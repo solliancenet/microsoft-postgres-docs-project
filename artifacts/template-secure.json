@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "prefix": {
@@ -46,8 +46,6 @@
         },
         "linuxFxVersion": "JAVA|11-java11",
         "alwaysOn": "true",
-        "dms-name": "[concat(parameters('prefix'),'-dms')]",
-        "factory-name": "[concat(parameters('prefix'),'-pg-adf-', variables('unique'))]",
         "vault-name": "[concat(parameters('prefix'),'-kv-', variables('unique'))]",
         "vm_db_name": "[concat(parameters('prefix'),'-vm-pgdb01')]",
         "app_name": "[concat(parameters('prefix'),'-app01')]",
@@ -65,7 +63,6 @@
         "pg_db_citus_coordSizeMB": 131072,
         "pg_db_citus_ha": false,
         "vm-db-ip": "[concat(parameters('prefix'),'-vm-pg-ip-01')]",
-        "pg-dms-name": "[concat(parameters('prefix'),'-pg-dms-01')]",
         "pg-vnet-db": "[concat(parameters('prefix'),'-vnet-postgresql')]",
         "pg-vnet-app01": "[concat(parameters('prefix'),'-vnet-app01')]",
         "pg-vnet-hub": "[concat(parameters('prefix'),'-vnet-hub')]",
@@ -78,25 +75,6 @@
         "finalVnetData": "[json(concat('{ \"SubnetArmResourceId\": \"', variables('vnetDataSet').subnetArmResourceId, '\"}'))]"
     },
     "resources": [
-        {
-            "type": "Microsoft.DataMigration/services",
-            "apiVersion": "2018-07-15-preview",
-            "name": "[variables('dms-name')]",
-            "location": "[variables('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('pg-nic-03'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('pg-vnet-hub'), 'default')]"
-            ],
-            "sku": {
-                "name": "Standard_1vCores",
-                "tier": "Standard",
-                "size": "1 vCores"
-            },
-            "kind": "Cloud",
-            "properties": {
-                "virtualSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('pg-vnet-hub'), 'default')]"
-            }
-        },
         {
             "type": "Microsoft.DBforPostgreSQL/servers",
             "apiVersion": "2017-12-01",
@@ -111,6 +89,7 @@
             "properties": {
                 "administratorLogin" : "[parameters('administratorLogin')]",
                 "administratorLoginPassword" : "[parameters('administratorLoginPassword')]",
+                "createMode" : "Default",
                 "storageProfile": {
                     "storageMB": 102400,
                     "backupRetentionDays": 7,
@@ -152,7 +131,6 @@
                 "haEnabled": "Disabled",
                 "administratorLogin": "[parameters('administratorLogin')]",
                 "administratorLoginPassword" : "[parameters('administratorLoginPassword')]",
-                "availabilityZone": "2",
                 "storageProfile": {
                     "storageMB": 131072,
                     "backupRetentionDays": 7
@@ -203,13 +181,6 @@
             }
         },
         {
-            "type": "Microsoft.DataFactory/factories",
-            "apiVersion": "2018-06-01",
-            "name": "[variables('factory-name')]",
-            "location": "[variables('location')]",
-            "properties": {}
-        },
-        {
             "type": "microsoft.insights/components",
             "apiVersion": "2018-05-01-preview",
             "name": "[variables('insights-name')]",
@@ -217,7 +188,7 @@
             "kind": "web",
             "properties": {
                 "Application_Type": "web",
-                "Request_Source": "IbizaWebAppExtensionCreate",
+                "Request_Source": "rest",
                 "RetentionInDays": 90,
                 "publicNetworkAccessForIngestion": "Enabled",
                 "publicNetworkAccessForQuery": "Enabled"
@@ -629,22 +600,6 @@
                 "aRecords": [
                     {
                         "ipv4Address": "10.5.0.4"
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/A",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('prefix'), 'privatedns.com', '/', variables('dms-name'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones', concat(parameters('prefix'), 'privatedns.com'))]"
-            ],
-            "properties": {
-                "ttl": 10,
-                "aRecords": [
-                    {
-                        "ipv4Address": "10.5.0.5"
                     }
                 ]
             }

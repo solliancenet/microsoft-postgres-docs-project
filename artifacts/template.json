@@ -14,7 +14,7 @@
             "defaultValue": "Seattle123Seattle123",
             "type": "String"
         },
-        "location" : {
+        "location": {
             "type": "string",
             "allowedValues": [
                 "eastus",
@@ -29,9 +29,9 @@
         }
     },
     "variables": {
-        "unique" : "[uniqueString(resourceGroup().id)]",
-        "location" : "[parameters('location')]",
-        "dns-domain" : "[concat(parameters('prefix'),'privatedns.com')]",
+        "unique": "[uniqueString(resourceGroup().id)]",
+        "location": "[parameters('location')]",
+        "dns-domain": "[concat(parameters('prefix'),'privatedns.com')]",
         "linuxFxVersion": "JAVA|11-java11",
         "alwaysOn": "true",
         "vault-name": "[concat(parameters('prefix'),'-kv-', variables('unique'))]",
@@ -73,9 +73,19 @@
                 "administratorLogin": "citus",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "backupRetentionDays": 35,
+                "coordinatorServerEdition": "GeneralPurpose",
+                "coordinatorStorageQuotaInMb": 524288,
+                "coordinatorVCores": 4,
                 "DelegatedSubnetArguments": "[if(empty(variables('vnetData')), json('null'), variables('finalVnetData'))]",
                 "enableMx": false,
                 "enableZfs": false,
+                "enableHa": true,
+                "nodeCount": 2,
+                "nodeEnablePublicIpAccess": true,
+                "nodeServerEdition": "MemoryOptimized",
+                "nodeStorageQuotaInMb": 524288,
+                "nodeVCores" : 4,
+                "enableGeoBackup": true,
                 "previewFeatures": "[variables('pg_db_citus_preview')]",
                 "postgresqlVersion": "[variables('pg_db_citus_version')]",
                 "serverRoleGroups": [
@@ -252,7 +262,7 @@
                         "properties": {
                             "peeringState": "Connected",
                             "remoteVirtualNetwork": {
-                                "id" : "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-hub'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-hub'))]"
                             },
                             "allowVirtualNetworkAccess": true,
                             "allowForwardedTraffic": false,
@@ -335,7 +345,7 @@
                         "properties": {
                             "peeringState": "Connected",
                             "remoteVirtualNetwork": {
-                                "id" : "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-hub'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-hub'))]"
                             },
                             "allowVirtualNetworkAccess": true,
                             "allowForwardedTraffic": false,
@@ -398,6 +408,163 @@
             }
         },
         {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[variables('app_name')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', concat(parameters('prefix'), '-pg-appsvc'))]"
+            ],
+            "kind": "app",
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(variables('app_name'), '.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(variables('app_name'), '.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('prefix'), '-pg-appsvc'))]",
+                "reserved": false,
+                "isXenon": false,
+                "hyperV": false,
+                "siteConfig": {
+                    "appSettings": [],
+                    "linuxFxVersion": "[variables('linuxFxVersion')]",
+                    "alwaysOn": "[variables('alwaysOn')]"
+                },
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": false,
+                "redundancyMode": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[variables('api_name')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', concat(parameters('prefix'), '-pg-appsvc'))]"
+            ],
+            "kind": "app",
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(variables('api_name'), '.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(variables('api_name'), '.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('prefix'), '-pg-appsvc'))]",
+                "reserved": false,
+                "isXenon": false,
+                "hyperV": false,
+                "siteConfig": {
+                    "appSettings": [],
+                    "linuxFxVersion": "[variables('linuxFxVersion')]",
+                    "alwaysOn": "[variables('alwaysOn')]"
+                },
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": false,
+                "redundancyMode": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(variables('app_name'), '/web')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('app_name'))]"
+            ],
+            "properties": {
+                "numberOfWorkers": 1,
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php",
+                    "hostingstart.html"
+                ],
+                "netFrameworkVersion": "v4.0",
+                "nodeVersion": "12.13.0",
+                "requestTracingEnabled": false,
+                "remoteDebuggingEnabled": false,
+                "httpLoggingEnabled": false,
+                "logsDirectorySizeLimit": 35,
+                "detailedErrorLoggingEnabled": false,
+                "publishingUsername": "$cjg-pgdb",
+                "azureStorageAccounts": {},
+                "scmType": "None",
+                "use32BitWorkerProcess": true,
+                "webSocketsEnabled": false,
+                "alwaysOn": true,
+                "managedPipelineMode": "Integrated",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": true
+                    }
+                ],
+                "loadBalancing": "LeastRequests",
+                "experiments": {
+                    "rampUpRules": []
+                },
+                "autoHealEnabled": false,
+                "localMySqlEnabled": false,
+                "ipSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictionsUseMain": false,
+                "http20Enabled": false,
+                "minTlsVersion": "1.2",
+                "ftpsState": "AllAllowed",
+                "reservedInstanceCount": 0
+            }
+        },
+        {
             "type": "Microsoft.DBforPostgreSQL/flexibleServers",
             "apiVersion": "2020-02-14-preview",
             "name": "[variables('pg-flex-01')]",
@@ -409,9 +576,10 @@
             },
             "properties": {
                 "version": "12",
-                "haEnabled": "Disabled",
+                "haEnabled": "Enabled",
+                "createMode": "Default",
                 "administratorLogin": "[parameters('adminUsername')]",
-                "administratorLoginPassword" : "[parameters('adminPassword')]",
+                "administratorLoginPassword": "[parameters('adminPassword')]",
                 "storageProfile": {
                     "storageMB": 131072,
                     "backupRetentionDays": 7
@@ -436,16 +604,16 @@
                 "capacity": 2
             },
             "properties": {
-                "administratorLogin" : "[parameters('adminUsername')]",
-                "administratorLoginPassword" : "[parameters('adminPassword')]",
-                "createMode" : "Default",
+                "administratorLogin": "[parameters('adminUsername')]",
+                "administratorLoginPassword": "[parameters('adminPassword')]",
+                "createMode": "Default",
                 "storageProfile": {
                     "storageMB": 102400,
                     "backupRetentionDays": 7,
                     "geoRedundantBackup": "Disabled",
                     "storageAutogrow": "Enabled"
                 },
-                "version": "12",
+                "version": "11",
                 "sslEnforcement": "Enabled",
                 "minimalTlsVersion": "TLSEnforcementDisabled",
                 "infrastructureEncryption": "Disabled",
