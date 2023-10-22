@@ -34,8 +34,6 @@
         "dns-domain" : "[concat(parameters('prefix'),'privatedns.com')]",
         "linuxFxVersion": "JAVA|11-java11",
         "alwaysOn": "true",
-        "dms-name": "[concat(parameters('prefix'),'-dms')]",
-        "factory-name": "[concat(parameters('prefix'),'-pg-adf-', variables('unique'))]",
         "vault-name": "[concat(parameters('prefix'),'-kv-', variables('unique'))]",
         "vm_db_name": "[concat(parameters('prefix'),'-vm-pgdb01')]",
         "app_name": "[concat(parameters('prefix'),'-app01')]",
@@ -43,7 +41,7 @@
         "insights-name": "[concat(parameters('prefix'),'-pg-insights')]",
         "pg_db_single": "[concat(parameters('prefix'),'-pg-single-01')]",
         "pg_db_citus": "[concat(parameters('prefix'),'-pg-citus-01')]",
-        "pg_db_citus_version": "11.2.8",
+        "pg_db_citus_version": "15",
         "pg_db_citus_preview": true,
         "pg_db_citus_coordCores": 2,
         "pg_db_citus_workerCores": 4,
@@ -52,7 +50,6 @@
         "pg_db_citus_coordSizeMB": 131072,
         "pg_db_citus_ha": false,
         "vm-db-ip": "[concat(parameters('prefix'),'-vm-pg-ip-01')]",
-        "pg-dms-name": "[concat(parameters('prefix'),'-pg-dms-01')]",
         "pg-vnet-db": "[concat(parameters('prefix'),'-vnet-postgresql')]",
         "pg-vnet-app01": "[concat(parameters('prefix'),'-vnet-app01')]",
         "pg-vnet-hub": "[concat(parameters('prefix'),'-vnet-hub')]",
@@ -67,26 +64,7 @@
     },
     "resources": [
         {
-            "type": "Microsoft.DataMigration/services",
-            "apiVersion": "2018-07-15-preview",
-            "name": "[variables('dms-name')]",
-            "location": "[variables('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('pg-nic-03'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('pg-vnet-hub'), 'default')]"
-            ],
-            "sku": {
-                "name": "Premium_4vCores",
-                "tier": "Premium",
-                "size": "4 vCores"
-            },
-            "kind": "Cloud",
-            "properties": {
-                "virtualSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('pg-vnet-hub'), 'default')]"
-            }
-        },
-        {
-            "apiVersion": "2020-10-05-privatepreview",
+            "apiVersion": "2022-11-08",
             "location": "[variables('location')]",
             "name": "[variables('pg_db_citus')]",
             "type": "Microsoft.DBforPostgreSQL/serverGroupsv2",
@@ -123,13 +101,6 @@
             }
         },
         {
-            "type": "Microsoft.DataFactory/factories",
-            "apiVersion": "2018-06-01",
-            "name": "[variables('factory-name')]",
-            "location": "[variables('location')]",
-            "properties": {}
-        },
-        {
             "type": "microsoft.insights/components",
             "apiVersion": "2018-05-01-preview",
             "name": "[variables('insights-name')]",
@@ -137,7 +108,7 @@
             "kind": "web",
             "properties": {
                 "Application_Type": "web",
-                "Request_Source": "IbizaWebAppExtensionCreate",
+                "Request_Source": "rest",
                 "RetentionInDays": 90,
                 "publicNetworkAccessForIngestion": "Enabled",
                 "publicNetworkAccessForQuery": "Enabled"
@@ -441,7 +412,6 @@
                 "haEnabled": "Disabled",
                 "administratorLogin": "[parameters('adminUsername')]",
                 "administratorLoginPassword" : "[parameters('adminPassword')]",
-                "availabilityZone": "2",
                 "storageProfile": {
                     "storageMB": 131072,
                     "backupRetentionDays": 7
@@ -468,13 +438,14 @@
             "properties": {
                 "administratorLogin" : "[parameters('adminUsername')]",
                 "administratorLoginPassword" : "[parameters('adminPassword')]",
+                "createMode" : "Default",
                 "storageProfile": {
                     "storageMB": 102400,
                     "backupRetentionDays": 7,
                     "geoRedundantBackup": "Disabled",
                     "storageAutogrow": "Enabled"
                 },
-                "version": "11",
+                "version": "12",
                 "sslEnforcement": "Enabled",
                 "minimalTlsVersion": "TLSEnforcementDisabled",
                 "infrastructureEncryption": "Disabled",
@@ -711,24 +682,6 @@
                 "delegations": [],
                 "privateEndpointNetworkPolicies": "Enabled",
                 "privateLinkServiceNetworkPolicies": "Enabled"
-            }
-        },
-        {
-            "type": "Microsoft.DataMigration/services",
-            "apiVersion": "2018-07-15-preview",
-            "name": "[variables('pg-dms-name')]",
-            "location": "[variables('location')]",
-            "sku": {
-                "name": "Premium_4vCores",
-                "size": "4 vCores",
-                "tier": "Premium"
-            },
-            "kind": "Cloud",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('pg-vnet-hub'))]"
-            ],
-            "properties": {
-                "virtualSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('pg-vnet-hub'), 'default')]"
             }
         },
         {
