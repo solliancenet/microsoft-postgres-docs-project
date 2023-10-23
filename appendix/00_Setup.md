@@ -30,16 +30,6 @@ The following steps will configure an environment to perform the guide's migrati
 - Select the **I agree...** checkbox
 - Select **Create**, after about 20 minutes the landing zone will be deployed
 
-## Open the Azure VM Ports
-
-- Browse to the Azure Portal.
-- Select the **PREFIX-vm-pgdb01** virtual machine resource.
-- Under **Settings**, select **Networking**
-- In the **Inbound port rules** area, select **Add inbound port rule**
-- For the **Destination port ranges**, type **5432**
-- For the name, type **Port_5432**
-- Select **Add**
-
 ## Allow Azure PostgreSQL Access
 
 - Browse to the Azure Portal.
@@ -58,8 +48,9 @@ The following steps will configure an environment to perform the guide's migrati
 - Login to the deployed database VM
   - Browse to the Azure Portal.
   - Select the **PREFIX-vm-pgdb01** virtual machine resource.
-  - Select **Connect->RDP**
-  - Select **Open** in the RDP dialog
+  - Under **Settings**, select **Connect**
+  - Select **Select** to open the native RDP dialog
+  - Select **Download RDP file** in the RDP dialog
   - Login using `s2admin` and `Seattle123Seattle123`
 
 ## Install Chrome
@@ -69,32 +60,6 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
 - Open a browser window, browse to https://www.google.com/chrome
 - Click **Download Chrome**
 - Follow all the prompts
-
-## Install ActivePerl 5.26 (PostgreSQL 10.16)
-
-Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
-
-- Open a browser window, browse to https://www.activestate.com/products/perl/downloads/
-- Download the ActivePerl 5.26 installer
-- Start the installer and click through the installer dialogs
-
-## Install Python 3.7.4 (PostgreSQL 10.16)
-
-The version of PostgreSQL (in this case 10.16) you install will target different python versions.  If you do not download the correctly linked Python version, you will not be able to enable the Python language later.
-
-Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
-
-- Browse [here](https://www.python.org/downloads/release/python-374/) to locate the installer.
-- Scroll to the bottom of the page, select the **Windows x86-64 executable installer**
-
-> Note that you will need to install Python for all users. This will require you to create a customized installation. We recommend installing Python to a directory like `C:\Python37`.
-
-- Check the **Add Python 3.7 to PATH** checkbox
-- Select **Customize Installation**
-- Select **Next**
-- Select **Install for all users**
-- Select **Install**
-- Select **Close**
 
 ## Setup Java and Maven
 
@@ -129,57 +94,6 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
   - Set the `M2_HOME` environment variable to the **C:\Program Files\apache-maven-{version}** folder
   - Add the **C:\Program Files\apache-maven-{version}\bin** path to the `PATH` environment variable
 
-## Install PostgreSQL 10.16
-
-- In the Virtual Machine, download the following [PostgreSQL versions](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads)
-  
-  - [PostgreSQL 10.16](https://get.enterprisedb.com/postgresql/postgresql-10.16-1-windows-x64.exe)
-  - PostgreSQL 11.0
-
-- Install PostgreSQL 10.16
-  - Start the PostgreSQL 10.16 installer you just downloaded
-  - Select **Run**
-  - On the Welcome dialog, select **Next**
-  - On the installation directory dialog, select **Next**
-  - On the select components dialog, select **Next**
-  - On the data directory dialog, select **Next**
-  - For the password, type `Seattle123`, then select **Next**
-  - For the port, select **Next**
-
-  > *Note* the default port is 5432, if you have changed this port, you will need to ensure that you open the necessary paths in the firewall and gateways from Azure to your on-premises\cloud environment.
-
-  - Select your locale, select **Next**
-  - On the summary dialog, select **Next**
-  - On the ready dialog, select **Next**, PostgreSQL will start the installation process
-  - Select **Finish**
-  
-- Run StackBuilder
-  - Select the local instance, then select **Next**
-  - Select the following applications, then select **Next**
-    - EDB Language Pack v1.0-5 (expand **Add-ons, tools and utilities**)
-    - pgBouncer v1.x (expand **Add-ons, tools and utilities**)
-    - pgJDBC (64bit) v13x (expand **Database Drivers**)
-    - psqlODBC (64bit) v13x (expand **Database Drivers**)
-    - Migration Toolkit v54.x (expand **Registration-required and trial products > EnterpriseDB Tools**)
-    - Replication Server v6.x (also an EnterpriseDB tool)
-  - For the download directory dialog, type **C:\Users\s2admin\Downloads**, then select **Next**.  The applications will download.
-  - Install all the StackBuilder applications by clicking through the dialogs and accepting all the defaults
-  
-- Add the **C:\Program Files\PostgreSQL\10\bin** path to the `PATH` environment variable
-  - Switch to the Environment Variables window
-  - Under **System variables**, choose **Path**. Then, select **Edit...**
-
-    ![](media/00_Edit_Environment_Variables.png)
-
-  - In the **Edit environment variable** dialog, select **New** and then **Browse...** Browse to `C:\Program Files\PostgreSQL\10\bin`.
-  - Select **OK**.
-
-## Configure Language Packs
-
-The default PostgreSQL installer should also install the programming language packs. These language packs include `python`, `tcl` and `perl`.  By default they will be installed in `c:\ebd`.
-
-> **Note** You can find out what version of Python has been targeted with the PostgreSQL build by running the python.exe in the language pack folder.
-
 ## pgAdmin
 
 - You may find it easier to download the latest pgAdmin tool rather than relying on the PostgreSQL installer.  You can find the latest versions [here](https://www.pgadmin.org/download/).
@@ -206,7 +120,7 @@ mkdir c:\PostgreSQLguide
 cd c:\PostgreSQLguide
 git config --global user.name "FIRST_NAME LAST_NAME"
 git config --global user.email "MY_NAME@example.com"
-git clone https://github.com/solliancenet/onprem-postgre-to-azurepostgre-migration-guide 
+git clone https://github.com/solliancenet/microsoft-postgres-docs-project 
 ```
 
 ## Deploy the Database
@@ -215,9 +129,9 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
 
 - Open the PostgreSQL pgAdmin tool
   - If opening for the first time, set the admin password to `Seattle123`
-- Expand the **Servers** node
-- Expand the **PostgreSQL 10** node, connect to your local PostgreSQL instance
-  - Enter `Seattle123` for the password
+- Right-click the **Servers** node, select **Register->Server**
+- Connect to the Azure Database for PostgreSQL instance (ex `PREFIX-pg-flex-01.postgres.database.azure.com`)
+  - Enter `Seattle123Seattle123` for the password
 - Expand the **Databases** node
 - Right-click the **Databases** node, select **Create->Database**
 - For the name, type **reg_app**, select **Save**
@@ -225,7 +139,7 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
 - Right-click the **Schemas** node, select **Query tool**
 - Select the open file icon
 - Browse to **C:\PostgreSQLguide\onprem-postgresql-to-azurepostgresql-migration-guide\artifacts\testapp\database-scripts**
-- Select **conferencedemo-PostgreSQL-10.sql** file, select **Select**
+- Select **conferencedemo-PostgreSQL-12.sql** file, select **Select**
 - Press **F5** to execute the sql
 
 <!--
@@ -258,16 +172,6 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
 
   >**Note**: The permissions granted are more than what is necessary for the app to function.
 
-## Configure Blob Data
-
-- Open the **C:\PostgreSQLguide\onprem-postgre-to-azurepostgre-migration-guide\artifacts\testapp\database-scripts\sample-images** directory
-- Copy the image files to the **C:\Program Files\PostgreSQL\10\data** directory
-- Right-click the **reg_app** schema, select **Query Tool**
-- Browse to the **C:\PostgreSQLguide\onprem-postgre-to-azurepostgre-migration-guide\artifacts\testapp\database-scripts\load-images.sql** file
-- Press **F5** to execute it
-
-> **Note** the `pg_read_binary_file` parameter is a relative path from the PostgreSQL data directory
-
 ## Install Azure CLI
 
 Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
@@ -294,15 +198,15 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
 Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
 
 - Open Visual Studio Code, if prompted, select **Yes, I trust the authors**
-- Open the **C:\PostgreSQLguide\onprem-postgre-to-azurepostgre-migration-guide\artifacts\testapp\conferencedemo** folder (Ctrl+K and Ctrl+O, or **File->Open Folder...**)
+- Open the **C:\PostgreSQLguide\microsoft-postgres-docs-project\artifacts\testapp\conferencedemo** folder (Ctrl+K and Ctrl+O, or **File->Open Folder...**)
 - Select the **Extensions** tab
 
     ![](media/00_Opening_Extension_Manager.png)
 
 - Search for and install the following extensions
   - PostgreSQL (by Microsoft)
-  - Java Extension Pack
-  - Spring Initializer Java Support
+  - Extension Pack for Java (By Microsoft)
+  - Spring Initializer Java Support (By Microsoft)
 - When prompted, select **Yes** to trust the **Maven Wrapper**
 - Update the `.vscode\launch.json ` file
   - If a launch.json does not exist, create a `.vscode` folder, and then create a new file called `launch.json`. The rectangle highlights the tool used to create a new folder, while the oval indicates the tool to create a new file.
@@ -324,7 +228,7 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
                 "request": "launch",
                 "mainClass": "com.yourcompany.conferencedemo.ConferencedemoApplication",
                 "env" :{
-                    "DB_CONNECTION_URL" : "jdbc:postgresql://localhost:5432/reg_app?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&noAccessToProcedureBodies=true",
+                    "DB_CONNECTION_URL" : "jdbc:postgresql://PREFIX-pg-flex-01.postgres.database.azure.com:5432/reg_app?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&noAccessToProcedureBodies=true",
                     "DB_USER_NAME" : "conferenceuser",
                     "DB_PASSWORD" : "Seattle123",
                     "ALLOWED_ORIGINS" : "*",
@@ -334,7 +238,7 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
     }
     ```
 
-  - Update the **{DB_CONNECTION_URL}** environment variable to the PostgreSQL Connections string `jdbc:postgresql://localhost:5432/reg_app?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&noAccessToProcedureBodies=true`
+  - Update the **{DB_CONNECTION_URL}** environment variable to the PostgreSQL Connections string `jdbc:postgresql://PREFIX-pg-flex-01.postgres.database.azure.com:5432/reg_app?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&noAccessToProcedureBodies=true`
   - Update the **{DB_USER_NAME}** environment variable to the PostgreSQL Connections string `conferenceuser`
   - Update the **{DB_PASSWORD}** environment variable to the PostgreSQL Connections string `Seattle123`
   - Update the **{ALLOWED_ORIGINS}** environment variable to `*`
@@ -351,7 +255,7 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
 
 ## Configure the Web Application Client
 
-- Open a new Visual Studio Code window to **C:\PostgreSQLguide\onprem-PostgreSQL-to-azurePostgreSQL-migration-guide\testapp\conferencedemo-client**
+- Open a new Visual Studio Code window to **C:\PostgreSQLguide\artifacts\testapp\conferencedemo-client**
 - Open a terminal window (**Terminal**->**New Terminal**)
 - Run the following commands to install all the needed packages, if prompted, select **N**
 
