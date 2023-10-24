@@ -5,11 +5,13 @@
    2. About the `azure_ai` extension.
       1. Enables the database to make calls to Azure OpenAI and Azure Cognitive Services.
 2. Prerequisites (add links for getting these set up)
-   1. Create an Open AI account.
-   2. Grant Access to Azure OpenAI.
-   3. Grant permissions to [create Azure OpenAI resources and to deploy models](https://learn.microsoft.com/azure/ai-services/openai/how-to/role-based-access-control).
-   4. [Create and deploy an Azure OpenAI service resource and a model](https://learn.microsoft.com/azure/ai-services/openai/how-to/create-resource?pivots=web-portal), for example deploy the embeddings model `text-embedding-ada-002`.
-3. Database setup
+   1. Create an Azure Database for PostgreSQL server.
+   2. Create an Open AI account.
+   3. Grant Access to Azure OpenAI.
+   4. Grant permissions to [create Azure OpenAI resources and to deploy models](https://learn.microsoft.com/azure/ai-services/openai/how-to/role-based-access-control).
+   5. [Create and deploy an Azure OpenAI service resource and a model](https://learn.microsoft.com/azure/ai-services/openai/how-to/create-resource?pivots=web-portal), for example deploy the embeddings model `text-embedding-ada-002`.
+3. Connect to the PostgreSQL server with psql.
+4. Extension installation and setup.
    1. Enable the extension.
       1. "Allow-list" the extension.
       2. Verify extension on "allow-list" using `SHOW azure.extensions`.
@@ -24,7 +26,9 @@
    4. Enable vector support.
       1. Brief intro to vector support in Azure PostgreSQL, with links for additional details.
       2. Install the `vector` extension.
-4. Vector embeddings with Azure OpenAI
+5. Database setup.
+6. Vector embeddings with Azure OpenAI
    1. Use `azure_openai` to create embeddings and then store the result using the `vector` data type.
    2. Retrieve rows that match a similarity search.
-5. Integrate Azure Cognitive Services
+7. Integrate Azure Cognitive Services.
+8. Clean up resources.
