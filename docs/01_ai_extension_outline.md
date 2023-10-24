@@ -20,15 +20,25 @@
       1. `azure_ai`
       2. `azure_openai`
       3. `azure_cognitive`
-   3. Configure the extension.
-      1. Provide endpoints and keys to Azure OpenAI / Azure Cognitive Services.
-      2. Add note mentioning required permissions for configuring the extension (`azure_ai_settings_manager` role).
-   4. Enable vector support.
+   3. Enable vector support.
       1. Brief intro to vector support in Azure PostgreSQL, with links for additional details.
       2. Install the `vector` extension.
-5. Database setup.
-6. Vector embeddings with Azure OpenAI
-   1. Use `azure_openai` to create embeddings and then store the result using the `vector` data type.
-   2. Retrieve rows that match a similarity search.
-7. Integrate Azure Cognitive Services.
-8. Clean up resources.
+5. Create vector embeddings with Azure OpenAI.
+   1. Configure the extension.
+      1. Provide endpoints and keys to Azure OpenAI.
+      2. Add note mentioning required permissions for configuring the extension (`azure_ai_settings_manager` role).
+   2. Database setup.
+      1. Create necessary tables.
+   3. Use `azure_openai` to create embeddings and then store the result using the `vector` data type.
+   4. Retrieve rows that match a similarity search.
+6. Integrate Azure Cognitive Services.
+   1. Configure the extension.
+      1. Provide endpoints and keys to Azure Cognitive Services.
+   2. Database setup.
+      1. Create any necessary tables and objects.
+   3. Call out to various Cognitive Services endpoints:
+      1. PII detection
+      2. Sentiment analysis
+      3. Language detection
+      4. etc.
+7. Clean up resources.
