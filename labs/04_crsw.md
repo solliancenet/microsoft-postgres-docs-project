@@ -5,18 +5,14 @@
 
 TBD
 
-## Create a resource group
+## Create Virutal Endpoints
 
 TBD
 
-## Create resources
+## Modify Application to use virtual endpoints
 
 TBD
 
-## Connect to server
-
-TBD
-
-## Enable Extension
+## Run applicaiton and perform Site Swap
 
 TBD
