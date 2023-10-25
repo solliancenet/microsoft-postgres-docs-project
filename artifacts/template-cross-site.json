@@ -14,7 +14,20 @@
             "defaultValue": "Seattle123Seattle123",
             "type": "String"
         },
-        "location": {
+        "primaryLocation": {
+            "type": "string",
+            "allowedValues": [
+                "eastus",
+                "eastus2",
+                "westus",
+                "westus2"
+            ],
+            "defaultValue": "eastus2",
+            "metadata": {
+                "description": "The primary location."
+            }
+        },
+        "replicaLocation": {
             "type": "string",
             "allowedValues": [
                 "eastus",
@@ -33,6 +46,9 @@
         "location": "[parameters('location')]",
         "linuxFxVersion": "JAVA|11-java11",
         "alwaysOn": "true",
+        "pg_version": 15,
+        "pg_storage_size": 128,
+        "pg_edition": "GeneralPurpose",
         "vm_db_name": "[concat(parameters('prefix'),'-vm-pgdb01')]",
         "app_name": "[concat(parameters('prefix'),'-app01')]",
         "api_name": "[concat(parameters('prefix'),'-api01')]",
@@ -41,11 +57,72 @@
         "pg-vnet-hub": "[concat(parameters('prefix'),'-vnet-hub')]",
         "pg-nsg-01": "[concat(parameters('prefix'),'-pg-nsg')]",
         "pg-flex-01": "[concat(parameters('prefix'),'-pg-flex-01')]",
+        "pg-flex-02": "[concat(parameters('prefix'),'-pg-flex-02')]",
         "pg-nic-01": "[concat(parameters('prefix'),'-vm-pg-nic-01')]",
         "pg-nic-02": "[concat(parameters('prefix'),'-nic-02')]",
         "pg-nic-03": "[concat(parameters('prefix'),'-nic-03')]"
     },
     "resources": [
+        {
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+            "apiVersion": "2022-12-01",
+            "name": "[variables('pg-flex-01')]",
+            "location": "[parameters('primaryLocation')]",
+            "sku": {
+                "name": "Standard_D2s_v3",
+                "tier": "[variables('pg_edition')]",
+                "capacity": 2
+            },
+            "properties": {
+                "version": "[variables('pg_version')]",
+                "haEnabled": "Enabled",
+                "createMode": "Default",
+                "administratorLogin": "[parameters('adminUsername')]",
+                "administratorLoginPassword": "[parameters('adminPassword')]",
+                "storageProfile": {
+                    "storageGB" : "[variables('pg_storage_size')]",
+                    "backupRetentionDays": 7
+                },
+                "maintenanceWindow": {
+                    "customWindow": "Disabled",
+                    "dayOfWeek": 0,
+                    "startHour": 0,
+                    "startMinute": 0
+                }
+            }
+        },
+        {
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+            "apiVersion": "2022-12-01",
+            "name": "[variables('pg-flex-02')]",
+            "location": "[parameters('replicaLocation')]",
+            "sku": {
+                "name": "Standard_D2s_v3",
+                "tier": "[variables('pg_edition')]",
+                "capacity": 2
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pg-flex-01'))]"
+            ],
+            "properties": {
+                "version": "[variables('pg_version')]",
+                "haEnabled": "Enabled",
+                "createMode": "Replica",
+                "sourceServerId" : "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pg-flex-01'))]",
+                "administratorLogin": "[parameters('adminUsername')]",
+                "administratorLoginPassword": "[parameters('adminPassword')]",
+                "storageProfile": {
+                    "storageGB" : "[variables('pg_storage_size')]",
+                    "backupRetentionDays": 7
+                },
+                "maintenanceWindow": {
+                    "customWindow": "Disabled",
+                    "dayOfWeek": 0,
+                    "startHour": 0,
+                    "startMinute": 0
+                }
+            }
+        },
         {
             "type": "microsoft.insights/components",
             "apiVersion": "2018-05-01-preview",
@@ -498,34 +575,6 @@
                 "minTlsVersion": "1.2",
                 "ftpsState": "AllAllowed",
                 "reservedInstanceCount": 0
-            }
-        },
-        {
-            "type": "Microsoft.DBforPostgreSQL/flexibleServers",
-            "apiVersion": "2020-02-14-preview",
-            "name": "[variables('pg-flex-01')]",
-            "location": "[variables('location')]",
-            "sku": {
-                "name": "Standard_D2s_v3",
-                "tier": "GeneralPurpose",
-                "capacity": 2
-            },
-            "properties": {
-                "version": "12",
-                "haEnabled": "Enabled",
-                "createMode": "Default",
-                "administratorLogin": "[parameters('adminUsername')]",
-                "administratorLoginPassword": "[parameters('adminPassword')]",
-                "storageProfile": {
-                    "storageMB": 131072,
-                    "backupRetentionDays": 7
-                },
-                "maintenanceWindow": {
-                    "customWindow": "Disabled",
-                    "dayOfWeek": 0,
-                    "startHour": 0,
-                    "startMinute": 0
-                }
             }
         },
         {
