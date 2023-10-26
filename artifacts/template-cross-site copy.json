@@ -65,68 +65,73 @@
     "resources": [
         {
             "type": "Microsoft.DBforPostgreSQL/flexibleServers",
-            "apiVersion": "2023-03-01-preview",
+            "apiVersion": "2022-12-01",
             "name": "[variables('pg-flex-01')]",
             "location": "[parameters('primaryLocation')]",
             "sku": {
                 "name": "Standard_D4s_v3",
-                "tier": "[variables('pg_edition')]"
+                "tier": "[variables('pg_edition')]",
+                "capacity": 2
             },
             "properties": {
+                "version": "[variables('pg_version')]",
+                "haEnabled": "Enabled",
+                "createMode": "Default",
                 "administratorLogin": "[parameters('adminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
-                "availabilityZone": "",
-                "backup": {
+                "storageProfile": {
+                    "AutoGrow": "Disabled",
+                    "storageGB" : "[variables('pg_storage_size')]",
                     "backupRetentionDays": 7,
+                    "tier" : "Standard"
+                },
+                "Backup": {
+                    "retentionDays": 7,
                     "geoRedundantBackup": "Disabled"
                 },
-                "createMode": "Default",                
                 "highAvailability" : {
                     "mode" : "Disabled",
                     "standbyAvailabilityZone" : ""
                 },
-                
+                "availabilityZone": "",
                 "maintenanceWindow": {
                     "customWindow": "Disabled",
                     "dayOfWeek": 0,
                     "startHour": 0,
                     "startMinute": 0
-                },
-                "storage": {
-                    "autoGrow": "Disabled",
-                    "storageSizeGB" : 128
-                },
-                "version": "[variables('pg_version')]"
+                }
             }
-
         },
         {
             "type": "Microsoft.DBforPostgreSQL/flexibleServers",
-            "apiVersion": "2023-03-01-preview",
+            "apiVersion": "2022-12-01",
             "name": "[variables('pg-flex-02')]",
             "location": "[parameters('replicaLocation')]",
             "sku": {
                 "name": "Standard_D4s_v3",
-                "tier": "[variables('pg_edition')]"
+                "tier": "[variables('pg_edition')]",
+                "capacity": 2
             },
             "dependsOn": [
                 "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pg-flex-01'))]"
             ],
             "properties": {
+                "version": "[variables('pg_version')]",
+                "haEnabled": "Enabled",
+                "createMode": "Replica",
+                "sourceServerId" : "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pg-flex-01'))]",
                 "administratorLogin": "[parameters('adminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
-                "availabilityZone" : "",
-                "backup": {
-                    "backupRetentionDays": 7,
-                    "geoRedundantBackup": "Disabled"
+                "storageProfile": {
+                    "storageGB" : "[variables('pg_storage_size')]",
+                    "backupRetentionDays": 7
                 },
-                "createMode": "Replica",
-                "SourceServerResourceId" : "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pg-flex-01'))]",
-                "storage": {
-                    "autoGrow": "Disabled",
-                    "storageSizeGB" : "[variables('pg_storage_size')]"
-                },
-                "version": "[variables('pg_version')]"
+                "maintenanceWindow": {
+                    "customWindow": "Disabled",
+                    "dayOfWeek": 0,
+                    "startHour": 0,
+                    "startMinute": 0
+                }
             }
         },
         {
