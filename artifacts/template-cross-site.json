@@ -98,7 +98,6 @@
                 },
                 "version": "[variables('pg_version')]"
             }
-
         },
         {
             "type": "Microsoft.DBforPostgreSQL/flexibleServers",
@@ -121,10 +120,14 @@
                     "geoRedundantBackup": "Disabled"
                 },
                 "createMode": "Replica",
+                "highAvailability" : {
+                    "mode" : "Disabled",
+                    "standbyAvailabilityZone" : ""
+                },
                 "SourceServerResourceId" : "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pg-flex-01'))]",
                 "storage": {
                     "autoGrow": "Disabled",
-                    "storageSizeGB" : "[variables('pg_storage_size')]"
+                    "storageSizeGB" : 128
                 },
                 "version": "[variables('pg_version')]"
             }

@@ -10,7 +10,7 @@ The implementation favors reusing the old primary over creating a new replica du
 
 The procedures for a site-swap are symmetric, mseaning they work identically when moving to the failover region or moving back, barring any specific features like geo-redundant backup that may affect the process. However, from a business perspective, site-swaps may not be entirely symmetrical. Typically, customers may have a primary region where they operate more frequently, and a different region reserved for Disaster Recovery (DR) purposes.  
 
-> NOTE: Due to the asynchronous setup of replicas, data loss might occur. It's currently the user's responsibility to halt applications and other mechanisms like [autovacuum](https://www.postgresql.org/docs/current/routine-vacuuming.html) on the primary to prevent changes from being applied. This temporary halt allows for replication to catch up with changes until promotion can be safely performed without data loss.
+> NOTE: Due to the asynchronous setup of replicas, data loss might occur. It's currently the user's responsibility to halt applications and other mechanisms like [autovacuum](https://www.postgresql.org/docs/current/routine-vacuuming.html) on the primary to prevent changes from being applied. This temporary halt allows for replication to catch up with changes until promotion can be safely performed without data loss.  You can [monitor the primary's metrics](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-monitoring) to watch for connections and activity to complete before making the site-swap.
 
 > NOTE: During a site-swap operation, the service automatically switches the roles of the servers. Currently, it is not supported to "pause" existing connections during a swap.  Active connections may be forcibly closed at the time of the swap.
 
@@ -20,13 +20,13 @@ When performing a zonal failover with [single and multi-zone-redundant high avai
 
 When performing failover between two different regions without site-swap, there are several more steps that must be performed to ensure a successful failover.  This can be as simple as manually changing connection strings, or having a [public/private DNS](https://techcommunity.microsoft.com/t5/azure-database-for-postgresql/failover-between-regions-with-azure-postgresql-flexible-server/ba-p/3768115) in place to manage the application traffic during the cross-region failover.
 
-For many architectures, it may not be acceptable to change connection strings or to setup DNS to support this scenerio.  Site-swap is designed to address these particular use-cases and provide a seamless, integrated process for failing over to different regions with Azure Database for Postgres.
+For many architectures, it may not be acceptable to change connection strings or to setup DNS to support this scenerio.  Site-swap is designed to address these particular use-cases and provide a seamless, integrated process for failing over to different regions with Azure Database for PostgreSQL.
 
 ## Requirements
 
 ### General
 
-In order to use site-swap, your Azure Database for Postgres must meet some basic requirements:
+In order to use site-swap, your Azure Database for PostgreSQL must meet some basic requirements:
 
 - Primary server can only have one Replica Server.
 - Both Primary and Replica servers should be in succeeded state.
@@ -79,11 +79,11 @@ The following table provides an overview of the operations on virtual endpoints 
 
 ## Site-swap operational behavior
 
-When performing a successful site-swap operation, the states of the primary and replica instances are vital to the process.
+When performing a successful site-swap operation, the states of the primary and replica instances are vital to the process.  The following sections describe the process for performing a failover with varying instance states.
 
 ### Primary and replica are healthy, all regions healthy
 
-1. Fencing the primary server (transactional).
+1. Fence the primary server (transactional).
 2. Disable HA if it is enabled (not transactional).
 3. Promote replica (transactional). Attempt a rewind if this process fails.
 4. Move the writer endpoint (transactional).
@@ -92,7 +92,7 @@ When performing a successful site-swap operation, the states of the primary and 
 
 ### Primary down
 
-1. Promote replica (transactional). No rewind attempt since the primary is down. If this process fails, the entire operation ends up with failure.
+1. Promote replica (transactional). No rewind attempt since the primary is down. If this process fails, the entire operation ends with failure.
 2. Move the writer endpoint (transactional). Reader endpoint returns error, it’s changed to point to old primary now, we prioritize primary over replica workload.
 
     > NOTE: While primary remains down that’s the end of the process. Once it comes back up the following actions are performed.
@@ -101,10 +101,8 @@ When performing a successful site-swap operation, the states of the primary and 
 4. Disable HA if it is enabled (standby removed). (non-transactional)
 
 ### Replica down
-
-Replica instance is down, or entire region is down.
-
-In this scenario, a swap is not possible, since there is no target, we can swap to. Users can change the reader endpoint to point to another, healthy replica, and trigger swap.
+s
+In the event the replica instance is down or the entire replica region is down a swap is not possible. Users can change the reader endpoint to point to another, healthy replica, and trigger swap.
 
 ## Cross-feature behavior
 
@@ -141,7 +139,9 @@ GRS (geo-backup and restore) is the only feature that’s behavior of the initia
 > NOTE: A site-swap operation disables High Availability on Primary server if it was enabled. Post failover, It must be explicitly re-enabled on the Primary.
 
 ## Use Cases
-s
+
+The following are two use cases for enabling and using Azure Database for PostgreSQL site-swap in your architecture(s).
+
 ### HA enabled cluster with one DR replica
 
 As a Data Officer in a well-established financial institution, I need to make sure that data in our Tier-1 systems are well protected in case of any outage or regional disasters. I’m familiar with Flexible Server zone redundant HA feature that provides zone resiliency, and this already has been listed as a must-have requirement for Tier-1 applications. I also need to make sure that in case of region-level failures my data is protected, and the system will be operational independently of the primary region recovery time. Ideally, I would like to have my data replicated synchronously to another region, but I’m also aware of the overhead it might cause so I can accept minimal data loss in case of regional failure, my RPO is up to 5 minutes. I used logical replication to another region once read replica feature wasn’t available, but I need to be able to replicate DDL statements as well as I don’t want to recreate the replicas each time failover is triggered as this imposes risk to my data in case regional failure would occur during the creation. I also don’t want to add additional work to our engineering team as logical replication is not part of the PaaS service and would need to be managed by them.
@@ -160,7 +160,7 @@ As a Data Officer in a well-established financial institution, I need to make su
 
 ### Site-swap as part of business continuity certification
 
-Data Architect at a large organziation wants to standardize on Azure Database for Postgres Flexible server but as part of the certification process, requires that the system fulfills the standard disaster recovery requirements for Tier-1 systems.
+Data Architect at a large organziation wants to standardize on Azure Database for PostgreSQL Flexible server but as part of the certification process, requires that the system fulfills the standard disaster recovery requirements for Tier-1 systems.
 
 These Tier-1 systems are required to undergo quarterly DR testing, moving workloads from one region to another then vice versa. So, a solution where fail-over is in line with their RTO/RPO expectations but fail-back takes a lot of time (like rebuilding a read replica from scratch) is something she wants to avoid.  Switching should be transparent to consuming applications – no connection strings update in applications required.  
 
@@ -180,5 +180,5 @@ These Tier-1 systems are required to undergo quarterly DR testing, moving worklo
 
 Explore the how-to guides to enable and test cross region site swap.
 
-- [Enable Cross-Region Site Swap for existing Azure Database for PostgresSQL - Flexible Server](TBD)
-- [Deploy and test new cross-region site swap Azure Database for PostgresSQL - Flexible Server](TBD)
+- [Enable Cross-Region Site Swap for existing Azure Database for PostgreSQL - Flexible Server](TBD)
+- [Deploy and test new cross-region site swap Azure Database for PostgreSQL - Flexible Server](TBD)
