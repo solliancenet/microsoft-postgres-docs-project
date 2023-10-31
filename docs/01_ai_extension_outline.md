@@ -29,6 +29,7 @@
       2. Add note mentioning required permissions for configuring the extension (`azure_ai_settings_manager` role).
    2. Database setup.
       1. Create necessary tables.
+      2. Load data.
    3. Use `azure_openai` to create embeddings and then store the result using the `vector` data type.
    4. Retrieve rows that match a similarity search.
 6. Integrate Azure Cognitive Services.
