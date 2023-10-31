@@ -13,7 +13,9 @@
     - [Enable vector support](#enable-vector-support)
     - [Generate and store vectors](#generate-and-store-vectors)
   - [Integrate Azure Cognitive Services](#integrate-azure-cognitive-services)
-    - [Retrieve Azure Cognitive Services endpoint and key](#retrieve-azure-cognitive-services-endpoint-and-key)
+    - [Set the Azure AI Language service endpoint and key](#set-the-azure-ai-language-service-endpoint-and-key)
+    - [Summarize bills](#summarize-bills)
+    - [Extract key phrases](#extract-key-phrases)
   - [Clean up resources](#clean-up-resources)
   - [Conclusion](#conclusion)
   - [Additional resources](#additional-resources)
@@ -29,7 +31,7 @@ This tutorial showcases how to add rich AI capabilities to an Azure Database for
    1. An Azure subscription - [Create one for free](https://azure.microsoft.com/free/cognitive-services?azure-portal=true).
    2. Access granted to Azure OpenAI in the desired Azure subscription. Currently, access to this service is granted only by application. You can apply for access to Azure OpenAI by completing the form at <https://aka.ms/oai/access>. Open an issue on this repo to contact us if you have an issue.
    3. An Azure OpenAI resource with the `text-embedding-ada-002` (Version 2) model deployed. This model is currently only available in [certain regions](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#model-summary-table-and-region-availability). If you do not have a resource, the process for creating one is documented in the [Azure OpenAI resource deployment guide](https://learn.microsoft.com/azure/ai-services/openai/how-to/create-resource).
-   4. An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-service/overview) service. If you do not have a resource, you can [create a Language resource](https://learn.microsoft.com/azure/ai-services/language-service/summarization/custom/quickstart#create-a-new-resource-from-the-azure-portal) in the Azure portal. You can use the free pricing tier (`Free F0`) to try the service, and upgrade later to a paid tier for production.
+   4. An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-service/overview) service. If you do not have a resource, you can [create a Language resource](https://portal.azure.com/#create/Microsoft.CognitiveServicesTextAnalytics) in the Azure portal by following the instructions provided in the [quickstart for summarization](https://learn.microsoft.com/azure/ai-services/language-service/summarization/custom/quickstart#create-a-new-resource-from-the-azure-portal) document. You can use the free pricing tier (`Free F0`) to try the service, and upgrade later to a paid tier for production.
    5. An Azure Database for PostgreSQL - Flexible Server instance in your Azure subscription. If you do not have a resource, use either the [Azure portal](https://learn.microsoft.com/azure/postgresql/flexible-server/quickstart-create-server-portal) or the [Azure CLI](https://learn.microsoft.com/azure/postgresql/flexible-server/quickstart-create-server-cli) guide for creating one.
 
 ## Connect to the database using `psql` in the Azure Cloud Shell
@@ -229,9 +231,19 @@ The query uses the `<=>` [vector operator](https://github.com/pgvector/pgvector#
 
 ## Integrate Azure Cognitive Services
 
-### Retrieve Azure Cognitive Services endpoint and key
+The Azure AI services integrations included in the the `azure_cognitive` schema of the `azure_ai` extension provide rich set of AI Language features accessible directly from the database. The list of functionality includes sentiment analysis, language detection, key phrase extraction, entity recognition, and text summarization. Access to these capabilities is through the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/overview).
 
-To successfully make calls against Azure AI services using the `azure_ai` extension, you must provide an endpoint and key for each service. Go to your Cognitive Services resource in the Azure portal and select the **Keys and Endpoint** item under **Resource Management** from the left-hand menu. Copy your endpoint and access key. You can use either `KEY1` or `KEY2`. Always having two keys allows you to securely rotate and regenerate keys without causing service disruption.
+To view the full list of Azure AI capabilities accessible through the extension, run the following command from the `psql` prompt to display a list of the functions available in the `azure_cognitive` schema.
+
+```sql
+\x
+\df+ azure_cognitive.*
+\x
+```
+
+### Set the Azure AI Language service endpoint and key
+
+To successfully make calls against Azure AI services using the `azure_ai` extension, you must provide the endpoint and a key for your Azure AI Language service. Go to your Language service resource in the Azure portal and select the **Keys and Endpoint** item under **Resource Management** from the left-hand menu. Copy your endpoint and access key. You can use either `KEY1` or `KEY2`. Always having two keys allows you to securely rotate and regenerate keys without causing service disruption.
 
 In the command below, replace the `{endpoint}` and `{api-key}` tokens with values you retrieved from the Azure portal, then run the commands from the `psql` command prompt to add your values to the configuration table.
 
@@ -240,35 +252,90 @@ SELECT azure_ai.set_setting('azure_cognitive.endpoint','{endpoint}');
 SELECT azure_ai.set_setting('azure_cognitive.subscription_key', '{api-key}');
 ```
 
-TODO: Inspect the functions and types associated with the `azure_cognitive` schema.
+### Summarize bills
 
-- azure_cognitive functions:
+The `azure_cognitive` schema provides two functions for summarizing text, `summarize_abstractive` and `summarize_extractive`. Abstractive summarization produces a summary that captures the main concepts from input text, but may not use the same words. Extractive summarization produces a summary by extracting key sentences from the input text.
 
-    ```sql
-    \df+ azure_cognitive.*
-    ```
+To take advantage of the Azure AI Language service's ability to generate new, original content, you can use the `summarize_abstractive()` function to generate a summarization of text input. The `summarize_abstractive()` function looks like the following:
 
-- azure_cognitive types:
+```sql
+azure_cognitive.summarize_abstractive(text TEXT, language TEXT)
+```
 
-    ```sql
-    \dT+ azure_cognitive.*
-    ```
+The function requires two arguments, the text to summarize and the language of that text, which is the two-letter ISO 639-1 representation of the language the text is written in. Currently English (`en`) and Spanish (`es`) are supported.
 
-1. Configure the extension.
-   1. Provide endpoints and keys to Azure Cognitive Services.
-2. Database setup.
-   1. Create any necessary tables and objects.
-3. Call out to various Cognitive Services endpoints:
-   1. PII detection
-   2. Sentiment analysis
-   3. Language detection
-   4. etc.
+The following query against the `bill_summaries` table uses the function to generate new one-sentence summaries of the text of each bill on the fly, allow you to incorporate the power of generative AI directly into your queries.
+
+```sql
+SELECT 
+    bill_id,
+    array_to_string(azure_cognitive.summarize_abstractive(bill_text, 'en', sentence_count => 1), ' ', '') one_sentence_summary
+FROM bill_summaries
+WHERE bill_id = '109_s2408' OR bill_id = '108_s1899';
+```
+
+THIS DOES NOT WORK.
+
+```sql
+SELECT
+    bill_id,
+    title,
+    array_to_string(azure_cognitive.summarize_abstractive(bill_text, 'en', sentence_count => 1), ' ', '') one_sentence_summary
+FROM bill_summaries
+ORDER BY bill_vector <=> azure_openai.create_embeddings('embeddings', 'Show me bills relating to veterans entrepreneurship.')::vector
+LIMIT 1;
+```
+
+TODO: This might not be necessary because bulk updates through calls to the extension don't seem to work in this case.
+
+```sql
+ALTER TABLE bill_summaries
+ADD COLUMN one_sentence_summary text;
+```
+
+THIS FAILS. Maybe something to do with the number of simultaneous calls to the Language service endpoint? It works when doing one record at a time.
+
+```sql
+UPDATE bill_summaries b
+SET one_sentence_summary = array_to_string(azure_cognitive.summarize_abstractive(REPLACE(b.bill_text, '\n', ' '), 'en', sentence_count => 1), ' ', '');
+```
+
+THIS ONE IS RETURNING 2 SENTENCES???
+
+```sql
+UPDATE bill_summaries b
+SET one_sentence_summary = array_to_string(azure_cognitive.summarize_abstractive(REPLACE(b.bill_text, '\n', ' '), 'en', sentence_count => 1), ' ', '')
+WHERE bill_id = '109_s2408';
+```
+
+```sql
+SELECT bill_id, one_sentence_summary FROM bill_summaries;
+```
+
+### Extract key phrases
+
+[Key phrase extraction](https://learn.microsoft.com/azure/ai-services/language-service/key-phrase-extraction/overview) in Azure AI extracts the main concepts in a text.
+
+
+```sql
+azure_cognitive.extract_key_phrases(text TEXT, language TEXT) 
+```
+
+```sql
+SELECT 
+    bill_id,
+    azure_cognitive.extract_key_phrases(summary, 'en') key_phrases
+FROM bill_summaries
+WHERE bill_id = '109_s2408' OR bill_id = '108_s1899';
+```
 
 ## Clean up resources
 
+TODO: Is this needed? It doesn't seem to be in many of the how-to articles (just quickly skimming the docs).
+
 ## Conclusion
 
-Congratulations, you just learned how to leverage the `azure_ai` extension to integrate generative AI capabilities into your database and applications.
+Congratulations, you just learned how to leverage the `azure_ai` extension to integrate generative AI capabilities into your database.
 
 ## Additional resources
 
