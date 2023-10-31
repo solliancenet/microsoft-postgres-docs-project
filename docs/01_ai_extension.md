@@ -16,7 +16,6 @@
     - [Set the Azure AI Language service endpoint and key](#set-the-azure-ai-language-service-endpoint-and-key)
     - [Summarize bills](#summarize-bills)
     - [Extract key phrases](#extract-key-phrases)
-  - [Clean up resources](#clean-up-resources)
   - [Conclusion](#conclusion)
   - [Additional resources](#additional-resources)
 
@@ -204,9 +203,11 @@ The first is the `deployment_name`, which was assigned when your embeddings mode
 
 Using this information, update each record in the `bill_summaries` table to add the vector for the `bill_text` field into the `bill_vector` column using the `azure_openai.create_embeddings()` function. This step also replaces newlines (`\n`) with a single space in each input text field, as inferior embeddings results these have been observed when these are present.
 
+Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page, and then run the following command:
+
 ```sql
 UPDATE bill_summaries b
-SET bill_vector = azure_openai.create_embeddings('embeddings', REPLACE(b.bill_text, '\n', ' '));
+SET bill_vector = azure_openai.create_embeddings('{your-deployment-name}', REPLACE(b.bill_text, '\n', ' '));
 ```
 
 To view the result, execute the following query to inspect a record. You can run `\x` first if the output is difficult to read.
@@ -330,10 +331,6 @@ SELECT
 FROM bill_summaries
 WHERE bill_id = '109_s2408' OR bill_id = '108_s1899';
 ```
-
-## Clean up resources
-
-TODO: Is this needed? It doesn't seem to be in many of the how-to articles (just quickly skimming the docs).
 
 ## Conclusion
 
