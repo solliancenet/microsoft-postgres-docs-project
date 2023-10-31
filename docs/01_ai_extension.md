@@ -28,7 +28,7 @@ This tutorial showcases how to add rich AI capabilities to an Azure Database for
 
    1. An Azure subscription - [Create one for free](https://azure.microsoft.com/free/cognitive-services?azure-portal=true).
    2. Access granted to Azure OpenAI in the desired Azure subscription. Currently, access to this service is granted only by application. You can apply for access to Azure OpenAI by completing the form at <https://aka.ms/oai/access>. Open an issue on this repo to contact us if you have an issue.
-   3. An Azure OpenAI resource with the `text-embedding-ada-002` (Version 2) model deployed. The deployment should be named `embeddings`. This model is currently only available in [certain regions](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#model-summary-table-and-region-availability). If you do not have a resource, the process for creating one is documented in the [Azure OpenAI resource deployment guide](https://learn.microsoft.com/azure/ai-services/openai/how-to/create-resource).
+   3. An Azure OpenAI resource with the `text-embedding-ada-002` (Version 2) model deployed. This model is currently only available in [certain regions](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#model-summary-table-and-region-availability). If you do not have a resource, the process for creating one is documented in the [Azure OpenAI resource deployment guide](https://learn.microsoft.com/azure/ai-services/openai/how-to/create-resource).
    4. A multi-service resource for Azure AI services. If you do not have a resource, you can provision one by following the [create a multi-service resource for Azure AI services quick](https://learn.microsoft.com/azure/ai-services/multi-service-resource?tabs=macos&pivots=azportal).
    5. An Azure Database for PostgreSQL - Flexible Server instance in your Azure subscription. If you do not have a resource, use either the [Azure portal](https://learn.microsoft.com/azure/postgresql/flexible-server/quickstart-create-server-portal) or the [Azure CLI](https://learn.microsoft.com/azure/postgresql/flexible-server/quickstart-create-server-cli) guide for creating one.
 
@@ -161,7 +161,7 @@ Using the PostgreSQL [COPY command](https://www.postgresql.org/docs/current/sql-
 
 ### Enable vector support
 
-Prior to using the `azure_ai` extension to generate embeddings, you must install the `pg_vector` extension by following the guidance in the [enable vector support in your database](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-use-pgvector#enable-extension) documentation. The `pg_vector` extension provides the ability to store your generated vectors alongside the rest of your data.
+The `azure_ai` extension allows you to generate embeddings for input text. To enable the generated vectors to be stored in the database, you must install the `pg_vector` extension by following the guidance in the [enable vector support in your database](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-use-pgvector#enable-extension) documentation. The `pg_vector` extension provides the ability to store your generated vectors alongside the rest of your data.
 
 With vector supported added to your database, add a new column to the `bill_summaries` table using the `vector` data type to stored embeddings within the table. The `text-embedding-ada-002` model you used to deploy your `embeddings` model produces vectors with 1536 dimensions, so you must specify `1536` as the vector size.
 
@@ -182,25 +182,9 @@ You can review the `create_embeddings()` function in the `azure_openai` schema b
 \x
 ```
 
-From the output, depicted below, the function expects the `deployment_name` you assigned when deploying the embeddings model in your Azure OpenAI account, along with the text for which vectors will be created.
+The `Argument data types` in the output of the `\df+ azure_openai.*` command reveals the arguments the function expects. The first is the `deployment_name`, which was assigned when your embeddings model was deployed in your Azure OpenAI account. To retrieve this value, go to your Azure OpenAI resource in the Azure portal. From there, select the **Model deployments** item under **Resource Management** in the left-hand navigation menu, then select **Manage Deployments** to open Azure OpenAI Studio. On the **Deployments** tab in Azure OpenAI Studio, copy the **Deployment name** value associated with the `text-embedding-ada-002` model deployment.
 
-```sql
-List of functions
--[ RECORD 1 ]-------+----------------------------------------------------------------------------------------------------------
-Schema              | azure_openai
-Name                | create_embeddings
-Result data type    | real[]
-Argument data types | deployment_name text, input text, timeout_ms integer DEFAULT 3600000, throw_on_error boolean DEFAULT true
-Type                | func
-Volatility          | immutable
-Parallel            | safe
-Owner               | azuresu
-Security            | invoker
-Access privileges   | 
-Language            | c
-Source code         | create_embeddings_scalar_wrapper
-Description         |
-```
+![The embeddings deployment for the text-embedding-ada-002 model is highlighted on the Deployments tab in Azure OpenAI Studio.](./media/azure_openai_studio_deployments_embeddings.png)
 
 Using this information, update each record in the `bill_summaries` table to add the vector for the `bill_text` field into the `bill_vector` column using the `azure_openai.create_embeddings()` function:
 
