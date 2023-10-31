@@ -11,8 +11,10 @@
     - [Set the Azure OpenAI endpoint and key](#set-the-azure-openai-endpoint-and-key)
     - [Populate the database with sample data](#populate-the-database-with-sample-data)
     - [Enable vector support](#enable-vector-support)
+    - [Generate vectors for the `bill_text` column](#generate-vectors-for-the-bill_text-column)
   - [Integrate Azure Cognitive Services](#integrate-azure-cognitive-services)
     - [Retrieve Azure Cognitive Services endpoint and key](#retrieve-azure-cognitive-services-endpoint-and-key)
+  - [Clean up resources](#clean-up-resources)
   - [Conclusion](#conclusion)
   - [Additional resources](#additional-resources)
 
@@ -112,6 +114,8 @@ Because the connection information for Azure AI services, including API keys, is
 
 The `azure_ai` extension's `azure_openai` schema enables the use of Azure OpenAI for creating vector embeddings for text values. Using this schema, you can invoke [Azure OpenAI embeddings](https://learn.microsoft.com/azure/ai-services/openai/reference#embeddings) directly from the database to create vector representations of input, which can then be used in vector similarity searches, as well as consumed by machine learning models.
 
+Embeddings are a technique of using machine learning models to evaluate how closely related information is. This allows for efficient identification of relationships and similarities between data, allowing algorithms to identify patterns and make accurate predictions.
+
 ### Set the Azure OpenAI endpoint and key
 
 Before you can use the `azure_openai` functions, you must configure the extension with your service endpoint and key. Navigate to your Azure OpenAI resource in the Azure portal and select the **Keys and Endpoint** item under **Resource Management** from the left-hand menu. Copy your endpoint and access key. You can use either `KEY1` or `KEY2`. Always having two keys allows you to securely rotate and regenerate keys without causing service disruption.
@@ -159,66 +163,65 @@ Using the PostgreSQL [COPY command](https://www.postgresql.org/docs/current/sql-
 
 Prior to using the `azure_ai` extension to generate embeddings, you must install the `pg_vector` extension by following the guidance in the [enable vector support in your database](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-use-pgvector#enable-extension) documentation. The `pg_vector` extension provides the ability to store your generated vectors alongside the rest of your data.
 
-With vector supported added to your database, add a new column to the `bill_summaries` table using the `vector` data type to stored embeddings within the table. The `text-embedding-ada-002` model you used to deploy your `embeddings` model produces vectors with 1536 dimensions, so you need to specify `1536` as the vector size.
+With vector supported added to your database, add a new column to the `bill_summaries` table using the `vector` data type to stored embeddings within the table. The `text-embedding-ada-002` model you used to deploy your `embeddings` model produces vectors with 1536 dimensions, so you must specify `1536` as the vector size.
 
 ```sql
 ALTER TABLE bill_summaries
 ADD COLUMN bill_vector vector(1536);
 ```
 
-6. TODO: Inspect the functions and types associated with the `azure_openai` schema.
+### Generate vectors for the `bill_text` column
 
-    ```sql
-    \df+ azure_openai.*
-    ```
+The `bill_summaries` table is now ready to store embeddings for the `bill_text` field. Using the `azure_openai.create_embeddings()` function, you will insert embeddings for the `bill_text` column into the newly created `bill_vector` column in the `bill_summaries` table.
 
-    ```sql
-    List of functions
-    -[ RECORD 1 ]-------+----------------------------------------------------------------------------------------------------------
-    Schema              | azure_openai
-    Name                | create_embeddings
-    Result data type    | real[]
-    Argument data types | deployment_name text, input text, timeout_ms integer DEFAULT 3600000, throw_on_error boolean DEFAULT true
-    Type                | func
-    Volatility          | immutable
-    Parallel            | safe
-    Owner               | azuresu
-    Security            | invoker
-    Access privileges   | 
-    Language            | c
-    Source code         | create_embeddings_scalar_wrapper
-    Description         |
-    ```
+You can review the `create_embeddings()` function in the `azure_openai` schema by running the following command.
 
-    TODO: Talk about the above output, specifically point out the argument data types, and what we need to pass into the function to generate embeddings. (e.g., deployment_name and the input text)
+```sql
+\x
+\df+ azure_openai.*
+\x
+```
 
-    The table is now ready to store embeddings for the `bill_text` field. Using the `azure_openai.create_embeddings()` function, insert embeddings for the `bill_text` column into the newly created `bill_vector` column in the `bill_summaries` table.
+From the output, depicted below, the function expects the `deployment_name` you assigned when deploying the embeddings model in your Azure OpenAI account, along with the text for which vectors will be created.
 
-    TODO: Need to provide instructions above to create a `text-embedding-ada-002` embeddings model in Azure OpenAI and name it `embeddings`, as that is what must be referenced below.
+```sql
+List of functions
+-[ RECORD 1 ]-------+----------------------------------------------------------------------------------------------------------
+Schema              | azure_openai
+Name                | create_embeddings
+Result data type    | real[]
+Argument data types | deployment_name text, input text, timeout_ms integer DEFAULT 3600000, throw_on_error boolean DEFAULT true
+Type                | func
+Volatility          | immutable
+Parallel            | safe
+Owner               | azuresu
+Security            | invoker
+Access privileges   | 
+Language            | c
+Source code         | create_embeddings_scalar_wrapper
+Description         |
+```
 
-    ```sql
-    UPDATE bill_summaries b
-    SET bill_vector = azure_openai.create_embeddings('embeddings', b.bill_text);
-    ```
+Using this information, update each record in the `bill_summaries` table to add the vector for the `bill_text` field into the `bill_vector` column using the `azure_openai.create_embeddings()` function:
 
-TODO: Look at a record...
+```sql
+UPDATE bill_summaries b
+SET bill_vector = azure_openai.create_embeddings('embeddings', b.bill_text);
+```
 
-TODO: Switch to `\x` first, as it prints a bit cleaner.
+To view the result, execute the following query to inspect a record. You can run `\x` first if the output is difficult to read.
 
 ```sql
 SELECT bill_id, bill_vector FROM bill_summaries LIMIT 1;
 ```
 
-Create an index on `bill_summaries` using `hnsw` (session_embedding_vector_cosine_ops).
-
-    TODO: the addition of HNSW, `pg_vector` can use the latest graph based algorithms to approximate nearest neighbor queries. HNSW is short for Hierarchical Navigable Small World.
-    TODO: Add link to HNSW details, for those interested...
+Vector similarity is a method used to measure how similar two items are by representing them as vectors, which are series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors. To enable more efficient searching over the `vector` field by creating an index on `bill_summaries` using HNSW, which is short for Hierarchical Navigable Small World, and cosine similarity. HNSW allows `pg_vector` to use the latest graph based algorithms to approximate nearest neighbor queries.
 
 ```sql
 CREATE INDEX ON bill_summaries USING hnsw (bill_vector vector_cosine_ops);
 ```
 
-Execute a query against the database to find bills that match a cosine similarity search.
+With everything now in place, execute a query against the database to find bills that match a cosine similarity search.
 
 ```sql
 SELECT bill_id, title, summary FROM bill_summaries
@@ -263,6 +266,8 @@ TODO: Inspect the functions and types associated with the `azure_cognitive` sche
    3. Language detection
    4. etc.
 
+## Clean up resources
+
 ## Conclusion
 
 Congratulations, you just learned how to leverage the `azure_ai` extension to integrate generative AI capabilities into your database and applications.
@@ -272,11 +277,3 @@ Congratulations, you just learned how to leverage the `azure_ai` extension to in
 - [How to use PostgreSQL extensions in Azure Database for PostgreSQL - Flexible Server](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions)
 - [Azure OpenAI Service embeddings models](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#embeddings-models-1)
 - [Understand embeddings in Azure OpenAI Service](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings)
-
-
-1. 
-
-   1. 
-2. Integrate Azure Cognitive Services.
-   
-3. Clean up resources.
