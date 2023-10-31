@@ -62,6 +62,8 @@ psql
 
 ## Install the `azure_ai` extension
 
+**TODO**: Add link to existing doc for installing the extension.
+
 The `azure_ai` extension provides the ability to integrate Azure OpenAI and Azure Cognitive Services into your database. To install and use the `azure_ai` extension, follow the steps below:
 
    1. Add the extension to your allowlist as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
