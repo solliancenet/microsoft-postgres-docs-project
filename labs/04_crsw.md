@@ -1,5 +1,5 @@
 
-# Tutorial: Utilizing Cross region Site Swap for Azure Database for PostgresSQL - Flexible Server
+# Tutorial: Cross region Site Swap with VNet Integration
 
 ## Pre-requistes
 
