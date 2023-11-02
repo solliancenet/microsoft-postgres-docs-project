@@ -3,7 +3,7 @@
 
 ## In this article
 
-- Prerequisities
+- Prerequisites
 - Review primary settings
 - Create a read replica
 - Add virtual endpoints (preview)
@@ -17,7 +17,7 @@
 
 In this article, you learn how to create and manage read replicas in Azure Database for PostgreSQL Flexible Server from the Azure portal. To learn more about read replicas, see the [overview](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas).
 
-## Pre-requistes
+## Pre-requisites
 
 An [Azure Database for PostgreSQL server](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/quickstart-create-server-portal) to be the primary server with no current read replicas.
 
@@ -25,7 +25,7 @@ An [Azure Database for PostgreSQL server](https://learn.microsoft.com/en-us/azur
 
 ## Review primary settings
 
-Before adding a replica for failover purposes, review the target Azure Database for PostgreSQL Flexible Server configuration.  It is a best practice to ensure that your replica configuration values match or exceed your primary configuration.  In some, but not all cases, Azure will attempt to notify you or automaticallu set the necessary values to support promote activites.
+Before adding a replica for failover purposes, review the target Azure Database for PostgreSQL Flexible Server configuration.  It is a best practice to ensure that your replica configuration values match or exceed your primary configuration.  In some, but not all cases, Azure will attempt to notify you or automatically set the necessary values to support promote activities.
 
 ### Server configuration
 
@@ -118,7 +118,7 @@ To create a read replica, follow these steps:
 
 - In the Azure portal, select the replica server.
 - On the server sidebar, under **Settings**, select **Server parameters**.
-- Set replica server parameters such that they match the priamry server.
+- Set replica server parameters such that they match the primary server.
 
 > Important: Review the [considerations section of the Read Replica overview](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas#considerations).
 
@@ -129,7 +129,7 @@ To create a read replica, follow these steps:
 - In the Azure portal, select the primary server.
 - On the server sidebar, under **Settings**, select **Replication**.
 - Select **Create endpoint**
-- In the dialog, type a meaningfull name for your endpoint.  Notice the DNS endpoint that is being generated.
+- In the dialog, type a meaningful name for your endpoint.  Notice the DNS endpoint that is being generated.
 - Select **Create**
 
 ### Modify application to point to virtual endpoint
@@ -146,7 +146,7 @@ To promote replica from the Azure portal, follow these steps:
 
 - In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server primary server.
 - On the server sidebar, on the server menu, under **Settings**, select **Replication**
-- Under **Servers**, seelct the **Promote** icon for the replica.
+- Under **Servers**, select the **Promote** icon for the replica.
 
   ![Select promote for a replica.](../media/enable-promote/select-replica.png)
 
@@ -164,18 +164,18 @@ Repeat the same operations to promote the original server to the primary:
 
 - In the [Azure portal](https://portal.azure.com/), select the replica.
 - On the server sidebar, under **Settings**, select **Replication**
-- Under **Servers**, seelct the **Promote** icon for the replica.
+- Under **Servers**, select the **Promote** icon for the replica.
 - In the dialog, ensure the action is **Promote to primary server**.
 - For **Data sync**, ensure **Planned - sync data before promoting** is selected.
 - Select **Promote**, the process will begin.  Once completed, the roles will be swapped with the replica now the primary and the primary the replica.
 
-### Test appications
+### Test applications
 
 Again, switch to one of the consuming applications.  Attempt to perform some operations.
 
 ## Monitor a replica
 
-As usage of your instance increased, so too will the amount of time to keep the replica(s) insync.  You can monitor the replication process with Azure Mointor metrics across the primary and the replicas.
+As usage of your instance increased, so too will the amount of time to keep the replica(s) in-sync.  You can monitor the replication process with Azure Monitor metrics across the primary and the replicas.
 
 ### Max Physical Replication Lag
 
