@@ -1,9 +1,21 @@
 
 # Create and manage read replicas in Azure Database for PostgreSQL - Flexible Server from the Azure portal
 
-In this article, you learn how to create and manage read replicas in Azure Database for PostgreSQL from the Azure portal. To learn more about read replicas, see the [overview](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas).
+## In this article
 
-## Enable Promote Primary for existing Azure Database for PostgresSQL - Flexible Server
+- Prerequisities
+- Review primary settings
+- Create a read replica
+- Add virtual endpoints
+- Promote replicas
+- Monitor a replica
+- Delete a replica
+- Delete a primary server
+- Next steps
+
+### APPLIES TO: Azure Database for PostgreSQL Flexible Server
+
+In this article, you learn how to create and manage read replicas in Azure Database for PostgreSQL Flexible Server from the Azure portal. To learn more about read replicas, see the [overview](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas).
 
 ## Pre-requistes
 
@@ -15,9 +27,9 @@ An [Azure Database for PostgreSQL server](https://learn.microsoft.com/en-us/azur
 
 Before adding a replica for cross-site failover, review the Azure Database for PostgreSQL Flexible Server configuration.  Althought not a necessary step, it is a best practice to ensure that your replica configuration values match or exceeds your primary configuration.
 
-## Server configuration
+### Server configuration
 
-- In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server that you want to setup site swap.
+- In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server that you want to setup a replica for.
 - On the **Overview** dialog, note the PostgreSQL version (ex `15.3`).  Also note the region your primary is deployed too (ex. `East US`).
 - Under **Settings**, select **Compute + storage**.
 - Review and note the following settings:
@@ -40,7 +52,7 @@ Before adding a replica for cross-site failover, review the Azure Database for P
       - Allow public access
       - Allowed client ip addresses
 
-## Server parameters
+### Server parameters
 
 - In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server that you want to create replica for.
 - Under **Settings**, select **Server parameters**.
@@ -57,7 +69,10 @@ To create a read replica, follow these steps:
   ![Add a replica.](../media/enable-promote/add-replica.png)
 
 - Enter the Basics form with the following information.
-  - Set the server name.  It is a best practice to use a naming scheme that will allow you to easily determine what instance you are connecting to or managing.
+  - Set the server name.
+  
+  > NOTE: It is a best practice to use a naming convention that will allow you to easily determine what instance you are connecting too or managing and where it resides.
+
   - Select a location that is different from your primary.
   - Set the compute and storage to what you recorded from your primary.
   
@@ -87,17 +102,17 @@ To create a read replica, follow these steps:
 ### Server Parameters
 
 - In the Azure portal, select the replica server.
-- Under **Settings**, select **Server parameters**.
+- On the server sidebar, under **Settings**, select **Server parameters**.
 - Set and server parameters such that they matche your priamry server.
 
 > Important: Review the [considerations section of the Read Replica overview](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas#considerations).
   
 > To avoid issues during promotion of replicas always change the following server parameters on the replicas first, before applying them on the primary: max_connections, max_prepared_transactions, max_locks_per_transaction, max_wal_senders, max_worker_processes.
 
-## Add Virtual Endpoint
+## Add Virtual Endpoints
 
 - In the Azure portal, select the primary server.
-- Under **Settings**, select **Replication**.
+- On the server sidebar, under **Settings**, select **Replication**.
 - Select **Create endpoint**
 - In the dialog, type a meaningfull name for your endpoint.  Notice the DNS endpoint that is being generated.
 - Select **Create**
@@ -115,14 +130,14 @@ With all the necessary components in place, you are now ready to perform a promo
 To promote replica from the Azure portal, follow these steps:
 
 - In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server primary server.
-- On the server menu, under **Settings**, select **Replication**
+- On the server sidebar, on the server menu, under **Settings**, select **Replication**
 - Under **Servers**, seelct the **Promote** icon for the replica.
 
   ![Select promote for a replica.](../media/enable-promote/select-replica.png)
 
 - In the dialog, ensure the action is **Promote to primary server**.
 - For **Data sync**, ensure **Planned - sync data before promoting** is selected.
-- Select **Promote**, the site-swap will start.  Once completed, the roles will be swapped with the replica now the primary and the primary the replica.
+- Select **Promote**, the process will begin.  Once completed, the roles will be swapped with the replica now the primary and the primary the replica.
 
 ### Test applications
 
@@ -133,15 +148,77 @@ Restart your applications, attempt to perform some operations.  The applications
 Repeat the same operations to promote the original server to the primary:
 
 - In the [Azure portal](https://portal.azure.com/), select the replica.
-- Under **Settings**, select **Replication**
+- On the server sidebar, under **Settings**, select **Replication**
 - Under **Servers**, seelct the **Promote** icon for the replica.
 - In the dialog, ensure the action is **Promote to primary server**.
 - For **Data sync**, ensure **Planned - sync data before promoting** is selected.
-- Select **Promote**, the site-swap will start.  Once completed, the roles will be swapped with the replica now the primary and the primary the replica.
+- Select **Promote**, the process will begin.  Once completed, the roles will be swapped with the replica now the primary and the primary the replica.
 
 ### Test appications
 
 Again, switch to one of the consuming applications.  Attempt to perform some operations.
+
+## Monitor a replica
+
+As usage of your instance increased, so too will the amount of time to keep the replica(s) insync.  You can monitor the replication process with Azure Mointor metrics across the primary and the replicas.
+
+### Max Physical Replication Lag
+
+The Max Physical Replication Lag metric shows the lag in bytes between the primary server and the most-lagging replica and is available on the primary.
+
+- In the Azure portal, select the primary server.
+- Select **Metrics**. In the Metrics window, select **Max Physical Replication Lag**.
+
+  ![Screenshot of the Metrics blade showing Max Physical Replication Lag metric.](../media/enable-promote/metrics_max_physical_replication_lag.png)
+
+- For **Aggregation**, select **Max**.
+
+### Read Replica Lag metric
+
+The Read Replica Lag metric shows the time since the last replayed transaction on a replica. If there are no transactions occurring on your primary, the metric reflects this time lag. For instance if there are no transactions occurring on your primary server, and the last transaction was replayed 5 seconds ago, then the Read Replica Lag will show 5 second delay.  This metric is only available on a replica.
+
+- In the Azure portal, select read replica.
+- Select **Metrics**. In the Metrics window, select **Read Replica Lag**.
+
+  ![Screenshot of the Metrics blade showing Read Replica Lag metric.](../media/enable-promote/metrics_read_replica_lag.png)
+
+- For **Aggregation**, select **Max**.
+
+## Delete a replica
+
+You can delete a read replica similar to how you delete a standalone Azure Database for PostgreSQL server.
+
+- In the Azure portal, open the **Overview** page for the read replica. Select **Delete**.
+
+  ![On the replica Overview page, select to delete the replica.](../media/enable-promote/delete-replica.png)
+
+- On the replica Overview page, select to delete the replica
+
+You can also delete the read replica from the Replication window by following these steps:
+
+- In the Azure portal, select your primary Azure Database for PostgreSQL server.
+- On the server menu, under **Settings**, select **Replication**.
+- Select the read replica to delete and hit the **Delete** button.
+
+  ![Select the replica to delete.](../media/enable-promote/delete-replica02.png)
+
+- Select the replica to delete
+- Acknowledge **Delete** operation.
+
+  ![Confirm to delete te replica.](../media/enable-promote/delete-confirm.png)
+
+## Delete primary server
+
+You can only delete primary server once all read replicas have been deleted. To delete a server from the Azure portal, follow these steps:
+
+- In the Azure portal, select your primary Azure Database for PostgreSQL server.
+- Open the **Overview** page for the server and select **Delete**.
+
+  ![On the server Overview page, select to delete the primary server.](../media/enable-promote/delete-server.png)
+
+- Enter the name of the primary server to delete. Select **Delete** to confirm deletion of the primary server.
+
+  ![Confirm to delete the primary server.](../media/enable-promote/confirm-delete.png)
 
 ## Next Steps
 
