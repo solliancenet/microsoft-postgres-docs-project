@@ -6,7 +6,7 @@
 - Prerequisities
 - Review primary settings
 - Create a read replica
-- Add virtual endpoints
+- Add virtual endpoints (preview)
 - Promote replicas
 - Monitor a replica
 - Delete a replica
@@ -124,7 +124,7 @@ To create a read replica, follow these steps:
 
 > To avoid issues during promotion of replicas always change the following server parameters on the replicas first, before applying them on the primary: max_connections, max_prepared_transactions, max_locks_per_transaction, max_wal_senders, max_worker_processes.
 
-## Add Virtual Endpoints
+## Add Virtual Endpoints (preview)
 
 - In the Azure portal, select the primary server.
 - On the server sidebar, under **Settings**, select **Replication**.
