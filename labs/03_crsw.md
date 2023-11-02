@@ -25,13 +25,16 @@ An [Azure Database for PostgreSQL server](https://learn.microsoft.com/en-us/azur
 
 ## Review primary settings
 
-Before adding a replica for cross-site failover, review the Azure Database for PostgreSQL Flexible Server configuration.  Althought not a necessary step, it is a best practice to ensure that your replica configuration values match or exceeds your primary configuration.
+Before adding a replica for failover purposes, review the target Azure Database for PostgreSQL Flexible Server configuration.  It is a best practice to ensure that your replica configuration values match or exceed your primary configuration.  In some, but not all cases, Azure will attempt to notify you or automaticallu set the necessary values to support promote activites.
 
 ### Server configuration
 
 - In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server that you want to setup a replica for.
 - On the **Overview** dialog, note the PostgreSQL version (ex `15.3`).  Also note the region your primary is deployed too (ex. `East US`).
-- Under **Settings**, select **Compute + storage**.
+
+  ![Primary instance version and location is highlighted.](../media/enable-promote/primary-settings.png)
+
+- On the server sidebar, under **Settings**, select **Compute + storage**.
 - Review and note the following settings:
 
     - Compute: Tier, Processor, Size (ex `Standard_D4ads_v5`).
@@ -42,6 +45,8 @@ Before adding a replica for cross-site failover, review the Azure Database for P
     - Backup settings
       - Retention period
       - Redundancy Options
+
+  ![Primary instance version and location is highlighted.](../media/enable-promote/primary-compute.png)
 
 > **NOTE** Read replicas are not supported for primary that has **Storage Auto-growth** enabled.  Uncheck this box if it is checked.
     
@@ -56,6 +61,9 @@ Before adding a replica for cross-site failover, review the Azure Database for P
 
 - In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server that you want to create replica for.
 - Under **Settings**, select **Server parameters**.
+
+  ![Primary server parameters are highlighted.](../media/enable-promote/primary-parameters.png)
+
 - Record any values that you may have modified to support your application.
 
 ## Create a read replica
@@ -64,36 +72,43 @@ To create a read replica, follow these steps:
 
 - In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server to use as the primary server.
 - On the server sidebar, under **Settings**, select **Replication**.
-- Select **Add replica**.
+- Select **Create replica**.
 
-  ![Add a replica.](../media/enable-promote/add-replica.png)
+  ![Add a replica.](../media/enable-promote/add-replica-new.png)
 
 - Enter the Basics form with the following information.
-  - Set the server name.
+  - Set the replica server name.
   
   > NOTE: It is a best practice to use a naming convention that will allow you to easily determine what instance you are connecting too or managing and where it resides.
 
-  - Select a location that is different from your primary.
-  - Set the compute and storage to what you recorded from your primary.
+  - Select a location that is different from your primary but note that you can select the same region.
+
+  > NOTE:  To learn more about which regions you can create a replica in, visit the [read replica concepts article](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas).
+
+  - Set the compute and storage to what you recorded from your primary. If the displayed compute does not match, select **Configure server** and select the appropriate one.
   
-  > NOTE:  If you select a compute size smaller than the primary, the deployment will fail.
+  > NOTE:  If you select a compute size smaller than the primary, the deployment will fail. Also be aware that the compute size may not be available in a different region.
+
+    ![Compute size of the replica is highlighted.](../media/enable-promote/replica-compute.png)
 
   - Select an availability zone setting.
   - Notice that the Authentication settings are auto selected for you.
 
-  ![Enter the Basics information.](../media/enable-promote/add-replica.png)
-
-  > NOTE:  To learn more about which regions you can create a replica in, visit the [read replica concepts article](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas).
+  ![Review the availability zone and authentication settings.](../media/enable-promote/replica-zone-auth.png)
 
 - Select **Review + create** to confirm the creation of the replica or **Next: Networking** if you want to add, delete or modify any firewall rules.
-- Verify the firewall settings.
+- Verify the firewall settings. Notice how the primary settings have been copied automatically.
 
   ![Modify firewall rules.](../media/enable-promote/networking.png)
 
 - Leave the remaining defaults and then select the **Review + create** button at the bottom of the page or proceed to the next forms to configure security or add tags.
 - Review the information in the final confirmation window. When you're ready, select **Create**. A new deployment will be created and executed.
 
-  ![Review the information in the final confirmation window.](../media/enable-promote/review.png)
+  ![Review the information in the final confirmation window.](../media/enable-promote/replica-review.png)
+
+- During the deployment, you will see the primary in `Updating` status:
+
+  ![Primary enters into updating status.](../media/enable-promote/primary-updating.png)
 
 - After the read replica is created, it can be viewed from the Replication window.
 
@@ -103,10 +118,10 @@ To create a read replica, follow these steps:
 
 - In the Azure portal, select the replica server.
 - On the server sidebar, under **Settings**, select **Server parameters**.
-- Set and server parameters such that they matche your priamry server.
+- Set replica server parameters such that they match the priamry server.
 
 > Important: Review the [considerations section of the Read Replica overview](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas#considerations).
-  
+
 > To avoid issues during promotion of replicas always change the following server parameters on the replicas first, before applying them on the primary: max_connections, max_prepared_transactions, max_locks_per_transaction, max_wal_senders, max_worker_processes.
 
 ## Add Virtual Endpoints
