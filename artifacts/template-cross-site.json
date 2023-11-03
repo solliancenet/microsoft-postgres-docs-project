@@ -14,6 +14,19 @@
             "defaultValue": "Seattle123Seattle123",
             "type": "String"
         },
+        "location": {
+            "type": "string",
+            "allowedValues": [
+                "eastus",
+                "eastus2",
+                "westus",
+                "westus2"
+            ],
+            "defaultValue": "eastus2",
+            "metadata": {
+                "description": "The primary location."
+            }
+        },
         "primaryLocation": {
             "type": "string",
             "allowedValues": [
@@ -43,7 +56,7 @@
     },
     "variables": {
         "unique": "[uniqueString(resourceGroup().id)]",
-        "location": "[parameters('primaryLocation')]",
+        "location": "[parameters('location')]",
         "linuxFxVersion": "JAVA|11-java11",
         "alwaysOn": "true",
         "pg_version": 15,
