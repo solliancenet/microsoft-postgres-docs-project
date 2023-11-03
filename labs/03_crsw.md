@@ -185,6 +185,34 @@ Again, switch to one of the consuming applications.  Wait for the primary and re
 
   ![Potential failover connectivity errors.](../media/enable-promote/failover-connectivity.png)
 
+## Add secondary read replica
+
+To create a read replica, follow these steps:
+
+- In the [Azure portal](https://portal.azure.com/), choose the primary Azure Database for PostgreSQL Flexible Server.
+- On the server sidebar, under **Settings**, select **Replication**.
+- Select **Create replica**.
+- Enter the Basics form with information in a third region (ex `westus` and `corp-pg-westus-001`)
+- Select **Review + create** to confirm the creation of the replica or **Next: Networking** if you want to add, delete or modify any firewall rules.
+- Verify the firewall settings. Notice how the primary settings have been copied automatically.
+- Leave the remaining defaults and then select the **Review + create** button at the bottom of the page or proceed to the next forms to configure security or add tags.
+- Review the information in the final confirmation window. When you're ready, select **Create**. A new deployment will be created and executed.
+- During the deployment, you will see the primary in `Updating` status:
+
+## Modify virtual endpoint
+
+- In the [Azure portal](https://portal.azure.com/), choose the primary Azure Database for PostgreSQL Flexible Server.
+- On the server sidebar, under **Settings**, select **Replication**.
+- Select the elipses and then select **Edit**
+
+  ![Edit the virtual endpoint.](../media/enable-promote/edit-virtual-endpoint.png)
+
+- In the dialog, select the new secondary replica
+
+  ![Select the seconary replica.](../media/enable-promote/select-secondary-endpoint.png)
+
+- Select **Save**.  The reader endpoint will now be pointed at the secondary replica and the promote operation will now be tied to this replica.
+
 ## Monitor a replica
 
 As usage of your instance increased, so too will the amount of time to keep the replica(s) in-sync.  You can monitor the replication process with Azure Monitor metrics across the primary and the replicas.
