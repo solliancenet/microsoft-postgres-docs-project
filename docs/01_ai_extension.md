@@ -23,21 +23,27 @@
 
 The `azure_ai` extension adds the ability to leverage [large language models](https://learn.microsoft.com/training/modules/fundamentals-generative-ai/3-language%20models) (LLMs) and build [generative AI](https://learn.microsoft.com/training/paths/introduction-generative-ai/) applications within an Azure Database for PostgreSQL - Flexible Server database by integrating the power of [Azure AI services](https://learn.microsoft.com/azure/ai-services/what-are-ai-services). Generative AI is a form of artificial intelligence in which LLMs are trained to generate original content based on natural language input. Using the `azure_ai` extension allows you to take advantage of generative AI's natural language query processing capabilities directly from the database.
 
-This tutorial showcases how to add rich AI capabilities to an Azure Database for PostgreSQL - Flexible Server using the `azure_ai` extension. It covers integrating both [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/overview) and the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/) into your database using the extension.
+This tutorial showcases adding rich AI capabilities to an Azure Database for PostgreSQL - Flexible Server using the `azure_ai` extension. It covers integrating both [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/overview) and the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/) into your database using the extension.
 
 ## Prerequisites
 
    1. An Azure subscription - [Create one for free](https://azure.microsoft.com/free/cognitive-services?azure-portal=true).
    2. Access granted to Azure OpenAI in the desired Azure subscription. Currently, access to this service is granted only by application. You can apply for access to Azure OpenAI by completing the form at <https://aka.ms/oai/access>.
    3. An Azure OpenAI resource with the `text-embedding-ada-002` (Version 2) model deployed. This model is currently only available in [certain regions](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#model-summary-table-and-region-availability). If you do not have a resource, the process for creating one is documented in the [Azure OpenAI resource deployment guide](https://learn.microsoft.com/azure/ai-services/openai/how-to/create-resource).
-   4. An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-service/overview) service. If you do not have a resource, you can [create a Language resource](https://portal.azure.com/#create/Microsoft.CognitiveServicesTextAnalytics) in the Azure portal by following the instructions provided in the [quickstart for summarization](https://learn.microsoft.com/azure/ai-services/language-service/summarization/custom/quickstart#create-a-new-resource-from-the-azure-portal) document. You can use the free pricing tier (`Free F0`) to try the service, and upgrade later to a paid tier for production.
+   4. An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-service/overview) service. If you do not have a resource, you can [create a Language resource](https://portal.azure.com/#create/Microsoft.CognitiveServicesTextAnalytics) in the Azure portal by following the instructions provided in the [quickstart for summarization](https://learn.microsoft.com/azure/ai-services/language-service/summarization/custom/quickstart#create-a-new-resource-from-the-azure-portal) document. You can use the free pricing tier (`Free F0`) to try the service and upgrade later to a paid tier for production.
    5. An Azure Database for PostgreSQL - Flexible Server instance in your Azure subscription. If you do not have a resource, use either the [Azure portal](https://learn.microsoft.com/azure/postgresql/flexible-server/quickstart-create-server-portal) or the [Azure CLI](https://learn.microsoft.com/azure/postgresql/flexible-server/quickstart-create-server-cli) guide for creating one.
 
 ## Connect to the database using `psql` in the Azure Cloud Shell
 
 Open the [Azure Cloud Shell](https://shell.azure.com/) in a web browser. Select **Bash** as the environment and, if prompted, select the subscription you used for your Azure Database for PostgreSQL - Flexible Server database, then select **Create storage**.
 
-To retrieve the database connection details, navigate to your Azure Database for PostgreSQL - Flexible Server resource in the [Azure portal](https://portal.azure.com/). From the left-hand navigation menu, select **Connect** under **Settings** and copy the **Connection details** block. Paste the copied environment variable declaration lines into the Azure Cloud Shell terminal you opened above, replacing the `{your-password}` token with the password you set when creating the database.
+To retrieve the database connection details:
+
+1. Navigate to your Azure Database for PostgreSQL - Flexible Server resource in the [Azure portal](https://portal.azure.com/).
+
+2. From the left-hand navigation menu, select **Connect** under **Settings** and copy the **Connection details** block.
+
+3. Paste the copied environment variable declaration lines into the Azure Cloud Shell terminal you opened above, replacing the `{your-password}` token with the password you set when creating the database.
 
 ```bash
 export PGHOST={your-server-name}.postgresql.database.azure.com
@@ -61,11 +67,12 @@ psql
 
 ## Install the `azure_ai` extension
 
-**TODO**: Add link to existing doc for installing the extension.
+**TODO**: Add a link to the existing doc for installing the extension.
 
-The `azure_ai` extension provides the ability to integrate Azure OpenAI and Azure Cognitive Services into your database. To enable the extension in your database, follow the steps below:
+The `azure_ai` extension allows you to integrate Azure OpenAI and Azure Cognitive Services into your database. To enable the extension in your database, follow the steps below:
 
 1. Add the extension to your allowlist as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
+
 2. Verify that the extension was successfully added to the allowlist by running the following from the `psql` command prompt:
 
     ```sql
@@ -80,13 +87,13 @@ The `azure_ai` extension provides the ability to integrate Azure OpenAI and Azur
 
 ## Inspect the objects contained within the `azure_ai` extension
 
-Reviewing the objects contained within the `azure_ai` extension can provide a better understanding of the capabilities it provides. You can use the [`\dx` meta-command](https://www.postgresql.org/docs/current/app-psql.html#APP-PSQL-META-COMMAND-DX-LC) from the `psql` command prompt to list the objects contained within the extension.
+Reviewing the objects contained within the `azure_ai` extension can provide a better understanding of the capabilities it offers. You can use the [`\dx` meta-command](https://www.postgresql.org/docs/current/app-psql.html#APP-PSQL-META-COMMAND-DX-LC) from the `psql` command prompt to list the objects contained within the extension.
 
 ```psql
 \dx+ azure_ai
 ```
 
-The meta-command output shows the `azure_ai` extension creates three schemas, multiple user-defined functions (UDFs), and several composite types in the database. The table below lists the schemas added by the extension and provides a description of each.
+The meta-command output shows the `azure_ai` extension creates three schemas, multiple user-defined functions (UDFs), and several composite types in the database. The table below lists the schemas added by the extension and describes each.
 
 | Schema | Description |
 | ------ | ----------- |
@@ -102,7 +109,7 @@ The functions and types are all associated with one of the schemas. To review th
 \x
 ```
 
-The `azure_ai.set_setting()` function allows you to set the endpoint and key values for Azure AI services. It accepts a **key** and the **value** to assign it. The `azure_ai.get_setting()` function provides a way to retrieve the values you set with the `set_setting()` function. It accepts the **key** of the setting you want to view. For both functions, the key must be one of the following:
+The `azure_ai.set_setting()` function lets you set the endpoint and key values for Azure AI services. It accepts a **key** and the **value** to assign it. The `azure_ai.get_setting()` function provides a way to retrieve the values you set with the `set_setting()` function. It accepts the **key** of the setting you want to view. For both methods, the key must be one of the following:
 
 | Key | Description |
 | --- | ----------- |
@@ -119,11 +126,17 @@ The `azure_ai.set_setting()` function allows you to set the endpoint and key val
 
 The `azure_ai` extension's `azure_openai` schema enables the use of Azure OpenAI for creating vector embeddings for text values. Using this schema, you can [generate embeddings with Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/how-to/embeddings) directly from the database to create vector representations of input text, which can then be used in vector similarity searches, as well as consumed by machine learning models.
 
-Embeddings are a technique of using machine learning models to evaluate how closely related information is. This allows for efficient identification of relationships and similarities between data, allowing algorithms to identify patterns and make accurate predictions.
+Embeddings are a technique of using machine learning models to evaluate how closely related information is. This technique allows for efficient identification of relationships and similarities between data, allowing algorithms to identify patterns and make accurate predictions.
 
 ### Set the Azure OpenAI endpoint and key
 
-Before you can use the `azure_openai` functions, you must configure the extension with your Azure OpenAI service endpoint and key. Navigate to your Azure OpenAI resource in the Azure portal and select the **Keys and Endpoint** item under **Resource Management** from the left-hand menu. Copy your endpoint and access key. You can use either `KEY1` or `KEY2`. Always having two keys allows you to securely rotate and regenerate keys without causing service disruption.
+Before using the `azure_openai` functions:
+
+1. Configure the extension with your Azure OpenAI service endpoint and key.
+
+2. Navigate to your Azure OpenAI resource in the Azure portal and select the **Keys and Endpoint** item under **Resource Management** from the left-hand menu.
+
+3. Copy your endpoint and access key. You can use either `KEY1` or `KEY2`. Always having two keys allows you to securely rotate and regenerate keys without causing service disruption.
 
 In the command below, replace the `{endpoint}` and `{api-key}` tokens with values you retrieved from the Azure portal, then run the commands from the `psql` command prompt to add your values to the configuration table.
 
@@ -132,18 +145,18 @@ SELECT azure_ai.set_setting('azure_openai.endpoint','{endpoint}');
 SELECT azure_ai.set_setting('azure_openai.subscription_key', '{api-key}');
 ```
 
-Verify the settings written into the configuration table:
+Verify the settings written in the configuration table:
 
 ```sql
 SELECT azure_ai.get_setting('azure_openai.endpoint');
 SELECT azure_ai.get_setting('azure_openai.subscription_key');
 ```
 
-The `azure_ai` extension is now connected to your Azure OpenAI account and ready to be used for generating vector embeddings.
+The `azure_ai` extension is now connected to your Azure OpenAI account and ready to generate vector embeddings.
 
 ### Populate the database with sample data
 
-To provide sample text data for generating vectors, this tutorial uses a small subset of the [BillSum dataset](https://github.com/FiscalNote/BillSum), which provides a list of United States Congressional and California state bills. The `bill_sum_data.csv` file containing these data can be downloaded from the [Azure Samples GitHub repo](https://github.com/Azure-Samples/Azure-OpenAI-Docs-Samples/blob/main/Samples/Tutorials/Embeddings/data/bill_sum_data.csv).
+This tutorial uses a small subset of the [BillSum dataset](https://github.com/FiscalNote/BillSum), which provides a list of United States Congressional and California state bills, to provide sample text data for generating vectors. The `bill_sum_data.csv` file containing these data can be downloaded from the [Azure Samples GitHub repo](https://github.com/Azure-Samples/Azure-OpenAI-Docs-Samples/blob/main/Samples/Tutorials/Embeddings/data/bill_sum_data.csv).
 
 To host the sample data in the database, create a table named `bill_summaries`.
 
@@ -181,7 +194,7 @@ ADD COLUMN bill_vector vector(1536);
 
 The `bill_summaries` table is now ready to store embeddings. Using the `azure_openai.create_embeddings()` function, you will create vectors for the `bill_text` field and insert them into the newly created `bill_vector` column in the `bill_summaries` table.
 
-Before using the `create_embeddings()` function, running the following command to inspect it and review the required arguments:
+Before using the `create_embeddings()` function, run the following command to inspect it and review the required arguments:
 
 ```sql
 \x
@@ -193,16 +206,16 @@ The `Argument data types` property in the output of the `\df+ azure_openai.*` co
 
 | Argument | Type | Default | Description |
 | -------- | ---- | ------- | ----------- |
-| deployment_name | text || The named of the deployment associated with your Azure OpenAI `text-embeddings-ada-002` model. |
+| deployment_name | text || The deployment name associated with your Azure OpenAI `text-embeddings-ada-002` model. |
 | input | text || The text for which vector embeddings will be generated. |
 | timeout_ms | integer | 3600000 | The number of milliseconds before the operation times out. |
 | throw_on_error | boolean | true | Flag indicating whether to stop or continue the create embedding operation when an error occurs. |
 
-The first argument is the `deployment_name`, which was assigned when your embeddings model was deployed in your Azure OpenAI account. To retrieve this value, go to your Azure OpenAI resource in the Azure portal. From there, select the **Model deployments** item under **Resource Management** in the left-hand navigation menu, then select **Manage Deployments** to open Azure OpenAI Studio. On the **Deployments** tab in Azure OpenAI Studio, copy the **Deployment name** value associated with the `text-embedding-ada-002` model deployment.
+The first argument is the `deployment_name`, assigned when your embeddings model was deployed in your Azure OpenAI account. To retrieve this value, go to your Azure OpenAI resource in the Azure portal. From there, select the **Model deployments** item under **Resource Management** in the left-hand navigation menu, then select **Manage Deployments** to open Azure OpenAI Studio. On the **Deployments** tab in Azure OpenAI Studio, copy the **Deployment name** value associated with the `text-embedding-ada-002` model deployment.
 
 ![The embeddings deployment for the text-embedding-ada-002 model is highlighted on the Deployments tab in Azure OpenAI Studio.](./media/azure_openai_studio_deployments_embeddings.png)
 
-Using this information, run a query to update each record in the `bill_summaries` table, inserting the generated vector embeddings for the `bill_text` field into the `bill_vector` column using the `azure_openai.create_embeddings()` function. This step also replaces newlines (`\n`) with a single space in each input text field, as inferior embeddings results have been observed when these are present.
+Using this information, run a query to update each record in the `bill_summaries` table, inserting the generated vector embeddings for the `bill_text` field into the `bill_vector` column using the `azure_openai.create_embeddings()` function. This step also replaces newlines (`\n`) with a single space in each input text field, as inferior embedding results have been observed when these are present.
 
 Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page, and then run the following command:
 
@@ -223,7 +236,7 @@ Each embedding is a vector of floating point numbers, such that the distance bet
 
 Vector similarity is a method used to measure how similar two items are by representing them as vectors, which are series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors.
 
-To enable more efficient searching over the `vector` field by creating an index on `bill_summaries` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pg_vector` to use the latest graph based algorithms to approximate nearest neighbor queries.
+To enable more efficient searching over the `vector` field by creating an index on `bill_summaries` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pg_vector` to use the latest graph-based algorithms to approximate nearest-neighbor queries.
 
 ```sql
 CREATE INDEX ON bill_summaries USING hnsw (bill_vector vector_cosine_ops);
@@ -231,7 +244,7 @@ CREATE INDEX ON bill_summaries USING hnsw (bill_vector vector_cosine_ops);
 
 With everything now in place, you are now ready to execute a [cosine similarity](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings#cosine-similarity) search query against the database.
 
-In the query below, the embeddings are being generated for an input question and then cast to a vector array (`::vector`), which allows it can be compared against the vectors stored in the `bill_summaries` table.
+In the query below, the embeddings are generated for an input question and then cast to a vector array (`::vector`), which allows it to be compared against the vectors stored in the `bill_summaries` table.
 
 ```sql
 SELECT bill_id, title FROM bill_summaries
@@ -243,9 +256,9 @@ The query uses the `<=>` [vector operator](https://github.com/pgvector/pgvector#
 
 ## Integrate Azure Cognitive Services
 
-The Azure AI services integrations included in the the `azure_cognitive` schema of the `azure_ai` extension provide rich set of AI Language features accessible directly from the database. The list of functionality includes sentiment analysis, language detection, key phrase extraction, entity recognition, and text summarization. Access to these capabilities is enabled through the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/overview).
+The Azure AI services integrations included in the `azure_cognitive` schema of the `azure_ai` extension provide a rich set of AI Language features accessible directly from the database. The functionalities include sentiment analysis, language detection, keyphrase extraction, entity recognition, and text summarization. Access to these capabilities is enabled through the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/overview).
 
-To review the full list of Azure AI capabilities accessible through the extension, run the following command from the `psql` prompt to display a list of the functions available in the `azure_cognitive` schema.
+To review the complete list of Azure AI capabilities accessible through the extension, run the following command from the `psql` prompt to display a list of the functions available in the `azure_cognitive` schema.
 
 ```sql
 \x
@@ -266,9 +279,9 @@ SELECT azure_ai.set_setting('azure_cognitive.subscription_key', '{api-key}');
 
 ### Summarize bills
 
-To demonstrate some of the capabilities of the `azure_cognitive` functions of the `azure_ai` extension, you will generate a short summary of each bill. The `azure_cognitive` schema provides two functions for summarizing text, `summarize_abstractive` and `summarize_extractive`. Abstractive summarization produces a summary that captures the main concepts from input text, but may not use the same words. Extractive summarization produces a summary by extracting key sentences from the input text.
+To demonstrate some of the capabilities of the `azure_cognitive` functions of the `azure_ai` extension, you will generate a short summary of each bill. The `azure_cognitive` schema provides two functions for summarizing text, `summarize_abstractive` and `summarize_extractive`. Abstractive summarization produces a summary that captures the main concepts from input text but may not use identical words. Extractive summarization assembles a summary by extracting critical sentences from the input text.
 
-To take advantage of the Azure AI Language service's ability to generate new, original content, you will use the `summarize_abstractive` function to generate a short summary of text input. Use the `\df` meta-command from `psql` again, this time to look specifically at the `azure_cognitive.summarize_abstractive` function.
+To take advantage of the Azure AI Language service's ability to generate new, original content, you will use the `summarize_abstractive` function to create a summary of text input. Use the `\df` meta-command from `psql` again, this time to look specifically at the `azure_cognitive.summarize_abstractive` function.
 
 ```sql
 \x
@@ -281,13 +294,13 @@ The `Argument data types` property in the output of the `\df azure_cognitive.sum
 | Argument | Type | Default | Description |
 | -------- | ---- | ------- | ----------- |
 | text | text || The input text to summarize. |
-| language | text || A two-letter ISO 639-1 representation of the language in which the text is written. Currently English (`en`) and Spanish (`es`) are supported. |
+| language | text || A two-letter ISO 639-1 representation of the language in which the text is written. Currently, English (`en`) and Spanish (`es`) are supported. |
 | timeout_ms | integer | 3600000 | The number of milliseconds before the operation times out. |
 | throw_on_error | boolean | true | Flag indicating whether to stop or continue the summarization operation when an error occurs. |
 | sentence_count | integer | 3 | The number of sentences to include in the generated summary. |
 | disable_service_logs | boolean | false | Flag indicating whether service logs are enabled. |
 
-The `summarize_abstractive` function, with it's required arguments, looks like the following:
+The `summarize_abstractive` function, including its required arguments, looks like the following:
 
 ```sql
 azure_cognitive.summarize_abstractive(text TEXT, language TEXT)
@@ -310,14 +323,14 @@ ALTER TABLE bill_summaries
 ADD COLUMN one_sentence_summary text;
 ```
 
-Next, update the table with the summaries. The `summarize_abstractive` function returns an array of text (`text[]`). To extract the one-sentence summary from the return value, the `array_to_string` function is used to convert it to its string representation. In the query below, the `throw_on_error` argument has been set to `false`. This will allow the summarization process to continue in the event of an error.
+Next, update the table with the summaries. The `summarize_abstractive` function returns an array of text (`text[]`). The `array_to_string` function converts the return value to its string representation. In the query below, the `throw_on_error` argument has been set to `false`. This setting allows the summarization process to continue if an error occurs.
 
 ```sql
 UPDATE bill_summaries b
 SET one_sentence_summary = array_to_string(azure_cognitive.summarize_abstractive(b.bill_text, 'en', throw_on_error => false, sentence_count => 1), ' ', '');
 ```
 
-In the output, you may notice a warning about an invalid document for which an appropriate summarization could not be generated. This warning is the result of setting `throw_on_error` to `false` in the above query. If that flag were left to the default of `true`, the query would have failed and no summaries would have been written to the database. To view the record that threw the warning, execute the following query:
+In the output, you may notice a warning about an invalid document for which an appropriate summarization could not be generated. This warning results from setting `throw_on_error` to `false` in the above query. If that flag were left to the default of `true`, the query would have failed, and no summaries would have been written to the database. To view the record that threw the warning, execute the following:
 
 ```sql
 SELECT bill_id, one_sentence_summary FROM bill_summaries WHERE one_sentence_summary = '';
