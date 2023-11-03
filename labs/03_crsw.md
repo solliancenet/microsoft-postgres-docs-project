@@ -130,11 +130,18 @@ To create a read replica, follow these steps:
 - On the server sidebar, under **Settings**, select **Replication**.
 - Select **Create endpoint**
 - In the dialog, type a meaningful name for your endpoint.  Notice the DNS endpoint that is being generated.
+
+  ![Add a new virtual endpoint with custom name.](../media/enable-promote/add-virtual-endpoint.png)
+
 - Select **Create**
+
+  > NOTE:  If you do not create a virtual endpoint you will receive an error on the promote replica attempt.
+
+  ![Promotion error when missing virtual endpoint.](../media/enable-promote/replica-promote-attempt.png)
 
 ### Modify application to point to virtual endpoint
 
-Modify any applications that are using your Azure Database for PostgreSQL to use the new virtual endpoint.
+Modify any applications that are using your Azure Database for PostgreSQL to use the new writer virtual endpoint (ex: `corp-pg-001-writer.postgres.database.azure.com`)
 
 ## Promote replicas
 
@@ -148,10 +155,13 @@ To promote replica from the Azure portal, follow these steps:
 - On the server sidebar, on the server menu, under **Settings**, select **Replication**
 - Under **Servers**, select the **Promote** icon for the replica.
 
-  ![Select promote for a replica.](../media/enable-promote/select-replica.png)
+  ![Select promote for a replica.](../media/enable-promote/replica-promote.png)
 
 - In the dialog, ensure the action is **Promote to primary server**.
 - For **Data sync**, ensure **Planned - sync data before promoting** is selected.
+
+  ![Promote the replica.](../media/enable-promote/replica-promote-final.png)
+
 - Select **Promote**, the process will begin.  Once completed, the roles will be swapped with the replica now the primary and the primary the replica.
 
 ### Test applications
