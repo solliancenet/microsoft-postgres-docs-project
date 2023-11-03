@@ -184,7 +184,7 @@ The Max Physical Replication Lag metric shows the lag in bytes between the prima
 - In the Azure portal, select the primary server.
 - Select **Metrics**. In the Metrics window, select **Max Physical Replication Lag**.
 
-  ![Screenshot of the Metrics blade showing Max Physical Replication Lag metric.](../media/enable-promote/metrics_max_physical_replication_lag.png)
+  ![Screenshot of the Metrics blade showing Read Replica Lag metric.](../media/enable-promote/primary-max-physical-replication-lag.png)
 
 - For **Aggregation**, select **Max**.
 
@@ -195,13 +195,13 @@ The Read Replica Lag metric shows the time since the last replayed transaction o
 - In the Azure portal, select read replica.
 - Select **Metrics**. In the Metrics window, select **Read Replica Lag**.
 
-  ![Screenshot of the Metrics blade showing Read Replica Lag metric.](../media/enable-promote/metrics_read_replica_lag.png)
+  ![Screenshot of the Metrics blade showing Read Replica Lag metric.](../media/enable-promote/replia-read-replica-lag.png)
 
 - For **Aggregation**, select **Max**.
 
 ## Delete a replica
 
-You can delete a read replica similar to how you delete a standalone Azure Database for PostgreSQL server.
+You can delete a read replica similar to how you delete a standalone Azure Database for PostgreSQL Flexible Server.
 
 - In the Azure portal, open the **Overview** page for the read replica. Select **Delete**.
 
@@ -220,7 +220,7 @@ You can also delete the read replica from the Replication window by following th
 - Select the replica to delete
 - Acknowledge **Delete** operation.
 
-  ![Confirm to delete te replica.](../media/enable-promote/delete-confirm.png)
+  ![Confirm to delete te replica.](../media/enable-promote/delete-replica-confirm.png)
 
 ## Delete primary server
 
@@ -229,11 +229,11 @@ You can only delete primary server once all read replicas have been deleted. To 
 - In the Azure portal, select your primary Azure Database for PostgreSQL server.
 - Open the **Overview** page for the server and select **Delete**.
 
-  ![On the server Overview page, select to delete the primary server.](../media/enable-promote/delete-server.png)
+  ![On the server Overview page, select to delete the primary server.](../media/enable-promote/delete-primary.png)
 
 - Enter the name of the primary server to delete. Select **Delete** to confirm deletion of the primary server.
 
-  ![Confirm to delete the primary server.](../media/enable-promote/confirm-delete.png)
+  ![Confirm to delete the primary server.](../media/enable-promote/delete-primary-confirm.png)
 
 ## Next Steps
 
