@@ -339,3 +339,5 @@ Congratulations, you just learned how to leverage the `azure_ai` extension to in
 - [Learn how to generate embeddings with Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/how-to/embeddings)
 - [Azure OpenAI Service embeddings models](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#embeddings-models-1)
 - [Understand embeddings in Azure OpenAI Service](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings)
+- [What is Azure AI Language?](https://learn.microsoft.com/azure/ai-services/language-service/overview)
+- [What is Azure OpenAI Service?](https://learn.microsoft.com/azure/ai-services/openai/overview)
