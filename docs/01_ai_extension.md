@@ -331,7 +331,7 @@ SELECT bill_id, one_sentence_summary FROM bill_summaries LIMIT 5;
 
 ## Conclusion
 
-Congratulations, you just learned how to leverage the `azure_ai` extension to integrate generative AI capabilities into your database.
+Congratulations, you just learned how to leverage the `azure_ai` extension to integrate large language models and generative AI capabilities into your database.
 
 ## Additional resources
 
