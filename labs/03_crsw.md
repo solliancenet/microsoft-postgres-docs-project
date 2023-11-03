@@ -30,7 +30,7 @@ Before adding a replica for failover purposes, review the target Azure Database 
 ### Server configuration
 
 - In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server that you want to setup a replica for.
-- On the **Overview** dialog, note the PostgreSQL version (ex `15.3`).  Also note the region your primary is deployed too (ex. `East US`).
+- On the **Overview** dialog, note the PostgreSQL version (ex `15.4`).  Also note the region your primary is deployed too (ex. `East US`).
 
   ![Primary instance version and location is highlighted.](../media/enable-promote/primary-settings.png)
 
@@ -51,7 +51,7 @@ Before adding a replica for failover purposes, review the target Azure Database 
 > **NOTE** Read replicas are not supported for primary that has **Storage Auto-growth** enabled.  Uncheck this box if it is checked.
     
 - Under **Settings**, select **Networking**
-- Reviewing the following settings:
+- Review the network settings
     - Public access
     - Firewall rules
       - Allow public access
@@ -139,7 +139,7 @@ To create a read replica, follow these steps:
 
   ![Promotion error when missing virtual endpoint.](../media/enable-promote/replica-promote-attempt.png)
 
-### Modify application to point to virtual endpoint
+### Modify application(s) to point to virtual endpoint
 
 Modify any applications that are using your Azure Database for PostgreSQL to use the new writer virtual endpoint (ex: `corp-pg-001-writer.postgres.database.azure.com`)
 
@@ -181,7 +181,9 @@ Repeat the same operations to promote the original server to the primary:
 
 ### Test applications
 
-Again, switch to one of the consuming applications.  Attempt to perform some operations.
+Again, switch to one of the consuming applications.  Wait for the primary and replica status to change to `updating` and then attempt to perform some operations.  During the replica promote, it is possible your application will encounter connectivity issues to the writer endpoint:
+
+  ![Potential failover connectivity errors.](../media/enable-promote/failover-connectivity.png)
 
 ## Monitor a replica
 
