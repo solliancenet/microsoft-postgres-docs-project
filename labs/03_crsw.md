@@ -79,7 +79,7 @@ To create a read replica, follow these steps:
 - Enter the Basics form with the following information.
   - Set the replica server name.
   
-  > NOTE: It is a best practice to use a naming convention that will allow you to easily determine what instance you are connecting too or managing and where it resides.
+  > NOTE: It is a Cloud Adoption Framework (CAF) best practice to [use a resource naming convention](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming) that will allow you to easily determine what instance you are connecting too or managing and where it resides.
 
   - Select a location that is different from your primary but note that you can select the same region.
 
@@ -164,6 +164,10 @@ To promote replica from the Azure portal, follow these steps:
 
 - Select **Promote**, the process will begin.  Once completed, the roles will be swapped with the replica now the primary and the primary the replica.
 
+  > NOTE:  The replica you are promoting must have the reader virtual endpoint assigned or you will receive an error on promotion:
+
+  ![Promote error when promtoing the wrong replica.](../media/enable-promote/promote-error.png)
+
 ### Test applications
 
 Restart your applications, attempt to perform some operations.  The applications should work without any modifying of the virtual endpoint connection string or DNS entries.  This time leave your applications running.
@@ -187,7 +191,7 @@ Again, switch to one of the consuming applications.  Wait for the primary and re
 
 ## Add secondary read replica
 
-To create a read replica, follow these steps:
+Create a secondary read replica in a seperate region to modify the reader virtual endpoint.
 
 - In the [Azure portal](https://portal.azure.com/), choose the primary Azure Database for PostgreSQL Flexible Server.
 - On the server sidebar, under **Settings**, select **Replication**.
@@ -253,7 +257,7 @@ You can also delete the read replica from the Replication window by following th
 
 - In the Azure portal, select your primary Azure Database for PostgreSQL server.
 - On the server menu, under **Settings**, select **Replication**.
-- Select the read replica to delete and hit the **Delete** button.
+- Select the read replica to delete and then select the ellipses.  Select **Delete**.
 
   ![Select the replica to delete.](../media/enable-promote/delete-replica02.png)
 
