@@ -207,13 +207,11 @@ The first argument is the `deployment_name`, assigned when your embeddings model
 
 ![The embeddings deployment for the text-embedding-ada-002 model is highlighted on the Deployments tab in Azure OpenAI Studio.](./media/azure_openai_studio_deployments_embeddings.png)
 
-Using this information, run a query to update each record in the `bill_summaries` table, inserting the generated vector embeddings for the `bill_text` field into the `bill_vector` column using the `azure_openai.create_embeddings()` function. This step also replaces newlines (`\n`) with a single space in each input text field, as inferior embedding results have been observed when these are present.
-
-Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page, and then run the following command:
+Using this information, run a query to update each record in the `bill_summaries` table, inserting the generated vector embeddings for the `bill_text` field into the `bill_vector` column using the `azure_openai.create_embeddings()` function. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page, and then run the following command:
 
 ```sql
 UPDATE bill_summaries b
-SET bill_vector = azure_openai.create_embeddings('{your-deployment-name}', REPLACE(b.bill_text, '\n', ' '));
+SET bill_vector = azure_openai.create_embeddings('{your-deployment-name}', b.bill_text);
 ```
 
 Execute the following query to view the embedding generated for the first record in the table. You can run `\x` first if the output is difficult to read.
