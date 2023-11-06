@@ -248,7 +248,7 @@ The query uses the `<=>` [vector operator](https://github.com/pgvector/pgvector#
 
 The Azure AI services integrations included in the `azure_cognitive` schema of the `azure_ai` extension provide a rich set of AI Language features accessible directly from the database. The functionalities include sentiment analysis, language detection, keyphrase extraction, entity recognition, and text summarization. Access to these capabilities is enabled through the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/overview).
 
-To review the complete list of Azure AI capabilities accessible through the extension, view the [Integration Azure Database for PostgreSQL Flexible Server with Azure Cognitive Services](**TODO: Add link to the doc here**).
+To review the complete list of Azure AI capabilities accessible through the extension, view the [Integrate Azure Database for PostgreSQL Flexible Server with Azure Cognitive Services](**TODO: Add link to the doc here**).
 
 ### Set the Azure AI Language service endpoint and key
 
