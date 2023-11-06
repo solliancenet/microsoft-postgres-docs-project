@@ -185,13 +185,19 @@ Repeat the same operations to promote the original server to the primary:
 
 ### Test applications
 
-Again, switch to one of the consuming applications.  Wait for the primary and replica status to change to `updating` and then attempt to perform some operations.  During the replica promote, it is possible your application will encounter connectivity issues to the writer endpoint:
+Again, switch to one of the consuming applications.  Wait for the primary and replica status to change to `updating` and then attempt to perform some operations.  During the replica promote, it is possible your application will encounter temporary connectivity issues to the writer endpoint:
 
-  ![Potential failover connectivity errors.](../media/enable-promote/failover-connectivity.png)
+  ![Potential failover connectivity errors.](../media/enable-promote/failover-connectivity-psql.png)
+
+If no application is available to test directly, connectivity during a promotion can be tested against the writer endpoint using psql and the `\watch` switch with a simple psql `select 1` command:
+
+```psql
+select 1; \watch
+```
 
 ## Add secondary read replica
 
-Create a secondary read replica in a seperate region to modify the reader virtual endpoint.
+Create a secondary read replica in a seperate region to modify the reader virtual endpoint and to allow for creating an independent server from the first replica.
 
 - In the [Azure portal](https://portal.azure.com/), choose the primary Azure Database for PostgreSQL Flexible Server.
 - On the server sidebar, under **Settings**, select **Replication**.
@@ -216,6 +222,26 @@ Create a secondary read replica in a seperate region to modify the reader virtua
   ![Select the seconary replica.](../media/enable-promote/select-secondary-endpoint.png)
 
 - Select **Save**.  The reader endpoint will now be pointed at the secondary replica and the promote operation will now be tied to this replica.
+
+## Promote replica to independent server
+
+Rather than failover to a replica, it is also possible to break the replication of a replica such that it becomes its own standalone server.
+
+- In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server primary server.
+- On the server sidebar, on the server menu, under **Settings**, select **Replication**
+- Under **Servers**, select the **Promote** icon for the replica you would like to promote to independent.
+
+  ![Select promote for a replica.](../media/enable-promote/replica-promote.png)
+
+- In the dialog, ensure the action is **Promote to independent server and remove from replication. This won't impact the primary server**.
+  
+  > NOTE: Once a replica is promoted to an independent server, it cannot be added back to the replication set.
+
+- For **Data sync**, ensure **Planned - sync data before promoting** is selected.
+
+  ![Promote the replica to independent server.](../media/enable-promote/replica-promote-independent.png)
+
+- Select **Promote**, the process will begin.  Once completed, the server will no longer be a replica of the primary.
 
 ## Monitor a replica
 
