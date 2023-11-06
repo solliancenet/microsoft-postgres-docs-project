@@ -250,7 +250,6 @@ The Azure AI services integrations included in the `azure_cognitive` schema of t
 
 To review the complete list of Azure AI capabilities accessible through the extension, view the [Integration Azure Database for PostgreSQL Flexible Server with Azure Cognitive Services](**TODO: Add link to the doc here**).
 
-
 ### Set the Azure AI Language service endpoint and key
 
 As with the `azure_openai` functions, to successfully make calls against Azure AI services using the `azure_ai` extension, you must provide the endpoint and a key for your Azure AI Language service. Retrieve those values by navigating to your Language service resource in the Azure portal and selecting the **Keys and Endpoint** item under **Resource Management** from the left-hand menu. Copy your endpoint and access key. You can use either `KEY1` or `KEY2`.
