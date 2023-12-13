@@ -41,6 +41,10 @@ from games
 
 ## Developer Features
 
+There are several developer based changes in PostgreSQL. Here we explore some of them.
+
+- [Function Json](https://www.postgresql.org/docs/16/functions-json.html)
+
 ### Add SQL/JSON object checks
 
 The `IS JSON` checks include checks for values, arrays, objects, scalars, and unique keys.
