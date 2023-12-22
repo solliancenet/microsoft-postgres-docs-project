@@ -112,10 +112,20 @@ FROM
 
 ### Aggragte funtion ANY_VALUE()
 
-Add aggregate function `ANY_VALUE()` which returns any value from a set
+The `ANY_VALUE()` function is a PostgreSQL aggregate function that helps optimize queries when utilizing GROUP BY clauses. The function will return an arbitrary non-null value in a given set of values.
+
+Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the SELECT statement were included in the GROUP BY clause as well. Pre-16 PostgreSQL would throw an error if a non-aggregated column is not added in the GROUP BY clause.
+
+The following is an example of pre-16 syntax:
 
 ```sql
-TODO
+SELECT country,MAX(city) as city_name,SUM(population) as total_population from city_data group by country limit 10;
+```
+
+This is the new v16 syntax:
+
+```sql
+SELECT country,ANY_VALUE(city) as city_name, SUM(population) from city_data as total_population group by country ;
 ```
 
 ### COPY from foreign tables
@@ -133,18 +143,24 @@ TODO
 The new options control the valid-until date, bypassing of row-level security, and role membership.
 
 ```sql
-TODO
+select count(*) from sales_order so1 FULL OUTER JOIN sales_order so2 USING (id)
 ```
 
 ## Infra Features
 
 ### Allow parallelization of FULL and internal right OUTER hash joins
 
+The more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal rigth `OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs where more to perform them.
+
+With this change, any queries you were performing using these joins will now run drastically faster.
+
+Here are some examples of performing these types of joins:
+
 ```sql
-TODO
+select count(*) from sales_order so1 FULL OUTER JOIN sales_order so2 USING (id)
 ```
 
-### Allow aggregate functions string_agg() and array_agg() to be parallelized (David Rowley)
+### Allow aggregate functions string_agg() and array_agg() to be parallelized
 
 Aggregate functions typically perform some kind of mathmatical operation on a column or set of columns.  If you were to calculate several aggregates at once, you could probably imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
 
