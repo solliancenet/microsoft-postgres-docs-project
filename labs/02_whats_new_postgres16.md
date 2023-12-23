@@ -8,13 +8,15 @@ In this lab you will explore the new developer and infrastructure features of Po
 - [Resource group](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal)
 - [Azure Database for PostgreSQL Flexible Server instanace](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/quickstart-create-server-portal)
 - [pgAdmin](https://www.pgadmin.org/download/)
+- `psql` access
+- Perform Lab 01 steps
 
 ## Setup
 
 - Open a command prompt, run the following command to connect to your database:
 
 ```cmd
-psql -h dev-pg-eastus2-001.postgres.database.azure.com -U s2admin -d sportsdata
+psql -h PREFIX-pg-flex-eastus2-16.postgres.database.azure.com -U s2admin -d airbnb
 ```
 
 - Run the following command to import the data to the server

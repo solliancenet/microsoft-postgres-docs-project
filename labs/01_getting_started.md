@@ -6,6 +6,7 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
 
 - [Azure subscription](https://azure.microsoft.com/free/)
 - [Resource group](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal)
+- Optional - Computer with Postgres 16 and pgAdmin
 
 ## Creating an Azure Database for Postgres Flexible Server
 
@@ -15,13 +16,13 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
     ![Alt text](media/01_00_create_resource.png)
 
 - In the left side navigation, select **Databases**
-- Under **Azure Database for PostgreSQL Flexible**, select **Create**
+- Under **Azure Database for PostgreSQL Flexible Server**, select **Create**
 
     ![Alt text](media/01_00_databases.png)
 
 - Fill out the Basics tab with the following information:
   - Resource Group: Name of your lab resource group
-  - Server name:  `PREFIX-pg-eastus-001`
+  - Server name:  `PREFIX-pg-flex-eastus-16`
   - Region: `East US`
   - PostgreSQL Version: `16`
   - Workload Type: `Production (Small/Medium-size)`
@@ -32,10 +33,12 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
   - For the size, select `Standard_D2ds_v5`
 
     ![Alt text](media/01_03_create_server_basics_02.png)
+  
+  - Select **Save**
 
   - Authentication method: `PostgreSQL and Microsoft Entra authentication`
   - Admin username: `s2admin`
-  - Password and confirm password: `S0lliance123`
+  - Password and confirm password: `Seattle123Seattle123`
 
     ![Alt text](media/01_03_create_server_basics_03.png)
 
@@ -110,7 +113,7 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 
 - Under **Settings**, select **Databases**
 - In the meny, select **+Add**
-- For the name, type **vector_cache**
+- For the name, type **airbnb**
 
     ![Alt text](media/01_11_pg_database_create.png)
 
@@ -130,40 +133,91 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 ## Configuring a server parameter  
 
 - Under **Settings**, select **Server parameters**.
-- For the **appliction_name** server parameter, type **vector_store**.
+- For the **appliction_name** server parameter, type **airbnb**.
   
   ![Alt text](media/01_13_server_params_01.png)
 
 - Select **Save**, notice an azure deployment is started.
-- After the deployment is complete, switch back to the **Server parameters**.
+- After the deployment is complete, navigate back to the **Server parameters**.
 - In the tabs, select **Static**, notice only static items are shown.
 - Search for **max_connections**, then highlight the info icon. Notice the values range from 25 to 5000.
   
   ![Alt text](media/01_13_pg_server_params_static.png)
 
-- Modify the value from **1718** to **2000**
+- Modify the value to **2000**
 - In the tabs, select **All**
 - Search for **azure.extensions**
-- Enable the **vector** extension
+- Enable the **VECTOR** extension
 
     ![Alt text](media/01_13_server_params_vector.png)
 
 - Select **Save**.
 - In the dialog, select **Save and Restart**
 
+## Setup Additional Lab Resources
+
+In order to support the remaining items, you will need to execute the following ARM tempalte in your resource group:
+
+- Switch to the Azure Portal
+- Browse to your resource group
+- Under **Settings**, select **Deployments**
+- Select any deployment (ex **PostgreSqlFlexibleServer_**) and in the tabs, select **Redeploy**
+- Select **Edit template**
+- Copy and paste the `/artifacts/template.json` file into the window
+- Select **Save**
+- Set the prefix parameter to the `PREFIX` you used previously.
+- Select **Review + create**
+- Select **Create**, the deployment will take a few minutes.  Once deployed, you will have:
+  - Two PostgreSQL servers (14 and 16).
+  - Windows 10 Virtual Machine with necessary software installed.
+  - Various Azure supporting services
+
 ## Connecting with PG Admin
 
+If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you can perform these steps on that machine.  If you do not, you can utilize the virtual machine that was deployed to your resource group from teh previous step.
+
+If you are using your own device, ensure the following:
+
 - Download and Install [pgAdmin](https://www.pgadmin.org/download/)
-- Once installed, open **pgAdmin**
+- Download and Install [PostgreSQL 16]()
+- Switch back to the Azure Portal
+- Browse to the `PREFIX-pg-flex-eastus-16` instance
+- Under **Settings**, select **Networking**
+- Under **Firewall rules**, add an entry for the IP address of your device
+- Select **Save**
+- Repeat for the `PREFIX-pg-flex-eastus-14` instance
+
+If you are using the virtual machine, all the software has been installed (or in process of being installed).  Login using the following:
+
+- Switch to the Azure Portal
+- Browse to your resource group
+- Select the **Blah** virtual machine
+- In the tabs, select **Connect->Connect**
+- Copy and save the IP address
+- Select **Download RDP file**
+- Open the RDP file with Remote Desktop
+- Select **Connect**
+- Login with `s2admin` and password `Seattle123Seattle123`
+- When prompted, select **Next**, then **Accept**
+- Switch back to the Azure Portal
+- Browse to the `PREFIX-pg-flex-eastus-16` instance
+- Under **Settings**, select **Networking**
+- Under **Firewall rules**, add an entry using the IP address you copied above
+- Select **Save**
+- Repeat for the `PREFIX-pg-flex-eastus-14` instance
+
+Continue with the lab steps:
+
+- Open **pgAdmin**
 - Right-click the **Servers** node, select **Register->Server**
   
   ![Alt text](media/01_14_pg_admin_register.png)
 
-- For name, type **PREFIX-pg-eastus-001**
+- For name, type **PREFIX-pg-flex-eastus-16**
 - Select the **Connection** tab
 - For the **host name/address**, paste the server name you copied from above
 - For the username, type **s2admin**
-- For the password, type **S0lliance123**
+- For the password, type **Seattle123Seattle123**
 - Select **Save password?** to toggle it on.
 - Select **Save**
 
@@ -171,16 +225,16 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 
 Using pgAdmin, you will add a new vector column to support OpenAI embeddings.
 
-- Expand the **PREFIX-pg-eastus-001** node
+- Expand the **PREFIX-pg-flex-eastus-16** node
 - Expand the **Databases** node
-- Expand the **vector_cache->Schemas->public** nodes
+- Expand the **airbnb->Schemas->public** nodes
 - Right-click the **Tables** node, select **Create->Table**
   
   ![Alt text](media/01_15_pg_admin_create_table_menu_02.png)
 
 - For the name, type **embeddings**
 - Select **Save**
-- Right-click the new table, select **Query Tool**
+- Right-click the new `embeddings` table, select **Query Tool**
   
   ![Alt text](media/01_16_query_tool.png)
 
@@ -194,6 +248,6 @@ ALTER TABLE embeddings ADD COLUMN embedding vector(1536);
 
 ## Summary
 
-In this lab, you created a new Azure Database for PostgreSQL Flexible Server instance, configured it, added a database called `vector_cache` with a `embeddinged` table that included a vector column.  
+In this lab, you created a new Azure Database for PostgreSQL Flexible Server instance, configured it, added a database called `airbnb` with a `embeddings` table that included a vector column.  
 
 In the next set of labs, you will explore the new developer and intrastructure features of PostgreSQL 16.

@@ -29,6 +29,11 @@
         }
     },
     "variables": {
+        "azureSubscriptionID": "[subscription().subscriptionId]",
+        "azureTenantID": "[subscription().tenantId]",
+        "odlId" : "postgres",
+        "deploymentId" : "postgres",
+        "postInstallParameters": "[concat(' -azureUsername nouser@microsoft.com', ' -azurePassword nopassword', ' -azureTenantID ', variables('azureTenantID'), ' -azureSubscriptionID ', variables('azureSubscriptionID'), ' -odlId ', variables('odlId'), ' -deploymentId ', variables('deploymentId'))]",
         "unique": "[uniqueString(resourceGroup().id)]",
         "location": "[parameters('location')]",
         "dns-domain": "[concat(parameters('prefix'),'privatedns.com')]",
@@ -39,22 +44,13 @@
         "app_name": "[concat(parameters('prefix'),'-app01')]",
         "api_name": "[concat(parameters('prefix'),'-api01')]",
         "insights-name": "[concat(parameters('prefix'),'-pg-insights')]",
-        "pg_db_single": "[concat(parameters('prefix'),'-pg-single-01')]",
-        "pg_db_citus": "[concat(parameters('prefix'),'-pg-citus-01')]",
-        "pg_db_citus_version": "15",
-        "pg_db_citus_preview": true,
-        "pg_db_citus_coordCores": 2,
-        "pg_db_citus_workerCores": 4,
-        "pg_db_citus_workers": 1,
-        "pg_db_citus_workerSizeMB": 524288,
-        "pg_db_citus_coordSizeMB": 131072,
-        "pg_db_citus_ha": false,
         "vm-db-ip": "[concat(parameters('prefix'),'-vm-pg-ip-01')]",
         "pg-vnet-db": "[concat(parameters('prefix'),'-vnet-postgresql')]",
         "pg-vnet-app01": "[concat(parameters('prefix'),'-vnet-app01')]",
         "pg-vnet-hub": "[concat(parameters('prefix'),'-vnet-hub')]",
         "pg-nsg-01": "[concat(parameters('prefix'),'-pg-nsg')]",
-        "pg-flex-01": "[concat(parameters('prefix'),'-pg-flex-01')]",
+        "pg-flex-14": "[concat(parameters('prefix'),'-pg-flex-', parameters('location'), '-14')]",
+        "pg-flex-16": "[concat(parameters('prefix'),'-pg-flex-', parameters('location'), '-16')]",
         "pg-nic-01": "[concat(parameters('prefix'),'-vm-pg-nic-01')]",
         "pg-nic-02": "[concat(parameters('prefix'),'-nic-02')]",
         "pg-nic-03": "[concat(parameters('prefix'),'-nic-03')]",
@@ -63,53 +59,6 @@
         "finalVnetData": "[json(concat('{ \"SubnetArmResourceId\": \"', variables('vnetDataSet').subnetArmResourceId, '\"}'))]"
     },
     "resources": [
-        {
-            "apiVersion": "2022-11-08",
-            "location": "[variables('location')]",
-            "name": "[variables('pg_db_citus')]",
-            "type": "Microsoft.DBforPostgreSQL/serverGroupsv2",
-            "properties": {
-                "createMode": "Default",
-                "administratorLogin": "citus",
-                "administratorLoginPassword": "[parameters('adminPassword')]",
-                "backupRetentionDays": 35,
-                "coordinatorServerEdition": "GeneralPurpose",
-                "coordinatorStorageQuotaInMb": 524288,
-                "coordinatorVCores": 4,
-                "DelegatedSubnetArguments": "[if(empty(variables('vnetData')), json('null'), variables('finalVnetData'))]",
-                "enableMx": false,
-                "enableZfs": false,
-                "enableHa": true,
-                "nodeCount": 2,
-                "nodeEnablePublicIpAccess": true,
-                "nodeServerEdition": "MemoryOptimized",
-                "nodeStorageQuotaInMb": 524288,
-                "nodeVCores" : 4,
-                "enableGeoBackup": true,
-                "previewFeatures": "[variables('pg_db_citus_preview')]",
-                "postgresqlVersion": "[variables('pg_db_citus_version')]",
-                "serverRoleGroups": [
-                    {
-                        "name": "",
-                        "role": "Coordinator",
-                        "serverCount": 1,
-                        "serverEdition": "GeneralPurpose",
-                        "vCores": "[variables('pg_db_citus_coordCores')]",
-                        "storageQuotaInMb": "[variables('pg_db_citus_coordSizeMB')]",
-                        "enableHa": "[variables('pg_db_citus_ha')]"
-                    },
-                    {
-                        "name": "",
-                        "role": "Worker",
-                        "serverCount": "[variables('pg_db_citus_workers')]",
-                        "serverEdition": "MemoryOptimized",
-                        "vCores": "[variables('pg_db_citus_workerCores')]",
-                        "storageQuotaInMb": "[variables('pg_db_citus_workerSizeMB')]",
-                        "enableHa": "[variables('pg_db_citus_ha')]"
-                    }
-                ]
-            }
-        },
         {
             "type": "microsoft.insights/components",
             "apiVersion": "2018-05-01-preview",
@@ -567,7 +516,7 @@
         {
             "type": "Microsoft.DBforPostgreSQL/flexibleServers",
             "apiVersion": "2020-02-14-preview",
-            "name": "[variables('pg-flex-01')]",
+            "name": "[variables('pg-flex-14')]",
             "location": "[variables('location')]",
             "sku": {
                 "name": "Standard_D2s_v3",
@@ -575,8 +524,8 @@
                 "capacity": 2
             },
             "properties": {
-                "version": "12",
-                "haEnabled": "Enabled",
+                "version": "14",
+                "haEnabled": "Disabled",
                 "createMode": "Default",
                 "administratorLogin": "[parameters('adminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
@@ -593,31 +542,31 @@
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/servers",
-            "apiVersion": "2017-12-01",
-            "name": "[variables('pg_db_single')]",
+            "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+            "apiVersion": "2020-02-14-preview",
+            "name": "[variables('pg-flex-16')]",
             "location": "[variables('location')]",
             "sku": {
-                "name": "GP_Gen5_2",
+                "name": "Standard_D2s_v3",
                 "tier": "GeneralPurpose",
-                "family": "Gen5",
                 "capacity": 2
             },
             "properties": {
+                "version": "16",
+                "haEnabled": "Disabled",
+                "createMode": "Default",
                 "administratorLogin": "[parameters('adminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
-                "createMode": "Default",
                 "storageProfile": {
-                    "storageMB": 102400,
-                    "backupRetentionDays": 7,
-                    "geoRedundantBackup": "Disabled",
-                    "storageAutogrow": "Enabled"
+                    "storageMB": 131072,
+                    "backupRetentionDays": 7
                 },
-                "version": "11",
-                "sslEnforcement": "Enabled",
-                "minimalTlsVersion": "TLSEnforcementDisabled",
-                "infrastructureEncryption": "Disabled",
-                "publicNetworkAccess": "Enabled"
+                "maintenanceWindow": {
+                    "customWindow": "Disabled",
+                    "dayOfWeek": 0,
+                    "startHour": 0,
+                    "startMinute": 0
+                }
             }
         },
         {
@@ -700,18 +649,18 @@
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "Standard_D2s_v3"
+                    "vmSize": "Standard_D4s_v3"
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "MicrosoftWindowsServer",
-                        "offer": "WindowsServer",
-                        "sku": "2016-Datacenter",
+                        "publisher": "microsoftwindowsdesktop",
+                        "offer": "windows-11",
+                        "sku": "win11-22h2-pro",
                         "version": "latest"
                     },
                     "osDisk": {
                         "osType": "Windows",
-                        "name": "[concat(variables('vm_db_name'), '_disk1_59e4d03a14164663945993546a74cc18')]",
+                        "name": "[concat(variables('vm_db_name'), '_disk1')]",
                         "createOption": "FromImage",
                         "caching": "ReadWrite",
                         "managedDisk": {
@@ -736,6 +685,7 @@
                     "secrets": [],
                     "allowExtensionOperations": true
                 },
+                "licenseType": "Windows_Client",
                 "networkProfile": {
                     "networkInterfaces": [
                         {
@@ -748,7 +698,36 @@
                         "enabled": true
                     }
                 }
-            }
+            },
+            "resources": [
+                    {
+                        "type": "Microsoft.Compute/virtualMachines/extensions",
+                        "name": "[concat(variables('vm_db_name'),'/', 'winExtension')]",
+                        "apiVersion": "2023-03-01",
+                        "location": "[variables('location')]",
+                        "comments": "Script",
+                        "tags": {
+                        "displayName": "VM Extension"
+                        },
+                        "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', variables('vm_db_name'))]"
+                        ],
+                        "properties": {
+                        "publisher": "Microsoft.Compute",
+                        "type": "CustomScriptExtension",
+                        "typeHandlerVersion": "1.10",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                            "https://raw.githubusercontent.com/solliancenet/specktra-install-scripts/main/postgres-sql-dev-labs/post-install-script01.ps1"
+                            ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File post-install-script01.ps1', variables('postInstallParameters'))]"
+                        }
+                        }
+                    }
+                ]
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
