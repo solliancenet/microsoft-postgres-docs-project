@@ -23,24 +23,20 @@ psql -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -U s2admin -d airbn
 
 ```sql
 CREATE TABLE temp_calendar (data jsonb);
-
-\COPY temp_calendar (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\calendar.json';
-
 CREATE TABLE temp_listings (data jsonb);
-
-\COPY temp_listings (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\listings.json';
-
 CREATE TABLE temp_reviews (data jsonb);
 
+\COPY temp_calendar (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\calendar.json';
+\COPY temp_listings (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\listings.json';
 \COPY temp_reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';
 
-CREATE TABLE listings (listing_id varchar(50), listings jsonb);
+CREATE TABLE listings (listing_id varchar(50), data jsonb);
+CREATE TABLE reviews (listing_id varchar(50), data jsonb);
+CREATE TABLE calendar (listing_id varchar(50), data jsonb);
 
 INSERT INTO listings
 SELECT replace(data['id']::varchar(50), '"', ''), data::jsonb
 FROM temp_listings;
-
-CREATE TABLE reviews (listing_id varchar(50), listings jsonb);
 
 INSERT INTO reviews
 SELECT replace(data['listing_id']::varchar(50), '"', ''), data::jsonb
@@ -51,12 +47,11 @@ SELECT replace(data['listing_id']::varchar(50), '"', ''), data::jsonb
 FROM temp_calendar;
 ```
 
-- Open pgAdmin, download and run the `create-load.sql` script to preload the database.
 - Review the new items added to the database:
 
 ```sql
 select * 
-from games
+from listings
 ```
 
 ## Developer Features
@@ -74,10 +69,10 @@ The `IS JSON` checks include checks for values, arrays, objects, scalars, and un
 ```sql
 SELECT
    _id,
-   pg_typeof(teams),
-   pg_typeof(teams ->> 'id')
+   pg_typeof(data),
+   pg_typeof(data ->> 'id')
 FROM
-   games LIMIT 1;
+   listings LIMIT 1;
 ```
 
 - The use of `->` and `->>` are pre-Postgres 14 commands used to navigate a json heiarchy.  The same query can also be written in Postgre 14 and higher, note the usage of the `[` `]`:
@@ -85,10 +80,10 @@ FROM
 ```sql
 SELECT
    _id,
-   pg_typeof(teams),
-   pg_typeof(teams['id'])
+   pg_typeof(data),
+   pg_typeof(data['id'])
 FROM
-   games LIMIT 1;
+   listings LIMIT 1;
 ```
 
 - In Postgres 16, you can now use the following:
@@ -96,10 +91,10 @@ FROM
 ```sql
 SELECT
    _id,
-   teams IS JSON,
-   teams['id'] IS JSON
+   data IS JSON,
+   data['id'] IS JSON
 FROM
-   games LIMIT 1;
+   listings LIMIT 1;
 ```
 
 - Additionally, you can get more granular about the type of JSON.
@@ -107,10 +102,10 @@ FROM
 ```sql
 SELECT
    _id,
-   teams IS JSON ARRAY,
-   teams['id'] IS JSON OBJECT
+   data IS JSON ARRAY,
+   data['id'] IS JSON OBJECT
 FROM
-   games LIMIT 1;
+   listings LIMIT 1;
 ```
 
 ### Add SQL/JSON constructors
@@ -121,9 +116,9 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
 
 ```sql
 SELECT
-   json_array(teams['id'])
+   json_array(data['id'])
 FROM
-   games;
+   listings;
 ```
 
 ```sql
