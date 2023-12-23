@@ -16,21 +16,39 @@ In this lab you will explore the new developer and infrastructure features of Po
 - Open a command prompt, run the following command to connect to your database:
 
 ```cmd
-psql -h PREFIX-pg-flex-eastus2-16.postgres.database.azure.com -U s2admin -d airbnb
+psql -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -U s2admin -d airbnb
 ```
 
 - Run the following command to import the data to the server
 
 ```sql
-CREATE TABLE temp (data jsonb);
+CREATE TABLE temp_calendar (data jsonb);
 
-\COPY temp (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\nbagames.json';
+\COPY temp_calendar (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\calendar.json';
 
-CREATE TABLE games (_id varchar(50), date timestamp, teams jsonb);
+CREATE TABLE temp_listings (data jsonb);
 
-INSERT INTO games
-SELECT replace(data['_id']['$oid']::varchar(50), '"', ''), cast(to_timestamp(replace(data['date']['$date']::varchar(50), '"', ''), 'yyyy-mm-dd"T"hh24:mi:ss') as date), data['teams']::jsonb
-FROM temp;
+\COPY temp_listings (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\listings.json';
+
+CREATE TABLE temp_reviews (data jsonb);
+
+\COPY temp_reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';
+
+CREATE TABLE listings (listing_id varchar(50), listings jsonb);
+
+INSERT INTO listings
+SELECT replace(data['id']::varchar(50), '"', ''), data::jsonb
+FROM temp_listings;
+
+CREATE TABLE reviews (listing_id varchar(50), listings jsonb);
+
+INSERT INTO reviews
+SELECT replace(data['listing_id']::varchar(50), '"', ''), data::jsonb
+FROM temp_reviews;
+
+INSERT INTO calendar
+SELECT replace(data['listing_id']::varchar(50), '"', ''), data::jsonb
+FROM temp_calendar;
 ```
 
 - Open pgAdmin, download and run the `create-load.sql` script to preload the database.
