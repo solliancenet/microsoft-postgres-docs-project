@@ -111,9 +111,9 @@ FROM
 
 ### Add SQL/JSON constructors
 
-In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON_ARRAYAGG()`, `JSON_OBJECT()`, and `JSON_OBJECTAGG()` that are part of the SQL standard and now PostgreSQL 16.  
+In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON_ARRAYAGG()`, and `JSON_OBJECT()` that are part of the SQL standard and now PostgreSQL 16.  
 
-- Run the following pre-16 commands:
+- Run the following PostgreSQL 16 commands:
 
 ```sql
 SELECT
@@ -123,7 +123,14 @@ FROM
 ```
 
 ```sql
+SELECT
+    json_arrayagg(data['id'])
+FROM
+    listings;
+```
 
+```sql
+SELECT json_object(ARRAY[1, 'a', true, row(2, 'b', false)]::TEXT[]);
 ```
 
 ### Aggragte funtion ANY_VALUE()
@@ -132,37 +139,105 @@ The `ANY_VALUE()` function is a PostgreSQL aggregate function that helps optimiz
 
 Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the SELECT statement were included in the GROUP BY clause as well. Pre-16 PostgreSQL would throw an error if a non-aggregated column is not added in the GROUP BY clause.
 
-The following is an example of pre-16 syntax:
+The following is an example of pre-16 syntax (**will throw error**):
 
 ```sql
-SELECT country,MAX(city) as city_name,SUM(population) as total_population from city_data group by country limit 10;
+SELECT 
+    data['zipcode'],
+    data['city'] as city_name,
+    SUM(cast(REPLACE(data['number_of_reviews']::text,'"','') as integer)) as total_reviews
+FROM 
+    listings
+GROUP BY data['zipcode']
 ```
 
 This is the new v16 syntax:
 
 ```sql
-SELECT country,ANY_VALUE(city) as city_name, SUM(population) from city_data as total_population group by country ;
+SELECT 
+    data['zipcode'],
+    ANY_VALUE(data['city']) as city_name,
+    SUM(cast(REPLACE(data['number_of_reviews']::text,'"','') as integer)) as total_reviews
+FROM 
+    listings
+GROUP BY data['zipcode']
+
 ```
 
-### COPY from foreign tables
+### COPY batch_size support
 
-Allow COPY into foreign tables to add rows in batches
+It is now possible to batch insert multiple records with the COPY statement for a foreign table using the `postgres_fdw` module.  Previously, this would insert a single record at a time from the foreign table which is much less efficient then doing multiple records.
+
+Setup the foreign table (windows), be sure to replace the `PREFIX` value:
 
 ```sql
-TODO
+SET PGPASSWORD=Seattle123Seattle123
+psql -h PREFIX-pg-flex-eastus-14.postgres.database.azure.com -d airbnb -U s2admin -p 5432 -a -w -f C:\microsoft-postgres-docs-project\artifacts\sql\createdb.sql
 ```
 
+Configure a new foriegn table (be sure to replace `PREFIX`):
+
+```sql
+CREATE EXTENSION IF NOT EXISTS postgres_fdw;
+
+CREATE SERVER postgres14
+FOREIGN DATA WRAPPER postgres_fdw
+OPTIONS (host 'PREFIX-pg-flex-eastus-14.postgres.database.azure.com', dbname 'airbnb');
+
+CREATE USER MAPPING FOR s2admin
+SERVER postgres14
+OPTIONS (user 's2admin', password 'Seattle123Seattle123');
+
+create schema postgres14;
+```
+
+Now import the schema from the remote Azure Database for PostgreSQL:
+
+```sql
+IMPORT FOREIGN SCHEMA public LIMIT TO (reviews)
+FROM SERVER postgres14 INTO postgres14;
+```
+
+> NOTE: You must have the **Allow public access from any Azure service within Azure to this server** enabled on the Postgres 14 server for the command to successfully execute.
+
+Use the new batch feature to use `COPY` to copy values from the foreign table:
+
+```sql
+ALTER SERVER postgres14 options (add batch_size '10');
+
+\COPY postgres14.reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';
+```
+
+For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=97da48246d34807196b404626f019c767b7af0df).
+
 ### Allow a COPY FROM value to map to a column's DEFAULT
+
+```sql
+CREATE TABLE default_test(c1 INT PRIMARY KEY, c2 TEXT DEFAULT 'the_default_value') ;
+
+COPY default_test FROM 'C:\microsoft-postgres-docs-project\artifacts\data\default.csv'; WITH (format csv, default '\D', header);
+```
+
+Enter the following values:
+
+```cmd
+SELECT
+    *
+FROM
+    default_test
+```
+
+Notice every entry from the source file with the default of '\D' was converted to the `DEFAULT` value from the column definition.
+
+## Infra Features
 
 ### Add options to createuser
 
 The new options control the valid-until date, bypassing of row-level security, and role membership.
 
 ```sql
-select count(*) from sales_order so1 FULL OUTER JOIN sales_order so2 USING (id)
+TODO
 ```
-
-## Infra Features
 
 ### Allow parallelization of FULL and internal right OUTER hash joins
 

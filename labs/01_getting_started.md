@@ -147,7 +147,7 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 - Modify the value to **2000**
 - In the tabs, select **All**
 - Search for **azure.extensions**
-- Enable the **VECTOR** extension
+- Enable the **VECTOR** and **POSTGRES_FDW** extension
 
     ![Alt text](media/01_13_server_params_vector.png)
 
@@ -183,6 +183,7 @@ If you are using your own device, ensure the following:
 - Switch back to the Azure Portal
 - Browse to the `PREFIX-pg-flex-eastus-16` instance
 - Under **Settings**, select **Networking**
+- Enable the **Allow public access from any Azure service within Azure to this server** checkbox
 - Under **Firewall rules**, add an entry for the IP address of your device
 - Select **Save**
 - Repeat for the `PREFIX-pg-flex-eastus-14` instance
@@ -202,6 +203,7 @@ If you are using the virtual machine, all the software has been installed (or in
 - Switch back to the Azure Portal
 - Browse to the `PREFIX-pg-flex-eastus-16` instance
 - Under **Settings**, select **Networking**
+- Enable the **Allow public access from any Azure service within Azure to this server** checkbox
 - Under **Firewall rules**, add an entry using the IP address you copied above
 - Select **Save**
 - Repeat for the `PREFIX-pg-flex-eastus-14` instance
