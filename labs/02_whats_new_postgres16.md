@@ -231,13 +231,27 @@ Notice every entry from the source file with the default of '\D' was converted t
 
 ## Infra Features
 
-### Add options to createuser
+### New options for CREATE USER
 
 The new options control the valid-until date, bypassing of row-level security, and role membership.
 
 ```sql
-TODO
+CREATE USER adminuser1 CREATEROLE REPLICATION CREATEDB;
+
+\connect postgres adminuser1
+
+CREATE USER user_repl1 REPLICATION; 
+
+CREATE USER user_db1 CREATEDB;
 ```
+
+Additionally, you can now do `VALID UNTIL`. The VALID UNTIL clause defines an expiration time for a password only, not for the user account:
+
+```sql
+CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2024-01-01';
+```
+
+> NOTE: Although it is possible to do assign the `BYPASSRLS` for a user in PostgreSQL 16, Azure Database for PostgreSQL Flexible Server does not support this feature.
 
 ### Allow parallelization of FULL and internal right OUTER hash joins
 
