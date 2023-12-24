@@ -262,8 +262,52 @@ With this change, any queries you were performing using these joins will now run
 Here are some examples of performing these types of joins:
 
 ```sql
-select count(*) from sales_order so1 FULL OUTER JOIN sales_order so2 USING (id)
+DROP TABLE IF EXISTS departments;
+DROP TABLE IF EXISTS employees;
+
+CREATE TABLE departments (
+	department_id serial PRIMARY KEY,
+	department_name VARCHAR (255) NOT NULL
+);
+
+CREATE TABLE employees (
+	employee_id serial PRIMARY KEY,
+	employee_name VARCHAR (255),
+	department_id INTEGER
+);
+
+INSERT INTO departments (department_name)
+VALUES
+	('Sales'),
+	('Marketing'),
+	('HR'),
+	('IT'),
+	('Production');
+
+INSERT INTO employees (
+	employee_name,
+	department_id
+)
+VALUES
+	('Dan Jump', 1),
+	('Molly Dempsey', 1),
+	('Miriam Graham', 2),
+	('Casey Jensen', 3),
+	('Eric Smith', 4),
+	('Julian Isla', NULL);
 ```
+
+```sql
+EXPLAIN SELECT
+	employee_name,
+	department_name
+FROM
+	employees e
+FULL OUTER JOIN departments d 
+        ON d.department_id = e.department_id;
+```
+
+In the execution plan, you should notice the use of a `Parallel Hash Full Join`.  In previous versions of PostgreSQL, you would see a regular `Hash Full Join`.
 
 ### Allow aggregate functions string_agg() and array_agg() to be parallelized
 
@@ -279,7 +323,65 @@ partitions have been combined.**
 The following is an example of a query that performs aggregates with the two functions included.  If this were to run on a pre-16 version, the query would be much slower than in version 16.
 
 ```sql
-TODO
+create table agg_test (x int, y int);
+
+insert into agg_test
+select (case x % 4 when 1 then null else x end), x % 10
+from generate_series(1,5000) x;
+```
+
+Run a select statement against it:
+
+```sql
+SELECT
+    y,
+    string_agg(x::text, ',') AS t,
+    string_agg(x::text::bytea, ',') AS b,
+    array_agg(x) AS a,
+    array_agg(ARRAY[x]) AS aa
+FROM
+    agg_test
+GROUP BY
+    y;
+```
+
+Review the `EXPLAIN` plan details, notice the `HashAggregate` plan and the costs:
+
+```sql
+EXPLAIN SELECT
+    y,
+    string_agg(x::text, ',') AS t,
+    string_agg(x::text::bytea, ',') AS b,
+    array_agg(x) AS a,
+    array_agg(ARRAY[x]) AS aa
+FROM
+    agg_test
+GROUP BY
+    y;
+```
+
+Set the parallel setup costs parameters:
+
+```sql
+set parallel_setup_cost TO 0;
+set parallel_tuple_cost TO 0;
+set parallel_leader_participation TO 0;
+set min_parallel_table_scan_size = 0;
+```
+
+Again, review the `EXPLAIN` plan details, notice the new `Finalize GroupAggregate` plan and the significantly reduced costs:
+
+```sql
+EXPLAIN SELECT
+    y,
+    string_agg(x::text, ',') AS t,
+    string_agg(x::text::bytea, ',') AS b,
+    array_agg(x) AS a,
+    array_agg(ARRAY[x]) AS aa
+FROM
+    agg_test
+GROUP BY
+    y;
 ```
 
 To compare between versions, you can use the `EXPLAIN` command to see that the query plan in 16 will display a `FINALIZE GroupAggregate` versus a much more costly pre-16 `HashAggregate`.
