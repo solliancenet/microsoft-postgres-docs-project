@@ -50,8 +50,9 @@ FROM temp_calendar;
 - Review the new items added to the database:
 
 ```sql
-select * 
-from listings
+select * from listings;
+select * from reviews;
+select * from calendar;
 ```
 
 ## Developer Features
@@ -68,7 +69,7 @@ The `IS JSON` checks include checks for values, arrays, objects, scalars, and un
 
 ```sql
 SELECT
-   _id,
+   listing_id,
    pg_typeof(data),
    pg_typeof(data ->> 'id')
 FROM
@@ -79,7 +80,7 @@ FROM
 
 ```sql
 SELECT
-   _id,
+   listing_id,
    pg_typeof(data),
    pg_typeof(data['id'])
 FROM
@@ -90,7 +91,7 @@ FROM
 
 ```sql
 SELECT
-   _id,
+   listing_id,
    data IS JSON,
    data['id'] IS JSON
 FROM
@@ -101,7 +102,7 @@ FROM
 
 ```sql
 SELECT
-   _id,
+   listing_id,
    data IS JSON ARRAY,
    data['id'] IS JSON OBJECT
 FROM
