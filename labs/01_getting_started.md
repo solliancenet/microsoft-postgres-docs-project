@@ -2,10 +2,10 @@
 
 In this lab you will create an Azure Database for PostgreSQL Flexible Server, configure it using the Azure Portal, Azure CLI and Azure REST APIs.  Once created and configured, you will then connect to it using pgAdmin to add a new 1532 dimension vector column.
 
-## Pre-requistes
+## Prerequisites
 
 - [Azure subscription](https://azure.microsoft.com/free/)
-- [Resource group](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal)
+- [Resource group](https://learn.microsoft.com/azure/azure-resource-manager/management/manage-resource-groups-portal)
 - Optional - Computer with Postgres 16 and pgAdmin
 
 ## Creating an Azure Database for Postgres Flexible Server
@@ -88,7 +88,7 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
 
 The Azure portal makes calls to the Azure Management API similar to how the Azure CLI and Powershell does.
 
-- Open a new PowerShell window, run the following commands. Be sure to set the subscritionId and resourceGroup variables with the values you copied from above:
+- Open a new PowerShell window, run the following commands. Be sure to set the subscriptionId and resourceGroup variables with the values you copied from above:
 
 ```PowerShell
 $token = $(Get-AzAccessToken -ResourceUrl "https://management.azure.com/").token
@@ -112,7 +112,7 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 ## Adding a database in the portal
 
 - Under **Settings**, select **Databases**
-- In the meny, select **+Add**
+- In the menu, select **+Add**
 - For the name, type **airbnb**
 
     ![Alt text](media/01_11_pg_database_create.png)
@@ -133,7 +133,7 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 ## Configuring a server parameter  
 
 - Under **Settings**, select **Server parameters**.
-- For the **appliction_name** server parameter, type **airbnb**.
+- For the **application_name** server parameter, type **airbnb**.
   
   ![Alt text](media/01_13_server_params_01.png)
 
@@ -156,7 +156,7 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 
 ## Setup Additional Lab Resources
 
-In order to support the remaining items, you will need to execute the following ARM tempalte in your resource group:
+In order to support the remaining items, you will need to execute the following ARM template in your resource group:
 
 - Switch to the Azure Portal
 - Browse to your resource group
@@ -252,4 +252,4 @@ ALTER TABLE embeddings ADD COLUMN embedding vector(1536);
 
 In this lab, you created a new Azure Database for PostgreSQL Flexible Server instance, configured it, added a database called `airbnb` with a `embeddings` table that included a vector column.  
 
-In the next set of labs, you will explore the new developer and intrastructure features of PostgreSQL 16.
+In the next set of labs, you will explore the new developer and infrastructure features of PostgreSQL 16.
