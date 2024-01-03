@@ -2,11 +2,11 @@
 
 In this lab you will explore the new developer and infrastructure features of PostgreSQL 16.
 
-## Pre-requistes
+## Prerequisites
 
 - [Azure subscription](https://azure.microsoft.com/free/)
-- [Resource group](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal)
-- [Azure Database for PostgreSQL Flexible Server instanace](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/quickstart-create-server-portal)
+- [Resource group](https://learn.microsoft.com/azure/azure-resource-manager/management/manage-resource-groups-portal)
+- [Azure Database for PostgreSQL Flexible Server instance](https://learn.microsoft.com/azure/postgresql/flexible-server/quickstart-create-server-portal)
 - [pgAdmin](https://www.pgadmin.org/download/)
 - `psql` access
 - Perform Lab 01 steps
@@ -76,7 +76,7 @@ FROM
    listings LIMIT 1;
 ```
 
-- The use of `->` and `->>` are pre-Postgres 14 commands used to navigate a json heiarchy.  The same query can also be written in Postgre 14 and higher, note the usage of the `[` `]`:
+- The use of `->` and `->>` are pre-Postgres 14 commands used to navigate a json hierarchy.  The same query can also be written in Postgres 14 and higher, note the usage of the `[` `]`:
 
 ```sql
 SELECT
@@ -133,7 +133,7 @@ FROM
 SELECT json_object(ARRAY[1, 'a', true, row(2, 'b', false)]::TEXT[]);
 ```
 
-### Aggragte funtion ANY_VALUE()
+### Aggregate function ANY_VALUE()
 
 The `ANY_VALUE()` function is a PostgreSQL aggregate function that helps optimize queries when utilizing GROUP BY clauses. The function will return an arbitrary non-null value in a given set of values.
 
@@ -255,7 +255,7 @@ CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2024-01-01';
 
 ### Allow parallelization of FULL and internal right OUTER hash joins
 
-The more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal rigth `OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs where more to perform them.
+The more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal right `OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs where more to perform them.
 
 With this change, any queries you were performing using these joins will now run drastically faster.
 
@@ -311,7 +311,7 @@ In the execution plan, you should notice the use of a `Parallel Hash Full Join`.
 
 ### Allow aggregate functions string_agg() and array_agg() to be parallelized
 
-Aggregate functions typically perform some kind of mathmatical operation on a column or set of columns.  If you were to calculate several aggregates at once, you could probably imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
+Aggregate functions typically perform some kind of mathematical operation on a column or set of columns.  If you were to calculate several aggregates at once, you could probably imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
 
 Not all aggregate functions have supported this type of optimization, as such with the `string_agg()` and `array_agg()` functions.  In PostgreSQL 16, this support was added and per the description on the code commit **adds combine, serial and deserial functions for the array_agg() and string_agg() aggregate functions, thus allowing these aggregates to
 partake in partial aggregations.  This allows both parallel aggregation to
@@ -390,7 +390,7 @@ For a more in-depth look at the code change for this feature, reference [here](h
 
 ### Add EXPLAIN option GENERIC_PLAN to display the generic plan for a parameterized query
 
-Previously, attempting to get an execution plan for a parameterized query was fairly complicated.  For example, using a prepared statement will have several executions which may required you to execute those all seperately and then put the results together.  Using the new feature will elimenate those extra steps.
+Previously, attempting to get an execution plan for a parameterized query was fairly complicated.  For example, using a prepared statement will have several executions which may required you to execute those all separately and then put the results together. Using the new feature will eliminate those extra steps.
 
 Attempt to get an execution plan for a parameterized query using the old way:
 
@@ -406,7 +406,7 @@ To get an execution plan for a parametrized query, run the following:
 EXPLAIN (GENERIC_PLAN) SELECT * FROM pg_class WHERE relname = $1;
 ```
 
-> Note the use of the parenthesis.  The old way (shown above) was to not utilize parenthesis and is only for backwards compatability. Newer options such as `GENERIC_PLAN` will only work with the new syntax.
+> Note the use of the parenthesis.  The old way (shown above) was to not utilize parenthesis and is only for backwards compatibility. Newer options such as `GENERIC_PLAN` will only work with the new syntax.
 
 As you can see above, you can use parameter placeholders like `$1` instead of an unknown or variable value. However, there are certain restrictions:
 
@@ -446,13 +446,13 @@ Use the following command to monitor the vacuum operations:
 select schemaname,relname,n_dead_tup,n_live_tup,round(n_dead_tup::float/n_live_tup::float*100) dead_pct,autovacuum_count,last_vacuum,last_autovacuum,last_autoanalyze,last_analyze from pg_stat_all_tables where n_live_tup >0;
 ```
 
-For more information on Azure Database for PostgreSQL Flexible Server autovacuum features read [Autovacuum Tuning in Azure Database for PostgreSQL - Flexible Server](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-autovacuum-tuning).
+For more information on Azure Database for PostgreSQL Flexible Server autovacuum features read [Autovacuum Tuning in Azure Database for PostgreSQL - Flexible Server](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-autovacuum-tuning).
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=7d71d3dd080b9b147402db3365fe498f74704231).
 
 ### Using pg_stat_io for enhanced IO monitoring
 
-`pg_stat_io` is a new catalog view that displays statsitcs around `reads` and `writes` and as of Postgres 16, `extends` information.
+`pg_stat_io` is a new catalog view that displays statistics around `reads` and `writes` and as of Postgres 16, `extends` information.
 
 Per the [postgresql documentation](https://www.postgresql.org/docs/devel/monitoring-stats.html#MONITORING-PG-STAT-IO-VIEW) : "The pg_stat_io view will contain one row for each combination of backend type, target I/O object, and I/O context, showing cluster-wide I/O statistics. Combinations which do not make sense are omitted.
 
@@ -478,5 +478,5 @@ select * from pg_stat_io
 
 Some common uses for this data include:
 
-    - Review if high evictions are occuring.  If so, shared buffers should be increased.
-    - Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer
+- Review if high evictions are occurring.  If so, shared buffers should be increased.
+- Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer.
