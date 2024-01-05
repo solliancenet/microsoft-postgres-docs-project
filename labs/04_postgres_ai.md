@@ -124,7 +124,7 @@ An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-se
 
 4. On the **Select additional features** dialog, select **Continue to create your resource**.
 
-    ![](media/create-a-resource-language-service-select-additional-features.png)
+    ![The continue to create your resource button is highlighted on the select additional features dialog.](media/create-a-resource-language-service-select-additional-features.png)
 
 5. On the Create Language **Basics** tab, enter the following:
 
@@ -137,10 +137,13 @@ An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-se
     | Region               | Select the region you used for your Azure Database for PostgreSQL Flexible Server resource. |
     | Name                 | _Enter a globally unique name_, such as `lang-postgres-labs-SUFFIX`, where `SUFFIX` is a unique string, such as your initials. |
     | Pricing tier         | Select the free pricing tier, **Free F0**. |
- 
+    | Responsible AI Notice | Check the box to certify you have reviewed and acknowledged the Responsible AI Notice. |
 
+    ![The Basics tab of the Create Language dialog is displayed and populated with the values specified above.](media/create-language-service-basics-tab.png)
 
+6. The default settings will be used for the remaining tabs of the Language service configuration, so select the **Review + create** button.
 
+7. Select the **Create** button on the **Review + create** tab to provision the Language service.
 
 ## Exercise 4: Install and configure the `azure_ai` extension
 
