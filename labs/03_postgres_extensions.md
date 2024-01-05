@@ -26,6 +26,8 @@ Azure Database for PostgreSQL Flexible Server provides the ability to extend a d
 >
 > This lab relies on the Azure Database for PostgreSQL Flexible Server database created in **Hands on Lab 1: Provisioning, configuring, and getting started with development**.
 
+**TODO: Determine what version of Postgres should be used for this lab and the next. V16 does not currently support the `postgis` and `timescaledb` extensions.**
+
 In this lab, you work with the following common PostgreSQL extensions:
 
 | Extension | Description |
@@ -62,7 +64,7 @@ Before you can install and use extensions in an Azure Database for PostgreSQL Fl
 
     ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, shared_preload is entered and highlighted in the search bar and the AZURE_STORAGE, PG_CRON, and TIMESCALEDB extensions are selected and highlighted.](media/postgresql-server-parameters-shared-preloaded-libraries.png)
 
-4. Select **Save** on the tool, then select **Save and Restart** in the dialog that appears.
+4. Select **Save** on the toolbar, then select **Save and Restart** in the dialog that appears.
 
     ![The Save and Restart button is highlighted on the Save server parameter dialog.](media/save-server-parameter-dialog.png)
 
