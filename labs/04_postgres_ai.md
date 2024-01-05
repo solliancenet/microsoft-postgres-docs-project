@@ -5,19 +5,19 @@
   - [Exercise 2: Create an Azure OpenAI resource](#exercise-2-create-an-azure-openai-resource)
     - [Task 1: Provision an Azure OpenAI service](#task-1-provision-an-azure-openai-service)
     - [Task 2: Deploy an embedding model](#task-2-deploy-an-embedding-model)
-  - [Exercise 3: Provision an Azure AI Language service](#exercise-3-provision-an-azure-ai-language-service)
-  - [Exercise 4: Install and configure the `azure_ai` extension](#exercise-4-install-and-configure-the-azure_ai-extension)
+  - [Exercise 3: Install and configure the `azure_ai` extension](#exercise-3-install-and-configure-the-azure_ai-extension)
     - [Task 1: Connect to the database using psql in the Azure Cloud Shell](#task-1-connect-to-the-database-using-psql-in-the-azure-cloud-shell)
     - [Task 2: Install the `azure_ai` extension](#task-2-install-the-azure_ai-extension)
     - [Task 3: Review the objects contained within the `azure_ai` extension](#task-3-review-the-objects-contained-within-the-azure_ai-extension)
-  - [Exercise 5: Generate vector embeddings with Azure OpenAI](#exercise-5-generate-vector-embeddings-with-azure-openai)
+  - [Exercise 4: Generate vector embeddings with Azure OpenAI](#exercise-4-generate-vector-embeddings-with-azure-openai)
     - [Task 1: Enable vector support with the pgvector extension](#task-1-enable-vector-support-with-the-pgvector-extension)
     - [Task 2: Generate and store vectors](#task-2-generate-and-store-vectors)
-  - [Exercise 6: Integrate Azure AI Services](#exercise-6-integrate-azure-ai-services)
-    - [Task 1: Set the Azure AI Language service endpoint and key](#task-1-set-the-azure-ai-language-service-endpoint-and-key)
-    - [Task 2: Analyze sentiment of reviews](#task-2-analyze-sentiment-of-reviews)
-  - [Exercise 7: Build sample app](#exercise-7-build-sample-app)
-  - [Exercise 8: Clean up](#exercise-8-clean-up)
+  - [Exercise 5: Integrate Azure AI Services](#exercise-5-integrate-azure-ai-services)
+    - [Task 1: Provision an Azure AI Language service](#task-1-provision-an-azure-ai-language-service)
+    - [Task 2: Set the Azure AI Language service endpoint and key](#task-2-set-the-azure-ai-language-service-endpoint-and-key)
+    - [Task 3: Analyze sentiment of reviews](#task-3-analyze-sentiment-of-reviews)
+  - [Exercise 6: Build sample app](#exercise-6-build-sample-app)
+  - [Exercise 7: Clean up](#exercise-7-clean-up)
 
 In this lab, you integrate Azure AI Services into your PostgreSQL Flexible Server using the [Azure AI Extension](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-overview). The `azure_ai` extension adds the ability to leverage [large language models](https://learn.microsoft.com/training/modules/fundamentals-generative-ai/3-language%20models) (LLMs) directly from your Azure Database for PostgreSQL Flexible Server. This capability allows you to build [generative AI](https://learn.microsoft.com/training/paths/introduction-generative-ai/) applications within a database by integrating the power of [Azure AI services](https://learn.microsoft.com/azure/ai-services/what-are-ai-services). Generative AI is a form of artificial intelligence in which LLMs are trained to generate original content based on natural language input. Using the `azure_ai` extension allows you to take advantage of generative AI's natural language query processing capabilities directly from the database.
 
@@ -108,44 +108,7 @@ The `azure_ai` extension provides the ability to create vector embeddings from t
 
 5. Select **Create** to deploy the model. After a few moments, the deployment will appear in the list of deployments.
 
-## Exercise 3: Provision an Azure AI Language service
-
-An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-service/overview) service is required to take advantage of the `azure_ai` extensions cognitive functions. In this exercise, you will create an Azure AI Language service to use for the exercises in this lab.
-
-1. In a web browser, navigate to the [Azure portal](https://portal.azure.com/).
-
-2. On the portal home page, select **Create a resource** under Azure services.
-
-    ![Create a resource is highlighted under Azure services on the portal home page.](media/create-a-resource.png)
-
-3. On the **Create a resource** page, select `AI + Machine Learning` from the left-hand menu, then select **Language service**.
-
-    ![On the Azure portal's create a resource screen, Storage is highlighted in the left-hand menu and Storage account is highlighted under Popular Azure services.](media/create-a-resource-language-service.png)
-
-4. On the **Select additional features** dialog, select **Continue to create your resource**.
-
-    ![The continue to create your resource button is highlighted on the select additional features dialog.](media/create-a-resource-language-service-select-additional-features.png)
-
-5. On the Create Language **Basics** tab, enter the following:
-
-    | Parameter            | Value |
-    | -------------------- | ----- |
-    | **Project details**  |       |
-    | Subscription         | Select the subscription you are using for resources in this lab. |
-    | Resource group       | Select the resource group you created in Lab 1. |
-    | **Instance details** |       |
-    | Region               | Select the region you used for your Azure Database for PostgreSQL Flexible Server resource. |
-    | Name                 | _Enter a globally unique name_, such as `lang-postgres-labs-SUFFIX`, where `SUFFIX` is a unique string, such as your initials. |
-    | Pricing tier         | Select the free pricing tier, **Free F0**. |
-    | Responsible AI Notice | Check the box to certify you have reviewed and acknowledged the Responsible AI Notice. |
-
-    ![The Basics tab of the Create Language dialog is displayed and populated with the values specified above.](media/create-language-service-basics-tab.png)
-
-6. The default settings will be used for the remaining tabs of the Language service configuration, so select the **Review + create** button.
-
-7. Select the **Create** button on the **Review + create** tab to provision the Language service.
-
-## Exercise 4: Install and configure the `azure_ai` extension
+## Exercise 3: Install and configure the `azure_ai` extension
 
 ### Task 1: Connect to the database using psql in the Azure Cloud Shell
 
@@ -230,7 +193,7 @@ Reviewing the objects contained within the `azure_ai` extension can provide a be
     >
     > Because the connection information for Azure AI services, including API keys, is stored in a configuration table in the database, the `azure_ai` extension defines a role called `azure_ai_settings_manager` to ensure this information is protected and accessible only to users assigned that role. This role enables reading and writing of settings related to the extension. Only superusers and members of the `azure_ai_settings_manager` role can invoke the `azure_ai.get_setting()` and `azure_ai.set_setting()` functions. In Azure Database for PostgreSQL Flexible Server, all admin users are assigned the `azure_ai_settings_manager` role.
 
-## Exercise 5: Generate vector embeddings with Azure OpenAI
+## Exercise 4: Generate vector embeddings with Azure OpenAI
 
 The `azure_ai` extension's `azure_openai` schema enables the use of Azure OpenAI for creating vector embeddings for text values. Using this schema, you can [generate embeddings with Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/how-to/embeddings) directly from the database to create vector representations of input text, which can then be used in vector similarity searches, as well as consumed by machine learning models.
 
@@ -293,13 +256,58 @@ SELECT bill_vector FROM bill_summaries LIMIT 1;
 
 Each embedding is a vector of floating point numbers, such that the distance between two embeddings in the vector space is correlated with semantic similarity between two inputs in the original format.
 
-## Exercise 6: Integrate Azure AI Services
+## Exercise 5: Integrate Azure AI Services
 
 The Azure AI services integrations included in the `azure_cognitive` schema of the `azure_ai` extension provide a rich set of AI Language features accessible directly from the database. The functionalities include sentiment analysis, language detection, key phrase extraction, entity recognition, and text summarization. Access to these capabilities is enabled through the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/overview).
 
 To review the complete list of Azure AI capabilities accessible through the extension, view the [Integrate Azure Database for PostgreSQL Flexible Server with Azure Cognitive Services](**TODO: Add link to the doc here**).
 
-### Task 1: Set the Azure AI Language service endpoint and key
+### Task 1: Provision an Azure AI Language service
+
+An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-service/overview) service is required to take advantage of the `azure_ai` extensions cognitive functions. In this exercise, you will create an Azure AI Language service to use for the exercises in this lab.
+
+1. In a web browser, navigate to the [Azure portal](https://portal.azure.com/).
+
+2. On the portal home page, select **Create a resource** under Azure services.
+
+    ![Create a resource is highlighted under Azure services on the portal home page.](media/create-a-resource.png)
+
+3. On the **Create a resource** page, select `AI + Machine Learning` from the left-hand menu, then select **Language service**.
+
+    ![On the Azure portal's create a resource screen, Storage is highlighted in the left-hand menu and Storage account is highlighted under Popular Azure services.](media/create-a-resource-language-service.png)
+
+4. On the **Select additional features** dialog, select **Continue to create your resource**.
+
+    ![The continue to create your resource button is highlighted on the select additional features dialog.](media/create-a-resource-language-service-select-additional-features.png)
+
+5. On the Create Language **Basics** tab, enter the following:
+
+    | Parameter            | Value |
+    | -------------------- | ----- |
+    | **Project details**  |       |
+    | Subscription         | Select the subscription you are using for resources in this lab. |
+    | Resource group       | Select the resource group you created in Lab 1. |
+    | **Instance details** |       |
+    | Region               | Select the region you used for your Azure Database for PostgreSQL Flexible Server resource. |
+    | Name                 | _Enter a globally unique name_, such as `lang-postgres-labs-SUFFIX`, where `SUFFIX` is a unique string, such as your initials. |
+    | Pricing tier         | Select the free pricing tier, **Free F0**. |
+    | Responsible AI Notice | Check the box to certify you have reviewed and acknowledged the Responsible AI Notice. |
+
+    ![The Basics tab of the Create Language dialog is displayed and populated with the values specified above.](media/create-language-service-basics-tab.png)
+
+6. The default settings will be used for the remaining tabs of the Language service configuration, so select the **Review + create** button.
+
+7. Select the **Create** button on the **Review + create** tab to provision the Language service.
+
+8. When the Language service deployment completes, select **Go to resource group** on the deployment page.
+
+    ![The go to resource group button is highlighted on the Language service deployment page.](media/create-language-service-deployment-complete.png)
+
+9. In the resource group, select the **Keys and Endpoint** item under **Resource Management** from the left-hand navigation menu.
+
+    TODO: insert screenshot.
+
+### Task 2: Set the Azure AI Language service endpoint and key
 
 As with the `azure_openai` functions, to successfully make calls against Azure AI services using the `azure_ai` extension, you must provide the endpoint and a key for your Azure AI Language service. Retrieve those values by navigating to your Language service resource in the Azure portal and selecting the **Keys and Endpoint** item under **Resource Management** from the left-hand menu. Copy your endpoint and access key. You can use either `KEY1` or `KEY2`.
 
@@ -310,17 +318,17 @@ SELECT azure_ai.set_setting('azure_cognitive.endpoint','{endpoint}');
 SELECT azure_ai.set_setting('azure_cognitive.subscription_key', '{api-key}');
 ```
 
-### Task 2: Analyze sentiment of reviews
+### Task 3: Analyze sentiment of reviews
 
 TODO...
 
-## Exercise 7: Build sample app
+## Exercise 6: Build sample app
 
 Explore a low code/nocode chatbot using postgres? (Have to see how easy)
 
 Possibly use a simple Steamlit app to interact with database and execute vector similarity searches?
 
-## Exercise 8: Clean up
+## Exercise 7: Clean up
 
 It is crucial that you clean up any unused resources. You are charged for the configured capacity, not how much the database is used. To delete your resource group and all resources you created for this lab, follow these instructions:
 
