@@ -480,3 +480,19 @@ Some common uses for this data include:
 
 - Review if high evictions are occurring.  If so, shared buffers should be increased.
 - Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer.
+
+## PgBouncer
+
+TODO: Write up section for `PgBouncer` capabilities, using `pg_stat` to show impact.
+
+https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-pgbouncer
+
+To enable, see the below.
+
+https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-pgbouncer#enabling-and-configuring-pgbouncer
+
+Connection Pooling: Reduces resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections.
+
+Performance Optimization: Helps in improving application performance and database efficiency by reducing the load on PostgreSQL server caused by too many connections.
+
+PgBouncer is a 3rd party open-source, community-developed project.
