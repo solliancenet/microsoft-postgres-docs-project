@@ -428,7 +428,7 @@ Perform the following steps to see how this could potentially work:
 Start a vacuum operation:
 
 ```sql
-vacuum analyze
+vacuum analyze;
 ```
 
 While the operation is executing, run the following command to increase the cost limits:
@@ -461,7 +461,7 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 Run the following command to see the information available:
 
 ```sql
-select * from pg_stat_io
+select * from pg_stat_io;
 ```
 
 Using `pgbench` you can generate some IO data:
@@ -473,7 +473,7 @@ pgbench -i -s 10 postgres
 Again, run the previous command to see the newly generated IO information:
 
 ```sql
-select * from pg_stat_io
+select * from pg_stat_io;
 ```
 
 Some common uses for this data include:
