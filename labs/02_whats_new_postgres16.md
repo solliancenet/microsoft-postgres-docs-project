@@ -3,6 +3,8 @@
 - [Hands on Lab: Working with the latest capabilities of Postgres 16](#hands-on-lab-working-with-the-latest-capabilities-of-postgres-16)
   - [Prerequisites](#prerequisites)
   - [Exercise 1: Setup](#exercise-1-setup)
+    - [Task 1: Create tables and data](#task-1-create-tables-and-data)
+  - [Task 2: Configuring a server parameters](#task-2-configuring-a-server-parameters)
   - [Exercise 2: Developer Features](#exercise-2-developer-features)
     - [Task 1: Add SQL/JSON object checks](#task-1-add-sqljson-object-checks)
     - [Task 2: Add SQL/JSON constructors](#task-2-add-sqljson-constructors)
@@ -33,6 +35,8 @@ In this lab you will explore the new developer and infrastructure features of Po
 - Perform Lab 01 steps
 
 ## Exercise 1: Setup
+
+### Task 1: Create tables and data
 
 - Open a command prompt, run the following command to connect to your database:
 
@@ -75,6 +79,26 @@ select * from listings;
 select * from reviews;
 select * from calendar;
 ```
+
+## Task 2: Configuring a server parameters
+
+In order to demonstrate some of the existing and new features of Azure Databse for PostgreSQL, we will have you modify some server parameters to support Lab 2.  Note that you may or may not need to do this when running your own environments and appications.
+
+- Under **Settings**, select **Server parameters**.
+- In the tabs, select **Static**, notice only static items are shown.
+- Search for **max_connections**, then highlight the info icon. Notice the values range from 25 to 5000.
+  
+  ![Alt text](media/01_13_pg_server_params_static.png)
+
+- Modify the value to **100**.  
+- In the tabs, select **All**
+- Search for **azure.extensions**
+- Enable the **POSTGRES_FDW** extension.
+
+    ![Alt text](media/01_13_server_params_vector.png)
+
+- Select **Save**.
+- In the dialog, select **Save and Restart**
 
 ## Exercise 2: Developer Features
 
@@ -519,28 +543,20 @@ References:
 
 ### Task 2: Performance without PgBouncer
 
-- Run the following commands to execute a `pgbench` test directly against the database server:
+- Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password.  Notice the use of the `-c` parameter that will create 20 different connections:
 
 ```sql
-pgbench -i -s 10 postgres -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin
+pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U wsuser -d contosostore
 ```
 
-- Once the test is complete, run the following:
-
-```sql
-select * from pg_stat_io;
-```
+You should get an error about `error: could not create connection for client...`
 
 ### Task 3: Performance with PgBouncer
 
-- Run the following commands to execute a `pgbench` test against the PgBouncer instance:
+- Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password. Notice the change of the port to the PgBouncer port of `6432`:
 
 ```sql
-pgbench -i -s 10 postgres -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 6432 -U s2admin
+pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 6432 -U wsuser -d contosostore
 ```
 
-- Once the test is complete, run the following:
-
-```sql
-select * from pg_stat_io;
-```
+- The test should complete successfully with no connection errors.

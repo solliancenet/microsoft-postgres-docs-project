@@ -5,16 +5,15 @@
   - [Exercise 1: Creating an Azure Database for Postgres Flexible Server](#exercise-1-creating-an-azure-database-for-postgres-flexible-server)
   - [Exercise 2: Adding a database in the portal](#exercise-2-adding-a-database-in-the-portal)
   - [Exercise 3: Configuring maintenance](#exercise-3-configuring-maintenance)
-  - [Exercise 4: Configuring a server parameter](#exercise-4-configuring-a-server-parameter)
-  - [Exercise 5: Setup Additional Lab Resources](#exercise-5-setup-additional-lab-resources)
-  - [Exercise 6: Connecting with PG Admin](#exercise-6-connecting-with-pg-admin)
-    - [Task 1: Networking Setup](#task-1-networking-setup)
+  - [Exercise 6: Connecting with pgAdmin](#exercise-6-connecting-with-pgadmin)
+    - [Task 1: Networking Setup (Local Device) - OPTIONAL](#task-1-networking-setup-local-device---optional)
+    - [Task 2: Networking Setup (Lab Environment)](#task-2-networking-setup-lab-environment)
     - [Task 2: Add Server to pgAdmin](#task-2-add-server-to-pgadmin)
   - [Exercise 7: Writing your first query](#exercise-7-writing-your-first-query)
-  - [Exercise 8: Configuring backup retention using Azure REST API (Optional)](#exercise-8-configuring-backup-retention-using-azure-rest-api-optional)
   - [Summary](#summary)
+  - [Miscellanous](#miscellanous)
 
-In this lab you will create an Azure Database for PostgreSQL Flexible Server, configure it using the Azure Portal, Azure CLI and Azure REST APIs.  Once created and configured, you will then connect to it using pgAdmin to add a new 1532 dimension vector column.
+In this lab you will create an Azure Database for PostgreSQL Flexible Serve and then configure various properties using the Azure Portal, Azure CLI and Azure REST APIs.  Once created and configured, you will then connect to it using pgAdmin to run some basic queries on pre-loaded data.
 
 ## Prerequisites
 
@@ -23,7 +22,7 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
 
 ## Exercise 1: Creating an Azure Database for Postgres Flexible Server
 
-- Open the [Azure Portal](https://portal.azure.com/).
+- Open the [Azure Portal](https://portal.azure.com/), if prompted, login using your lab credentials
 - Select **Create a resource (+)** in the upper-left corner of the portal or select **Create a resource** under **Azure services**.
 
     ![Alt text](media/01_00_create_resource.png)
@@ -44,12 +43,12 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
 
   - Under **Compute + Storage**, select **Configure Server**
   - For the size, select `Standard_D2ds_v5`
+  - Please **DO NOT** select the **High Availability** option as it is subject to availability and capacity limits in various regions.
 
     ![Alt text](media/01_03_create_server_basics_02.png)
   
   - Select **Save**
-
-  - Authentication method: `PostgreSQL and Microsoft Entra authentication`
+  - Authentication method: `PostgreSQL`
   - Admin username: `s2admin`
   - Password and confirm password: `Seattle123Seattle123`
 
@@ -62,17 +61,12 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
   ![Alt text](media/01_04_networking_01.png)
 
   - Add your client IP address to ensure you can connect to your new instance
+
+    > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
+
   - Additonally, select the **Allow public access from any Azure service with Azure to the server**
   
   ![Alt text](media/01_04_networking_02.png)
-
-- Select **Next: Security**, revew the page
-
-  ![Alt text](media/01_05_security.png)
-
-- Select **Next: Tags**, review the page
-  
-  ![Alt text](media/01_06_tags.png)
 
 - Select **Review + create** to review your selections.
 
@@ -119,55 +113,13 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
 
 - Select **Save**
 
-## Exercise 4: Configuring a server parameter  
-
-- Under **Settings**, select **Server parameters**.
-- For the **application_name** server parameter, type **airbnb**.
-  
-  ![Alt text](media/01_13_server_params_01.png)
-
-- Select **Save**, notice an azure deployment is started.
-- After the deployment is complete, navigate back to the **Server parameters**.
-- In the tabs, select **Static**, notice only static items are shown.
-- Search for **max_connections**, then highlight the info icon. Notice the values range from 25 to 5000.
-  
-  ![Alt text](media/01_13_pg_server_params_static.png)
-
-- Modify the value to **2000**
-- In the tabs, select **All**
-- Search for **azure.extensions**
-- Enable the **VECTOR** and **POSTGRES_FDW** extension
-
-    ![Alt text](media/01_13_server_params_vector.png)
-
-- Select **Save**.
-- In the dialog, select **Save and Restart**
-
-## Exercise 5: Setup Additional Lab Resources
-
-In order to support the remaining items, you will need to execute the following ARM template in your resource group:
-
-- Switch to the Azure Portal
-- Browse to your resource group
-- Under **Settings**, select **Deployments**
-- Select any deployment (ex **PostgreSqlFlexibleServer_**) and in the tabs, select **Redeploy**
-- Select **Edit template**
-- Copy and paste the `/artifacts/template.json` file into the window
-- Select **Save**
-- Set the prefix parameter to the `PREFIX` you used previously.
-- Select **Review + create**
-- Select **Create**, the deployment will take a few minutes.  Once deployed, you will have:
-  - Two PostgreSQL servers (14 and 16).
-  - Windows 10 Virtual Machine with necessary software installed.
-  - Various Azure supporting services
-
-## Exercise 6: Connecting with PG Admin
+## Exercise 6: Connecting with pgAdmin
 
 If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you can perform these steps on that machine.  If you do not, you can utilize the virtual machine that was deployed to your resource group from the previous step.
 
-### Task 1: Networking Setup
+### Task 1: Networking Setup (Local Device) - OPTIONAL
 
-If you are using your own device, ensure the following:
+If you are using your own device, ensure the following has been completed:
 
 - Download and Install [pgAdmin](https://www.pgadmin.org/download/)
 - Download and Install [PostgreSQL 16]()
@@ -179,11 +131,13 @@ If you are using your own device, ensure the following:
 - Select **Save**
 - Repeat for the `PREFIX-pg-flex-eastus-14` instance
 
-If you are using the virtual machine from the ARM template, all the software has been installed (or in process of being installed).  Login using the following:
+### Task 2: Networking Setup (Lab Environment)
+
+If you are using the virtual machine from the lab environment, all the software has been installed for you. Login using the following:
 
 - Switch to the Azure Portal
 - Browse to your resource group
-- Select the **Blah** virtual machine
+- Select the **PREFIX-paw-1** virtual machine
 - In the tabs, select **Connect->Connect**
 - Copy and save the IP address
 - Select **Download RDP file**
@@ -201,7 +155,7 @@ If you are using the virtual machine from the ARM template, all the software has
 
 ### Task 2: Add Server to pgAdmin
 
-- Open **pgAdmin**
+- From the lab virtual machine, open **pgAdmin**
 - Right-click the **Servers** node, select **Register->Server**
   
   ![Alt text](media/01_14_pg_admin_register.png)
@@ -216,56 +170,40 @@ If you are using the virtual machine from the ARM template, all the software has
 
 ## Exercise 7: Writing your first query
 
-Using pgAdmin, you will add a new vector column to support OpenAI embeddings.
+Using pgAdmin, you will execute some basic queries
 
+- Switch to pgAdmin
 - Expand the **PREFIX-pg-flex-eastus-16** node
 - Expand the **Databases** node
 - Expand the **airbnb->Schemas->public** nodes
-- Right-click the **Tables** node, select **Create->Table**
-  
-  ![Alt text](media/01_15_pg_admin_create_table_menu_02.png)
-
-- For the name, type **embeddings**
-- Select **Save**
-- Right-click the new `embeddings` table, select **Query Tool**
-  
-  ![Alt text](media/01_16_query_tool.png)
-
-- Copy the following into the query tool window, this will create a typical Open AI vector column based on 1536 dimensions:
+- Expand the **Tables** node
+- Right-click the new `airbnb` table, select **Query Tool**
+- Copy the following into the query tool window:
 
 ```sql
-CREATE EXTENSION vector;
-
-ALTER TABLE embeddings ADD COLUMN embedding vector(1536);
-```
-
-## Exercise 8: Configuring backup retention using Azure REST API (Optional)
-
-The Azure portal makes calls to the Azure Management API similar to how the Azure CLI and Powershell does.
-
-- Open a new PowerShell window, run the following commands. Be sure to set the subscriptionId and resourceGroup variables with the values you copied from above:
-
-```PowerShell
-$token = $(Get-AzAccessToken -ResourceUrl "https://management.azure.com/").token
-
-$subscriptionId = "REPLACE_THIS"
-$resourceGroup = "REPLACE_THIS"
-$resourceName = "REPLACE_THIS"
-
-$content = "{""properties"":{""Backup"":{""backupRetentionDays"":35}}}"
-
-$url = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.DBforPostgreSQL/flexibleServers/$($resourceName)?api-version=2023-06-01-preview"
-
-$headers = @{
- "Authorization" = "Bearer $token"
- 'content-type' = 'application/json'
-}
-
-Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
+TODO
 ```
 
 ## Summary
 
-In this lab, you created a new Azure Database for PostgreSQL Flexible Server instance, configured it, added a database called `airbnb` with a `embeddings` table that included a vector column.  
+In this lab, you created a new Azure Database for PostgreSQL Flexible Server instance, configured some various ascpects of it, added a database called `airbnb` and then explored its data using pgAdmin.  
 
 In the next set of labs, you will explore the new developer and infrastructure features of PostgreSQL 16.
+
+## Miscellanous
+
+If you would like to run these labs in your own Azure subscription, you will need to execute the following ARM template:
+
+- Switch to the Azure Portal
+- Select the **+** in the top left
+- Search for **template**, select the **Template deployment (deploy using custom templates)
+- Select **Create**
+- Select **Build your own template in the editor**
+- Copy and paste the `/artifacts/template.json` file into the window
+- Select **Save**
+- Set the prefix parameter.
+- Select **Review + create**
+- Select **Create**, the deployment will take a few minutes.  Once deployed, you will have:
+  - Two PostgreSQL servers (14 and 16).
+  - Windows 10 Virtual Machine with necessary software installed.
+  - Various Azure supporting services
