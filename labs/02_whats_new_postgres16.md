@@ -1,5 +1,26 @@
 # Hands on Lab: Working with the latest capabilities of Postgres 16
 
+- [Hands on Lab: Working with the latest capabilities of Postgres 16](#hands-on-lab-working-with-the-latest-capabilities-of-postgres-16)
+  - [Prerequisites](#prerequisites)
+  - [Exercise 1: Setup](#exercise-1-setup)
+  - [Exercise 2: Developer Features](#exercise-2-developer-features)
+    - [Task 1: Add SQL/JSON object checks](#task-1-add-sqljson-object-checks)
+    - [Task 2: Add SQL/JSON constructors](#task-2-add-sqljson-constructors)
+    - [Task 3: Aggregate function ANY\_VALUE()](#task-3-aggregate-function-any_value)
+    - [Task 4: COPY batch\_size support](#task-4-copy-batch_size-support)
+    - [Allow a COPY FROM value to map to a column's DEFAULT](#allow-a-copy-from-value-to-map-to-a-columns-default)
+  - [Exercise 3: Infra Features](#exercise-3-infra-features)
+    - [Task 1: New options for CREATE USER](#task-1-new-options-for-create-user)
+    - [Task 2: Allow parallelization of FULL and internal right OUTER hash joins](#task-2-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
+    - [Task 3: Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task-3-allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
+    - [Task 4: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-4-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
+    - [Task 5: Use new VACUUM options to improve the performance](#task-5-use-new-vacuum-options-to-improve-the-performance)
+    - [Task 6: Using pg\_stat\_io for enhanced IO monitoring](#task-6-using-pg_stat_io-for-enhanced-io-monitoring)
+  - [Exercise 3: PgBouncer](#exercise-3-pgbouncer)
+    - [Task 1: Enable PgBouncer](#task-1-enable-pgbouncer)
+    - [Task 2: Performance without PgBouncer](#task-2-performance-without-pgbouncer)
+    - [Task 3: Performance with PgBouncer](#task-3-performance-with-pgbouncer)
+
 In this lab you will explore the new developer and infrastructure features of PostgreSQL 16.
 
 ## Prerequisites
@@ -11,7 +32,7 @@ In this lab you will explore the new developer and infrastructure features of Po
 - `psql` access
 - Perform Lab 01 steps
 
-## Setup
+## Exercise 1: Setup
 
 - Open a command prompt, run the following command to connect to your database:
 
@@ -55,13 +76,13 @@ select * from reviews;
 select * from calendar;
 ```
 
-## Developer Features
+## Exercise 2: Developer Features
 
 There are several developer based changes in PostgreSQL. Here we explore some of them.
 
 - [Function Json](https://www.postgresql.org/docs/16/functions-json.html)
 
-### Add SQL/JSON object checks
+### Task 1: Add SQL/JSON object checks
 
 The `IS JSON` checks include checks for values, arrays, objects, scalars, and unique keys.
 
@@ -109,7 +130,7 @@ FROM
    listings LIMIT 1;
 ```
 
-### Add SQL/JSON constructors
+### Task 2: Add SQL/JSON constructors
 
 In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON_ARRAYAGG()`, and `JSON_OBJECT()` that are part of the SQL standard and now PostgreSQL 16.  
 
@@ -133,7 +154,7 @@ FROM
 SELECT json_object(ARRAY[1, 'a', true, row(2, 'b', false)]::TEXT[]);
 ```
 
-### Aggregate function ANY_VALUE()
+### Task 3: Aggregate function ANY_VALUE()
 
 The `ANY_VALUE()` function is a PostgreSQL aggregate function that helps optimize queries when utilizing GROUP BY clauses. The function will return an arbitrary non-null value in a given set of values.
 
@@ -164,7 +185,7 @@ GROUP BY data['zipcode']
 
 ```
 
-### COPY batch_size support
+### Task 4: COPY batch_size support
 
 It is now possible to batch insert multiple records with the COPY statement for a foreign table using the `postgres_fdw` module.  Previously, this would insert a single record at a time from the foreign table which is much less efficient then doing multiple records.
 
@@ -229,9 +250,9 @@ FROM
 
 Notice every entry from the source file with the default of '\D' was converted to the `DEFAULT` value from the column definition.
 
-## Infra Features
+## Exercise 3: Infra Features
 
-### New options for CREATE USER
+### Task 1: New options for CREATE USER
 
 The new options control the valid-until date, bypassing of row-level security, and role membership.
 
@@ -253,7 +274,7 @@ CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2024-01-01';
 
 > NOTE: Although it is possible to do assign the `BYPASSRLS` for a user in PostgreSQL 16, Azure Database for PostgreSQL Flexible Server does not support this feature.
 
-### Allow parallelization of FULL and internal right OUTER hash joins
+### Task 2: Allow parallelization of FULL and internal right OUTER hash joins
 
 The more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal right `OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs where more to perform them.
 
@@ -309,7 +330,7 @@ FULL OUTER JOIN departments d
 
 In the execution plan, you should notice the use of a `Parallel Hash Full Join`.  In previous versions of PostgreSQL, you would see a regular `Hash Full Join`.
 
-### Allow aggregate functions string_agg() and array_agg() to be parallelized
+### Task 3: Allow aggregate functions string_agg() and array_agg() to be parallelized
 
 Aggregate functions typically perform some kind of mathematical operation on a column or set of columns.  If you were to calculate several aggregates at once, you could probably imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
 
@@ -388,7 +409,7 @@ To compare between versions, you can use the `EXPLAIN` command to see that the q
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=16fd03e956540d1b47b743f6a84f37c54ac93dd4).
 
-### Add EXPLAIN option GENERIC_PLAN to display the generic plan for a parameterized query
+### Task 4: Add EXPLAIN option GENERIC_PLAN to display the generic plan for a parameterized query
 
 Previously, attempting to get an execution plan for a parameterized query was fairly complicated.  For example, using a prepared statement will have several executions which may required you to execute those all separately and then put the results together. Using the new feature will eliminate those extra steps.
 
@@ -413,7 +434,7 @@ As you can see above, you can use parameter placeholders like `$1` instead of an
 - You can use parameters only with the statements SELECT, INSERT, UPDATE, DELETE and VALUES.
 - You can only use parameters instead of constants (literals). You can’t use parameters instead of identifiers (object names) or keywords, among other things.
 
-### Use new VACUUM options to improve the performance
+### Task 5: Use new VACUUM options to improve the performance
 
 The PostgreSQL `VACUUM` command is used to garbage-collect and analyze databases.  It works by removing `dead` tuples left over by large changes to a database (such as frequently updated tables). By removing the gaps between the data, you can speed up the performance of specific operations and increase your disk space.
 
@@ -450,7 +471,7 @@ For more information on Azure Database for PostgreSQL Flexible Server autovacuum
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=7d71d3dd080b9b147402db3365fe498f74704231).
 
-### Using pg_stat_io for enhanced IO monitoring
+### Task 6: Using pg_stat_io for enhanced IO monitoring
 
 `pg_stat_io` is a new catalog view that displays statistics around `reads` and `writes` and as of Postgres 16, `extends` information.
 
@@ -481,18 +502,45 @@ Some common uses for this data include:
 - Review if high evictions are occurring.  If so, shared buffers should be increased.
 - Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer.
 
-## PgBouncer
+## Exercise 3: PgBouncer
 
-TODO: Write up section for `PgBouncer` capabilities, using `pg_stat` to show impact.
+PgBouncer is a well known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
 
-https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-pgbouncer
+References:
+  - https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-pgbouncer
 
-To enable, see the below.
+### Task 1: Enable PgBouncer
 
-https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-pgbouncer#enabling-and-configuring-pgbouncer
+- Browse to the Azure Portal and your **PREFIX-pg-flex-eastus-16** resource
+- Under **Settings**, select **Server parameters**
+- Search for the `pgbouncer.enabled` dynamic parameters
+- Toggle the setting to `TRUE`
+- Select **Save**
 
-Connection Pooling: Reduces resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections.
+### Task 2: Performance without PgBouncer
 
-Performance Optimization: Helps in improving application performance and database efficiency by reducing the load on PostgreSQL server caused by too many connections.
+- Run the following commands to execute a `pgbench` test directly against the database server:
 
-PgBouncer is a 3rd party open-source, community-developed project.
+```sql
+pgbench -i -s 10 postgres -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin
+```
+
+- Once the test is complete, run the following:
+
+```sql
+select * from pg_stat_io;
+```
+
+### Task 3: Performance with PgBouncer
+
+- Run the following commands to execute a `pgbench` test against the PgBouncer instance:
+
+```sql
+pgbench -i -s 10 postgres -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 6432 -U s2admin
+```
+
+- Once the test is complete, run the following:
+
+```sql
+select * from pg_stat_io;
+```

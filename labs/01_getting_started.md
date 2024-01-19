@@ -1,14 +1,27 @@
-# Hand on lab: Provisioning, configuring, and getting started with development
+# Hands on Lab: Provisioning, configuring, and getting started with development
+
+- [Hands on Lab: Provisioning, configuring, and getting started with development](#hands-on-lab-provisioning-configuring-and-getting-started-with-development)
+  - [Prerequisites](#prerequisites)
+  - [Exercise 1: Creating an Azure Database for Postgres Flexible Server](#exercise-1-creating-an-azure-database-for-postgres-flexible-server)
+  - [Exercise 2: Adding a database in the portal](#exercise-2-adding-a-database-in-the-portal)
+  - [Exercise 3: Configuring maintenance](#exercise-3-configuring-maintenance)
+  - [Exercise 4: Configuring a server parameter](#exercise-4-configuring-a-server-parameter)
+  - [Exercise 5: Setup Additional Lab Resources](#exercise-5-setup-additional-lab-resources)
+  - [Exercise 6: Connecting with PG Admin](#exercise-6-connecting-with-pg-admin)
+    - [Task 1: Networking Setup](#task-1-networking-setup)
+    - [Task 2: Add Server to pgAdmin](#task-2-add-server-to-pgadmin)
+  - [Exercise 7: Writing your first query](#exercise-7-writing-your-first-query)
+  - [Exercise 8: Configuring backup retention using Azure REST API (Optional)](#exercise-8-configuring-backup-retention-using-azure-rest-api-optional)
+  - [Summary](#summary)
 
 In this lab you will create an Azure Database for PostgreSQL Flexible Server, configure it using the Azure Portal, Azure CLI and Azure REST APIs.  Once created and configured, you will then connect to it using pgAdmin to add a new 1532 dimension vector column.
 
 ## Prerequisites
 
 - [Azure subscription](https://azure.microsoft.com/free/)
-- [Resource group](https://learn.microsoft.com/azure/azure-resource-manager/management/manage-resource-groups-portal)
 - Optional - Computer with Postgres 16 and pgAdmin
 
-## Creating an Azure Database for Postgres Flexible Server
+## Exercise 1: Creating an Azure Database for Postgres Flexible Server
 
 - Open the [Azure Portal](https://portal.azure.com/).
 - Select **Create a resource (+)** in the upper-left corner of the portal or select **Create a resource** under **Azure services**.
@@ -46,32 +59,33 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
 - Configure Networking options:
   - Select **Public access (allowed IP addresses)**
 
-    ![Alt text](media/01_04_networking_01.png)
+  ![Alt text](media/01_04_networking_01.png)
 
-  - Add your client IP address to ensure you can connect to your new instance:
+  - Add your client IP address to ensure you can connect to your new instance
+  - Additonally, select the **Allow public access from any Azure service with Azure to the server**
   
-    ![Alt text](media/01_04_networking_02.png)
+  ![Alt text](media/01_04_networking_02.png)
 
-- Select **Next: Security**
+- Select **Next: Security**, revew the page
 
-    ![Alt text](media/01_05_security.png)
+  ![Alt text](media/01_05_security.png)
 
-- Select **Next: Tags**
+- Select **Next: Tags**, review the page
   
   ![Alt text](media/01_06_tags.png)
 
 - Select **Review + create** to review your selections.
 
-    ![Alt text](media/01_07_review_create.png)
+  ![Alt text](media/01_07_review_create.png)
 
 - Select **Create** to provision the server. This operation may take a few minutes.
 - In the top right of the toolbar, select the Notifications icon (a bell)
 
-    ![Alt text](media/01_08_deployment_00.png)
+  ![Alt text](media/01_08_deployment_00.png)
 
 - Select **Deployment in progress** link.  You can now monitor the deployment process:
 
-    ![Alt text](media/01_08_deployment.png)
+  ![Alt text](media/01_08_deployment.png)
 
 - Once deployed, select the link to navigate to your server's **Overview** page.
   - Make a note of the Server name and the Server admin login name.
@@ -82,34 +96,9 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Server, co
     - Resource name
     - Server name
 
-    ![Alt text](media/01_10_pg_overview.png)
+  ![Alt text](media/01_10_pg_overview.png)
 
-## Configuring backup retention using Azure REST API
-
-The Azure portal makes calls to the Azure Management API similar to how the Azure CLI and Powershell does.
-
-- Open a new PowerShell window, run the following commands. Be sure to set the subscriptionId and resourceGroup variables with the values you copied from above:
-
-```PowerShell
-$token = $(Get-AzAccessToken -ResourceUrl "https://management.azure.com/").token
-
-$subscriptionId = "REPLACE_THIS"
-$resourceGroup = "REPLACE_THIS"
-$resourceName = "REPLACE_THIS"
-
-$content = "{""properties"":{""Backup"":{""backupRetentionDays"":35}}}"
-
-$url = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.DBforPostgreSQL/flexibleServers/$($resourceName)?api-version=2023-06-01-preview"
-
-$headers = @{
- "Authorization" = "Bearer $token"
- 'content-type' = 'application/json'
-}
-
-Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
-```
-
-## Adding a database in the portal
+## Exercise 2: Adding a database in the portal
 
 - Under **Settings**, select **Databases**
 - In the menu, select **+Add**
@@ -119,7 +108,7 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 
 - Select **Save**
 
-## Configuring maintenance
+## Exercise 3: Configuring maintenance
 
 - Under **Settings**, select **Maintenance**
 - Select **Custom schedule**
@@ -130,7 +119,7 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 
 - Select **Save**
 
-## Configuring a server parameter  
+## Exercise 4: Configuring a server parameter  
 
 - Under **Settings**, select **Server parameters**.
 - For the **application_name** server parameter, type **airbnb**.
@@ -154,7 +143,7 @@ Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 - Select **Save**.
 - In the dialog, select **Save and Restart**
 
-## Setup Additional Lab Resources
+## Exercise 5: Setup Additional Lab Resources
 
 In order to support the remaining items, you will need to execute the following ARM template in your resource group:
 
@@ -172,9 +161,11 @@ In order to support the remaining items, you will need to execute the following 
   - Windows 10 Virtual Machine with necessary software installed.
   - Various Azure supporting services
 
-## Connecting with PG Admin
+## Exercise 6: Connecting with PG Admin
 
-If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you can perform these steps on that machine.  If you do not, you can utilize the virtual machine that was deployed to your resource group from teh previous step.
+If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you can perform these steps on that machine.  If you do not, you can utilize the virtual machine that was deployed to your resource group from the previous step.
+
+### Task 1: Networking Setup
 
 If you are using your own device, ensure the following:
 
@@ -183,12 +174,12 @@ If you are using your own device, ensure the following:
 - Switch back to the Azure Portal
 - Browse to the `PREFIX-pg-flex-eastus-16` instance
 - Under **Settings**, select **Networking**
-- Enable the **Allow public access from any Azure service within Azure to this server** checkbox
+- Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
 - Under **Firewall rules**, add an entry for the IP address of your device
 - Select **Save**
 - Repeat for the `PREFIX-pg-flex-eastus-14` instance
 
-If you are using the virtual machine, all the software has been installed (or in process of being installed).  Login using the following:
+If you are using the virtual machine from the ARM template, all the software has been installed (or in process of being installed).  Login using the following:
 
 - Switch to the Azure Portal
 - Browse to your resource group
@@ -203,12 +194,12 @@ If you are using the virtual machine, all the software has been installed (or in
 - Switch back to the Azure Portal
 - Browse to the `PREFIX-pg-flex-eastus-16` instance
 - Under **Settings**, select **Networking**
-- Enable the **Allow public access from any Azure service within Azure to this server** checkbox
+- Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
 - Under **Firewall rules**, add an entry using the IP address you copied above
 - Select **Save**
 - Repeat for the `PREFIX-pg-flex-eastus-14` instance
 
-Continue with the lab steps:
+### Task 2: Add Server to pgAdmin
 
 - Open **pgAdmin**
 - Right-click the **Servers** node, select **Register->Server**
@@ -223,7 +214,7 @@ Continue with the lab steps:
 - Select **Save password?** to toggle it on.
 - Select **Save**
 
-## Writing your first query
+## Exercise 7: Writing your first query
 
 Using pgAdmin, you will add a new vector column to support OpenAI embeddings.
 
@@ -246,6 +237,31 @@ Using pgAdmin, you will add a new vector column to support OpenAI embeddings.
 CREATE EXTENSION vector;
 
 ALTER TABLE embeddings ADD COLUMN embedding vector(1536);
+```
+
+## Exercise 8: Configuring backup retention using Azure REST API (Optional)
+
+The Azure portal makes calls to the Azure Management API similar to how the Azure CLI and Powershell does.
+
+- Open a new PowerShell window, run the following commands. Be sure to set the subscriptionId and resourceGroup variables with the values you copied from above:
+
+```PowerShell
+$token = $(Get-AzAccessToken -ResourceUrl "https://management.azure.com/").token
+
+$subscriptionId = "REPLACE_THIS"
+$resourceGroup = "REPLACE_THIS"
+$resourceName = "REPLACE_THIS"
+
+$content = "{""properties"":{""Backup"":{""backupRetentionDays"":35}}}"
+
+$url = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.DBforPostgreSQL/flexibleServers/$($resourceName)?api-version=2023-06-01-preview"
+
+$headers = @{
+ "Authorization" = "Bearer $token"
+ 'content-type' = 'application/json'
+}
+
+Invoke-WebRequest -Method PATCH -Uri $url -Headers $headers -Body $content
 ```
 
 ## Summary
