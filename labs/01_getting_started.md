@@ -2,25 +2,27 @@
 
 - [Hands on Lab: Provisioning, configuring, and getting started with development](#hands-on-lab-provisioning-configuring-and-getting-started-with-development)
   - [Prerequisites](#prerequisites)
-  - [Exercise 1: Creating an Azure Database for Postgres Flexible Server](#exercise-1-creating-an-azure-database-for-postgres-flexible-server)
+  - [Exercise 1: Creating an Azure Database for PostgreSQL Flexible Server](#exercise-1-creating-an-azure-database-for-postgresql-flexible-server)
   - [Exercise 2: Adding a database in the portal](#exercise-2-adding-a-database-in-the-portal)
   - [Exercise 3: Configuring maintenance](#exercise-3-configuring-maintenance)
-  - [Exercise 6: Connecting with pgAdmin](#exercise-6-connecting-with-pgadmin)
+  - [Exercise 4: Connecting with pgAdmin](#exercise-4-connecting-with-pgadmin)
     - [Task 1: Networking Setup (Local Device) - OPTIONAL](#task-1-networking-setup-local-device---optional)
     - [Task 2: Networking Setup (Lab Environment)](#task-2-networking-setup-lab-environment)
     - [Task 2: Add Server to pgAdmin](#task-2-add-server-to-pgadmin)
-  - [Exercise 7: Writing your first query](#exercise-7-writing-your-first-query)
+  - [Exercise 5: Writing your first query](#exercise-5-writing-your-first-query)
   - [Summary](#summary)
   - [Miscellanous](#miscellanous)
 
-In this lab you will create an Azure Database for PostgreSQL Flexible Serve and then configure various properties using the Azure Portal, Azure CLI and Azure REST APIs.  Once created and configured, you will then connect to it using pgAdmin to run some basic queries on pre-loaded data.
+In this lab you will create an [Azure Database for PostgreSQL Flexible Server](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/overview) and then configure various properties using the Azure Portal. Once created and configured, you will then connect to it using [pgAdmin](https://www.pgadmin.org/) to run some basic queries on pre-loaded data.
 
 ## Prerequisites
 
 - [Azure subscription](https://azure.microsoft.com/free/)
-- Optional - Computer with Postgres 16 and pgAdmin
+- Optional - Computer with [Postgres 16](https://www.postgresql.org/download/) and [pgAdmin](https://www.pgadmin.org/)
 
-## Exercise 1: Creating an Azure Database for Postgres Flexible Server
+## Exercise 1: Creating an Azure Database for PostgreSQL Flexible Server
+
+In this exercise you will create a new Azure Database for PostgreSQL Flexible Server using the Azure Portal.
 
 - Open the [Azure Portal](https://portal.azure.com/), if prompted, login using your lab credentials
 - Select **Create a resource (+)** in the upper-left corner of the portal or select **Create a resource** under **Azure services**.
@@ -94,6 +96,8 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Serve and 
 
 ## Exercise 2: Adding a database in the portal
 
+In this exercise you will use the Azure Portal to add a new database to your newly created Azure Database for PostgreSQL Flexible Server.
+
 - Under **Settings**, select **Databases**
 - In the menu, select **+Add**
 - For the name, type **airbnb**
@@ -104,6 +108,8 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Serve and 
 
 ## Exercise 3: Configuring maintenance
 
+In this exercise you will modify the [maintennce schedule](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-maintenance) of your Azure Database for PostgreSQL Flexible Server. By changing the scheulde you can match the Azure update schedule to your own internal update schedule.
+
 - Under **Settings**, select **Maintenance**
 - Select **Custom schedule**
 - For the **Day of week**, select **Saturday**
@@ -113,21 +119,24 @@ In this lab you will create an Azure Database for PostgreSQL Flexible Serve and 
 
 - Select **Save**
 
-## Exercise 6: Connecting with pgAdmin
+## Exercise 4: Connecting with pgAdmin
 
-If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you can perform these steps on that machine.  If you do not, you can utilize the virtual machine that was deployed to your resource group from the previous step.
+If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you can perform these steps on that machine.  If you do not, you can utilize the virtual machine that was deployed to your lab environment.
 
 ### Task 1: Networking Setup (Local Device) - OPTIONAL
 
 If you are using your own device, ensure the following has been completed:
 
 - Download and Install [pgAdmin](https://www.pgadmin.org/download/)
-- Download and Install [PostgreSQL 16]()
+- Download and Install [PostgreSQL 16](https://www.postgresql.org/download/)
 - Switch back to the Azure Portal
 - Browse to the `PREFIX-pg-flex-eastus-16` instance
 - Under **Settings**, select **Networking**
 - Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
-- Under **Firewall rules**, add an entry for the IP address of your device
+- Under **Firewall rules**, add an entry for the IP address of your device.
+
+    > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
+
 - Select **Save**
 - Repeat for the `PREFIX-pg-flex-eastus-14` instance
 
@@ -150,6 +159,9 @@ If you are using the virtual machine from the lab environment, all the software 
 - Under **Settings**, select **Networking**
 - Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
 - Under **Firewall rules**, add an entry using the IP address you copied above
+
+    > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
+
 - Select **Save**
 - Repeat for the `PREFIX-pg-flex-eastus-14` instance
 
@@ -168,12 +180,12 @@ If you are using the virtual machine from the lab environment, all the software 
 - Select **Save password?** to toggle it on.
 - Select **Save**
 
-## Exercise 7: Writing your first query
+## Exercise 5: Writing your first query
 
 Using pgAdmin, you will execute some basic queries
 
 - Switch to pgAdmin
-- Expand the **PREFIX-pg-flex-eastus-16** node
+- Expand the **PREFIX-pg-flex-eastus-14** node
 - Expand the **Databases** node
 - Expand the **airbnb->Schemas->public** nodes
 - Expand the **Tables** node

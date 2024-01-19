@@ -36,6 +36,8 @@ In this lab you will explore the new developer and infrastructure features of Po
 
 ## Exercise 1: Setup
 
+In this exercise you will create some tables and use the COPY command to move data into those tables.  The data is in JSON format and not SQL format.
+
 ### Task 1: Create tables and data
 
 - Open a command prompt, run the following command to connect to your database:
@@ -82,7 +84,7 @@ select * from calendar;
 
 ## Task 2: Configuring a server parameters
 
-In order to demonstrate some of the existing and new features of Azure Databse for PostgreSQL, we will have you modify some server parameters to support Lab 2.  Note that you may or may not need to do this when running your own environments and appications.
+In order to demonstrate some of the existing and new features of Azure Databse for PostgreSQL, we will have you modify some server parameters to support this lab.  Note that you may or may not need to do this when running your own environments and appications.
 
 - Under **Settings**, select **Server parameters**.
 - In the tabs, select **Static**, notice only static items are shown.
@@ -102,7 +104,7 @@ In order to demonstrate some of the existing and new features of Azure Databse f
 
 ## Exercise 2: Developer Features
 
-There are several developer based changes in PostgreSQL. Here we explore some of them.
+There are several developer based changes in PostgreSQL 16. In this exercise we explore several of them including the new SQL standard JSON functions.
 
 - [Function Json](https://www.postgresql.org/docs/16/functions-json.html)
 
@@ -236,7 +238,7 @@ OPTIONS (user 's2admin', password 'Seattle123Seattle123');
 create schema postgres14;
 ```
 
-Now import the schema from the remote Azure Database for PostgreSQL:
+Now import the schema from the remote Azure Database for PostgreSQL Flexible Server:
 
 ```sql
 IMPORT FOREIGN SCHEMA public LIMIT TO (reviews)
@@ -539,6 +541,9 @@ References:
 - Under **Settings**, select **Server parameters**
 - Search for the `pgbouncer.enabled` dynamic parameters
 - Toggle the setting to `TRUE`
+
+    ![Alt text](media/02_03_enable_pgbouncer.png)
+
 - Select **Save**
 
 ### Task 2: Performance without PgBouncer
@@ -549,7 +554,9 @@ References:
 pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U wsuser -d contosostore
 ```
 
-You should get an error about `error: could not create connection for client...`
+- You should get an error about `error: could not create connection for client...`
+
+    ![Alt text](media/02_03_test_without_pgbouncer.png)
 
 ### Task 3: Performance with PgBouncer
 
@@ -559,4 +566,6 @@ You should get an error about `error: could not create connection for client...`
 pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 6432 -U wsuser -d contosostore
 ```
 
-- The test should complete successfully with no connection errors.
+- The test should complete successfully with no connection errors:
+
+    ![Alt text](media/02_03_test_with_pgbouncer.png)
