@@ -1,6 +1,6 @@
-# Hands on Lab: Building AI Apps with Azure Open AI
+# Hands on Lab: Building AI Apps with Azure OpenAI (TODO: Change title to: Generative AI with Azure Database for PostgreSQL Flexible Server?)
 
-- [Hands on Lab: Building AI Apps with Azure Open AI](#hands-on-lab-building-ai-apps-with-azure-open-ai)
+- [Hands on Lab: Building AI Apps with Azure OpenAI (TODO: Change title to: Generative AI with Azure Database for PostgreSQL Flexible Server?)](#hands-on-lab-building-ai-apps-with-azure-openai-todo-change-title-to-generative-ai-with-azure-database-for-postgresql-flexible-server)
   - [Exercise 1: Add Azure AI and Vector extensions to allowlist](#exercise-1-add-azure-ai-and-vector-extensions-to-allowlist)
   - [Exercise 2: Create an Azure OpenAI resource](#exercise-2-create-an-azure-openai-resource)
     - [Task 1: Provision an Azure OpenAI service](#task-1-provision-an-azure-openai-service)
@@ -9,9 +9,11 @@
     - [Task 1: Connect to the database using psql in the Azure Cloud Shell](#task-1-connect-to-the-database-using-psql-in-the-azure-cloud-shell)
     - [Task 2: Install the `azure_ai` extension](#task-2-install-the-azure_ai-extension)
     - [Task 3: Review the objects contained within the `azure_ai` extension](#task-3-review-the-objects-contained-within-the-azure_ai-extension)
+    - [Task 4: Set the Azure OpenAI endpoint and key](#task-4-set-the-azure-openai-endpoint-and-key)
   - [Exercise 4: Generate vector embeddings with Azure OpenAI](#exercise-4-generate-vector-embeddings-with-azure-openai)
     - [Task 1: Enable vector support with the pgvector extension](#task-1-enable-vector-support-with-the-pgvector-extension)
-    - [Task 2: Generate and store vectors](#task-2-generate-and-store-vectors)
+    - [Task 2: Generate and store vector embeddings](#task-2-generate-and-store-vector-embeddings)
+    - [Task 3: Perform a vector similarity search](#task-3-perform-a-vector-similarity-search)
   - [Exercise 5: Integrate Azure AI Services](#exercise-5-integrate-azure-ai-services)
     - [Task 1: Provision an Azure AI Language service](#task-1-provision-an-azure-ai-language-service)
     - [Task 2: Set the Azure AI Language service endpoint and key](#task-2-set-the-azure-ai-language-service-endpoint-and-key)
@@ -19,17 +21,17 @@
   - [Exercise 6: Build sample app](#exercise-6-build-sample-app)
   - [Exercise 7: Clean up](#exercise-7-clean-up)
 
-In this lab, you integrate Azure AI Services into your PostgreSQL Flexible Server using the [Azure AI Extension](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-overview). The `azure_ai` extension adds the ability to leverage [large language models](https://learn.microsoft.com/training/modules/fundamentals-generative-ai/3-language%20models) (LLMs) directly from your Azure Database for PostgreSQL Flexible Server. This capability allows you to build [generative AI](https://learn.microsoft.com/training/paths/introduction-generative-ai/) applications within a database by integrating the power of [Azure AI services](https://learn.microsoft.com/azure/ai-services/what-are-ai-services). Generative AI is a form of artificial intelligence in which LLMs are trained to generate original content based on natural language input. Using the `azure_ai` extension allows you to take advantage of generative AI's natural language query processing capabilities directly from the database.
+[Generative AI](https://learn.microsoft.com/training/paths/introduction-generative-ai/) is a form of artificial intelligence in which [large language models](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#large-language-model-llm) (LLMs) are trained to generate original content based on natural language input. LLMs are designed to understand and generate human-like language output, and are known for their ability to perform a wide range of natural language understanding and generation tasks. Generative AI has a wide range of applications for data-driven applications, including semantic search, recommendations systems, content generation, such as summarization, and many others.
 
-This lab showcases adding rich AI capabilities to an Azure Database for PostgreSQL Flexible Server using the `azure_ai` extension. It covers integrating both [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/overview) and the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/) into your database.
+In this lab, you take advantage of [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/overview) and the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/) to integrate rich generative AI capabilities directly into your Azure Database for PostgreSQL Flexible Server using the the [Azure AI Extension](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-overview). The `azure_ai` extension adds the ability to leverage LLMs directly from your database.
 
 > Important:
 >
-> This lab builds upon the work done in Lab 3 and relies on data loaded into the Azure Database for PostgreSQL Flexible Server in that lab.
+> This lab builds upon the work you did with extensions in Lab 3 and relies on data loaded into the Azure Database for PostgreSQL Flexible Server in that lab.
 
 ## Exercise 1: Add Azure AI and Vector extensions to allowlist
 
-In this lab, you use the [azure_ai](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-overview) and [pgvector](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-use-pgvector) extensions to add generative AI capabilities to your PostgreSQL database. In this exercise, you add these extensions to your server's _allowlist_, as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
+Throughout this lab, you use the [azure_ai](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-overview) and [pgvector](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-use-pgvector) extensions to add generative AI capabilities to your PostgreSQL database. In this exercise, you add these extensions to your server's _allowlist_, as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
 
 1. In a web browser, navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/).
 
@@ -44,11 +46,11 @@ In this lab, you use the [azure_ai](https://learn.microsoft.com/azure/postgresql
 
 ## Exercise 2: Create an Azure OpenAI resource
 
-The `azure_ai` extension requires an underlying Azure OpenAI service. In this exercise, you will provision an Azure OpenAI resource in the Azure portal.
+The `azure_ai` extension requires an underlying Azure OpenAI service to create [vector embeddings](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#embeddings). In this exercise, you will provision an Azure OpenAI resource in the Azure portal and deploy an embedding model into that service.
 
 ### Task 1: Provision an Azure OpenAI service
 
-If you do not have a resource, the process for creating one is documented in the [Azure OpenAI resource deployment guide](https://learn.microsoft.com/azure/ai-services/openai/how-to/create-resource).
+In this task, you create a new Azure OpenAI service.
 
 1. In a web browser, navigate to the [Azure portal](https://portal.azure.com/).
 
@@ -88,7 +90,7 @@ If you do not have a resource, the process for creating one is documented in the
 
 The `azure_ai` extension provides the ability to create vector embeddings from text. To create these embeddings requires a deployed `text-embedding-ada-002` (version 2) model within your Azure OpenAI service. In this task, you will use [Azure OpenAI Studio](https://oai.azure.com/) to create a model deployment that use can use.
 
-1. Navigate to your Azure OpenAI resource in the [Azure portal](https://portal.azure.com/).
+1. Navigate to your newly provisioned Azure OpenAI resource in the [Azure portal](https://portal.azure.com/).
 
 2. On the resource's **Overview** page, select the **Go to Azure OpenAI Studio** button.
 
@@ -110,25 +112,27 @@ The `azure_ai` extension provides the ability to create vector embeddings from t
 
 ## Exercise 3: Install and configure the `azure_ai` extension
 
+In this exercise, you install the `azure_ai` extention into your database and configure it to connect to your Azure OpenAI service.
+
 ### Task 1: Connect to the database using psql in the Azure Cloud Shell
 
 In this task, you use the `psql` command line utility from the Azure Cloud Shell to connect to your database.
 
-1. Using the same browser tab where the Cloud Shell is open, navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/).
+1. You need the connection details for your database to connect to it using `psql` in the Cloud Shell. Navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/) and in the left-hand navigation menu, select **Connect** under **Settings**.
 
-2. From the database's left-hand navigation menu, select **Connect** under **Settings**, then select **airbnb** for the **Database name** and copy the **Connection details** block.
+    ![The Connect menu item is highlighted under Settings in the left-hand navigation menu in the Azure portal.](media/azure-postgres-connect.png)
+
+2. With the **Connect** page open, select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the bottom of your browser window.
+
+    ![The Cloud Shell icon is highlighted in the Azure portal toolbar and a Cloud Shell window is open at the bottom of the browser window.](media/portal-cloud-shell-postgres.png)
+
+3. From the database's **Connect** page, select **airbnb** for the **Database name** and copy the **Connection details** block.
 
     ![The Connection strings page of the Azure Cosmos DB Cluster resource is highlighted. On the Connection strings page, the copy to clipboard button to the right of the psql connection string is highlighted.](media/postgresql-connection-details-psql.png)
 
-3. Paste the connection details into the Cloud Shell, and replace the `{your_password}` token with the password you assigned to the `s2admin` user when creating your database. If the followed the instructions in Lab 1, the password should be `Seattle123Seattle123`.
+4. Paste the connection details into the Cloud Shell, and replace the `{your_password}` token with the password you assigned to the `s2admin` user when creating your database. If the followed the instructions in Lab 1, the password should be `Seattle123Seattle123`.
 
-4. Add one additional environment variable to require an SSL connection to the database.
-
-    ```bash
-    export PGSSLMODE=require
-    ```
-
-5. Connect to your database using the [psql command-line utility](https://www.postgresguide.com/utilities/psql/) by entering the following at the prompt.
+5. Connect to your database using the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) by entering the following at the prompt.
 
     ```bash
     psql
@@ -140,18 +144,16 @@ In this task, you use the `psql` command line utility from the Azure Cloud Shell
 
 The `azure_ai` extension allows you to integrate Azure OpenAI and Azure Cognitive Services into your database. To enable the extension in your database, follow the steps below:
 
-1. Add the extension to your allowlist as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
-
-2. Verify that the extension was successfully added to the allowlist by running the following from the `psql` command prompt:
+1. Verify that the extension was successfully added to the allowlist by running the following from the `psql` command prompt:
 
     ```sql
     SHOW azure.extensions;
     ```
 
-3. Install the `azure_ai` extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
+2. Install the `azure_ai` extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
 
     ```sql
-    CREATE EXTENSION azure_ai;
+    CREATE EXTENSION IF NOT EXISTS azure_ai;
     ```
 
 ### Task 3: Review the objects contained within the `azure_ai` extension
@@ -172,12 +174,11 @@ Reviewing the objects contained within the `azure_ai` extension can provide a be
     | `azure_openai` | Contains the UDFs that enable calling an Azure OpenAI endpoint. |
     | `azure_cognitive` | Provides UDFs and composite types related to integrating the database with Azure Cognitive Services. |
 
-2. The functions and types are all associated with one of the schemas. To review the functions defined in the `azure_ai` schema, use the `\df` meta-command, specifying the schema whose functions should be displayed. The `\x` commands before and after the `\df` command toggle the expanded display on and off to make the output from the command easier to view in the Azure Cloud Shell.
+2. The functions and types are all associated with one of the schemas. To review the functions defined in the `azure_ai` schema, use the `\df` meta-command, specifying the schema whose functions should be displayed. The `\x auto` command preceding `\df` allows the expanded display to be automatically applied when necessary to make the output from the command easier to view in the Azure Cloud Shell.
 
     ```sql
-    \x
+    \x auto
     \df+ azure_ai.*
-    \x
     ```
 
     The `azure_ai.set_setting()` function lets you set the endpoint and key values for Azure AI services. It accepts a **key** and the **value** to assign it. The `azure_ai.get_setting()` function provides a way to retrieve the values you set with the `set_setting()` function. It accepts the **key** of the setting you want to view. For both methods, the key must be one of the following:
@@ -193,17 +194,43 @@ Reviewing the objects contained within the `azure_ai` extension can provide a be
     >
     > Because the connection information for Azure AI services, including API keys, is stored in a configuration table in the database, the `azure_ai` extension defines a role called `azure_ai_settings_manager` to ensure this information is protected and accessible only to users assigned that role. This role enables reading and writing of settings related to the extension. Only superusers and members of the `azure_ai_settings_manager` role can invoke the `azure_ai.get_setting()` and `azure_ai.set_setting()` functions. In Azure Database for PostgreSQL Flexible Server, all admin users are assigned the `azure_ai_settings_manager` role.
 
+### Task 4: Set the Azure OpenAI endpoint and key
+
+Before using the `azure_openai` functions, you must configure the extension to your Azure OpenAI service endpoint and key.
+
+1. Using the same browser tab where the Cloud Shell is open, navigate to your Azure OpenAI resource in the [Azure portal](https://portal.azure.com/) and select the **Keys and Endpoint** item under **Resource Management** from the left-hand menu, then copy your endpoint and access key.
+
+    ![The Azure OpenAI service's Keys and Endpoints page is selected and highlighted, with the KEY 1 and Endpoint copy to clipboard buttons highlighted.](media/azure-openai-keys-and-endpoints.png)
+
+    You can use either `KEY1` or `KEY2`. Always having two keys allows you to securely rotate and regenerate keys without causing service disruption.
+
+2. In the command below, replace the `{endpoint}` and `{api-key}` tokens with values you retrieved from the Azure portal, then run the commands from the `psql` command prompt in the Cloud Shell pane to add your values to the configuration table.
+
+    ```sql
+    SELECT azure_ai.set_setting('azure_openai.endpoint','{endpoint}');
+    SELECT azure_ai.set_setting('azure_openai.subscription_key', '{api-key}');
+    ```
+
+3. Verify the settings written in the configuration table using the following queries:
+
+    ```sql
+    SELECT azure_ai.get_setting('azure_openai.endpoint');
+    SELECT azure_ai.get_setting('azure_openai.subscription_key');
+    ```
+
+    The `azure_ai` extension is now connected to your Azure OpenAI account and ready to generate vector embeddings.
+
 ## Exercise 4: Generate vector embeddings with Azure OpenAI
 
 The `azure_ai` extension's `azure_openai` schema enables the use of Azure OpenAI for creating vector embeddings for text values. Using this schema, you can [generate embeddings with Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/how-to/embeddings) directly from the database to create vector representations of input text, which can then be used in vector similarity searches, as well as consumed by machine learning models.
 
-Embeddings are a technique of using machine learning models to evaluate how closely related information is. This technique allows for efficient identification of relationships and similarities between data, allowing algorithms to identify patterns and make accurate predictions.
+[Embeddings](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#embeddings) are a concept in machine learning and natural language processing (NLP) that involves representing objects, such as words, documents, or entities, as [vectors](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#vectors) in a multi-dimensional space. Embeddings allow machine learning models to evaluate how closely related information is. This technique allows for efficient identification of relationships and similarities between data, allowing algorithms to identify patterns and make accurate predictions.
 
 ### Task 1: Enable vector support with the pgvector extension
 
 The `azure_ai` extension allows you to generate embeddings for input text. To enable the generated vectors to be stored alongside the rest of your data in the database, you must install the `pgvector` extension by following the guidance in the [enable vector support in your database](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-use-pgvector#enable-extension) documentation.
 
-1. TODO: Add steps for installing `pgvector`...
+1. Install the `pgvector` extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
 
     ```sql
     CREATE EXTENSION IF NOT EXISTS vector;
@@ -212,55 +239,83 @@ The `azure_ai` extension allows you to generate embeddings for input text. To en
 2. With vector supported added to your database, add a new column to the `listings` table using the `vector` data type to store embeddings within the table. The `text-embedding-ada-002` model produces vectors with 1536 dimensions, so you must specify `1536` as the vector size.
 
     ```sql
-    ALTER TABLE listings
-    ADD COLUMN bill_vector vector(1536);
+    ALTER TABLE abb.listings
+    ADD COLUMN description_vector vector(1536);
     ```
 
-### Task 2: Generate and store vectors
+### Task 2: Generate and store vector embeddings
 
-The `bill_summaries` table is now ready to store embeddings. Using the `azure_openai.create_embeddings()` function, you will create vectors for the `bill_text` field and insert them into the newly created `bill_vector` column in the `bill_summaries` table.
+The `listings` table is now ready to store embeddings. Using the `azure_openai.create_embeddings()` function, you create vectors for the `description` field and insert them into the newly created `description_vector` column in the `listings` table.
 
-Before using the `create_embeddings()` function, run the following command to inspect it and review the required arguments:
+1. Before using the `create_embeddings()` function, run the following command to inspect it and review the required arguments:
 
-```sql
-\x
-\df+ azure_openai.*
-\x
-```
+    ```sql
+    \df+ azure_openai.*
+    ```
 
-The `Argument data types` property in the output of the `\df+ azure_openai.*` command reveals the list of arguments the function expects.
+    The `Argument data types` property in the output of the `\df+ azure_openai.*` command reveals the list of arguments the function expects.
 
-| Argument | Type | Default | Description |
-| -------- | ---- | ------- | ----------- |
-| deployment_name | `text` || Name of the deployment in Azure OpenAI studio that contains the `text-embeddings-ada-002` model. |
-| input | `text` || Input text used to create embeddings. |
-| timeout_ms | `integer` | 3600000 | Timeout in milliseconds after which the operation is stopped. |
-| throw_on_error | `boolean` | true | Flag indicating whether the function should, on error, throw an exception resulting in a rollback of the wrapping transactions. |
+    | Argument | Type | Default | Description |
+    | -------- | ---- | ------- | ----------- |
+    | deployment_name | `text` || Name of the deployment in Azure OpenAI studio that contains the `text-embeddings-ada-002` model. |
+    | input | `text` || Input text used to create embeddings. |
+    | timeout_ms | `integer` | 3600000 | Timeout in milliseconds after which the operation is stopped. |
+    | throw_on_error | `boolean` | true | Flag indicating whether the function should, on error, throw an exception resulting in a rollback of the wrapping transactions. |
 
-The first argument is the `deployment_name`, assigned when your embeddings model was deployed in your Azure OpenAI account. To retrieve this value, go to your Azure OpenAI resource in the Azure portal. From there, select the **Model deployments** item under **Resource Management** in the left-hand navigation menu, then select **Manage Deployments** to open Azure OpenAI Studio. On the **Deployments** tab in Azure OpenAI Studio, copy the **Deployment name** value associated with the `text-embedding-ada-002` model deployment.
+2. The first argument required by the `azure_openai.create_embeddings()` function is the `deployment_name`. This name was assigned when you deployed the embeddings model in your Azure OpenAI account. To retrieve this value, return to [Azure OpenAI Studio](https://oai.azure.com/), select **Deployments** under **Management** in the left-hand navigation menu. On the **Deployments** page, copy the **Deployment name** value associated with the `text-embedding-ada-002` model deployment.
 
-![The embeddings deployment for the text-embedding-ada-002 model is highlighted on the Deployments tab in Azure OpenAI Studio.](./media/azure_openai_studio_deployments_embeddings.png)
+    ![The embeddings deployment for the text-embedding-ada-002 model is highlighted on the Deployments tab in Azure OpenAI Studio.](media/azure-openai-studio-deployments-embeddings.png)
 
-Using this information, run a query to update each record in the `bill_summaries` table, inserting the generated vector embeddings for the `bill_text` field into the `bill_vector` column using the `azure_openai.create_embeddings()` function. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page, and then run the following command:
+3. Using the deployment name, run the following query to update each record in the `listings` table, inserting the generated vector embeddings for the `description` field into the `description_vector` column using the `azure_openai.create_embeddings()` function. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page:
 
-```sql
-UPDATE bill_summaries b
-SET bill_vector = azure_openai.create_embeddings('{your-deployment-name}', b.bill_text);
-```
+    ```sql
+    WITH empty_vectors AS (
+        SELECT id FROM abb.listings
+        WHERE description_vector IS NULL
+        LIMIT 100
+    )
+    UPDATE abb.listings l
+    SET description_vector = azure_openai.create_embeddings('{your-deployment-name}', l.description, throw_on_error => false)
+    WHERE id IN (SELECT id FROM empty_vectors);
+    ```
 
-Execute the following query to view the embedding generated for the first record in the table. You can run `\x` first if the output is difficult to read.
+    Rerun the above query until all of the records have been updated. This will be indicated by an output that reads `UPDATE ##`, where `##` is a number less than 100. TODO: Mention the requests per minute rate limit.
 
-```sql
-SELECT bill_vector FROM bill_summaries LIMIT 1;
-```
+    **TODO: Determine if it makes sense to just do a couple hundred records and base the following queries off of those, or if we want to show how to handle cases, like above, where there are many records, and you have to account for rate limiting and token throttling.**
 
-Each embedding is a vector of floating point numbers, such that the distance between two embeddings in the vector space is correlated with semantic similarity between two inputs in the original format.
+4. Execute the following query to view the embeddings generated for the first record in the table.
+
+    ```sql
+    SELECT description_vector FROM abb.listings LIMIT 1;
+    ```
+
+    Each embedding is a vector of floating point numbers, such that the distance between two embeddings in the vector space is correlated with semantic similarity between two inputs in the original format.
+
+### Task 3: Perform a vector similarity search
+
+Vector similarity is a method used to measure how similar two items are by representing them as vectors, which are series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors.
+
+1. To enable more efficient searching over the `vector` field by creating an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to use the latest graph-based algorithms to approximate nearest-neighbor queries.
+
+    ```sql
+    CREATE INDEX ON abb.listings USING hnsw (description_vector vector_cosine_ops);
+    ```
+
+2. With everything now in place, you are now ready to execute a [cosine similarity](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings#cosine-similarity) search query against the database. Run the query below to do a vector similarity search against listing descriptions. The embeddings are generated for an input question and then cast to a vector array (`::vector`), which allows it to be compared against the vectors stored in the `listings` table.
+
+    ```sql
+    SELECT id, name, description FROM abb.listings
+    ORDER BY description_vector <=> azure_openai.create_embeddings('embeddings', 'Properties with a private room near Discovery Park')::vector
+    LIMIT 3;
+    ```
+
+    The query uses the `<=>` [vector operator](https://github.com/pgvector/pgvector#vector-operators), which represents the "cosine distance" operator used to calculate the distance between two vectors in a multi-dimensional space.
 
 ## Exercise 5: Integrate Azure AI Services
 
 The Azure AI services integrations included in the `azure_cognitive` schema of the `azure_ai` extension provide a rich set of AI Language features accessible directly from the database. The functionalities include sentiment analysis, language detection, key phrase extraction, entity recognition, and text summarization. Access to these capabilities is enabled through the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/overview).
 
-To review the complete list of Azure AI capabilities accessible through the extension, view the [Integrate Azure Database for PostgreSQL Flexible Server with Azure Cognitive Services](**TODO: Add link to the doc here**).
+To review the complete list of Azure AI capabilities accessible through the extension, view the [Integrate Azure Database for PostgreSQL Flexible Server with Azure Cognitive Services documentation](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-cognitive).
 
 ### Task 1: Provision an Azure AI Language service
 
@@ -303,20 +358,20 @@ An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-se
 
     ![The go to resource group button is highlighted on the Language service deployment page.](media/create-language-service-deployment-complete.png)
 
-9. In the resource group, select the **Keys and Endpoint** item under **Resource Management** from the left-hand navigation menu.
-
-    TODO: insert screenshot.
-
 ### Task 2: Set the Azure AI Language service endpoint and key
 
-As with the `azure_openai` functions, to successfully make calls against Azure AI services using the `azure_ai` extension, you must provide the endpoint and a key for your Azure AI Language service. Retrieve those values by navigating to your Language service resource in the Azure portal and selecting the **Keys and Endpoint** item under **Resource Management** from the left-hand menu. Copy your endpoint and access key. You can use either `KEY1` or `KEY2`.
+As with the `azure_openai` functions, to successfully make calls against Azure AI services using the `azure_ai` extension, you must provide the endpoint and a key for your Azure AI Language service.
 
-In the command below, replace the `{endpoint}` and `{api-key}` tokens with values you retrieved from the Azure portal, then run the commands from the `psql` command prompt to add your values to the configuration table.
+1. Using the same browser tab where the Cloud Shell is open, navigate to your Language service resource in the [Azure portal](https://portal.azure.com/) and select the **Keys and Endpoint** item under **Resource Management** from the left-hand navigation menu.
 
-```sql
-SELECT azure_ai.set_setting('azure_cognitive.endpoint','{endpoint}');
-SELECT azure_ai.set_setting('azure_cognitive.subscription_key', '{api-key}');
-```
+    ![The Keys and Endpoints page of the Language service is displayed, with the Keys and Endpoints menu item highlighted in the left-hand navigation menu.](media/azure-language-service-keys-and-endpoints.png)
+
+2. Copy your endpoint and access key values, then in the command below, replace the `{endpoint}` and `{api-key}` tokens with values you retrieved from the Azure portal. Run the commands from the `psql` command prompt in the Cloud Shell to add your values to the configuration table.
+
+    ```sql
+    SELECT azure_ai.set_setting('azure_cognitive.endpoint','{endpoint}');
+    SELECT azure_ai.set_setting('azure_cognitive.subscription_key', '{api-key}');
+    ```
 
 ### Task 3: Analyze sentiment of reviews
 
@@ -327,6 +382,10 @@ TODO...
 Explore a low code/nocode chatbot using postgres? (Have to see how easy)
 
 Possibly use a simple Steamlit app to interact with database and execute vector similarity searches?
+
+Take a look at this example from Denzil: https://github.com/YugabyteDB-Samples/yugabytedb-azure-openai-lodging-service
+
+TODO: Come up with some good queries that cross the boundaries of the work that has been done in labs 3 and 4 to really showcase the capabilities. Combine geospatial query with semantic search and other such things.
 
 ## Exercise 7: Clean up
 
