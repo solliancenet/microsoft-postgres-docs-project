@@ -375,7 +375,29 @@ As with the `azure_openai` functions, to successfully make calls against Azure A
 
 ### Task 3: Analyze sentiment of reviews
 
+In this task, you will use the `azure_cognitive.XXX` function to analyze the sentiment of reviews for properties and assign the sentiment score to a new column in the reviews table.
+
 TODO...
+
+1. To perform sentiment analysis using the `azure_cognitive` schema in the `azure_ai` extension, you use the `analyze_sentiment` function. Run the command below to quickly review that function:
+
+    ```sql
+    \df azure_cognitive.analyze_sentiment
+    ```
+
+2. It is also important to understand the output of that function, so you can properly handle the value it returns. Run the following command to inspect the `sentiment_analysis_result` type:
+
+    ```sql
+    \dT+ azure_cognitive.sentiment_analysis_result
+    ```
+
+    This `azure_cognitive.sentiment_analysis_result` is a result record containing the sentiment predictions of the input text. It contains the sentiment, which can be positive, negative, neutral and mixed; and the score for positive, neutral and negative found in the text represented as a real number between 0 and 1. For example in (neutral,0.26,0.64,0.09), the sentiment is neutral with positive score at 0.26, neutral at 0.64 and negative at 0.09.
+
+3. Now that you have an understanding of how to analyze sentiment using the extension and what the expected return type is, execute the following query to see how it works:
+
+    ```sql
+    ```
+    
 
 ## Exercise 6: Build sample app
 
