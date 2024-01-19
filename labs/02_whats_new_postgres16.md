@@ -10,7 +10,7 @@
     - [Task 2: Add SQL/JSON constructors](#task-2-add-sqljson-constructors)
     - [Task 3: Aggregate function ANY\_VALUE()](#task-3-aggregate-function-any_value)
     - [Task 4: COPY batch\_size support](#task-4-copy-batch_size-support)
-    - [Allow a COPY FROM value to map to a column's DEFAULT](#allow-a-copy-from-value-to-map-to-a-columns-default)
+    - [Task 5: Allow a COPY FROM value to map to a column's DEFAULT](#task-5-allow-a-copy-from-value-to-map-to-a-columns-default)
   - [Exercise 3: Infra Features](#exercise-3-infra-features)
     - [Task 1: New options for CREATE USER](#task-1-new-options-for-create-user)
     - [Task 2: Allow parallelization of FULL and internal right OUTER hash joins](#task-2-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
@@ -27,11 +27,6 @@ In this lab you will explore the new developer and infrastructure features of Po
 
 ## Prerequisites
 
-- [Azure subscription](https://azure.microsoft.com/free/)
-- [Resource group](https://learn.microsoft.com/azure/azure-resource-manager/management/manage-resource-groups-portal)
-- [Azure Database for PostgreSQL Flexible Server instance](https://learn.microsoft.com/azure/postgresql/flexible-server/quickstart-create-server-portal)
-- [pgAdmin](https://www.pgadmin.org/download/)
-- `psql` access
 - Perform Lab 01 steps
 
 ## Exercise 1: Setup
@@ -40,13 +35,13 @@ In this exercise you will create some tables and use the COPY command to move da
 
 ### Task 1: Create tables and data
 
-- Open a command prompt, run the following command to connect to your database:
+- In your lab virtual machine, open a command prompt, run the following command to connect to your database, be sure to replace `PREFIX` with your lab information:
 
 ```cmd
 psql -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -U s2admin -d airbnb
 ```
 
-- Run the following command to import the data to the server
+- Run the following commands to create the tables and import the data to the server:
 
 ```sql
 CREATE TABLE temp_calendar (data jsonb);
@@ -74,13 +69,20 @@ SELECT replace(data['listing_id']::varchar(50), '"', ''), data::jsonb
 FROM temp_calendar;
 ```
 
-- Review the new items added to the database:
+![Alt text](media/02_01_insert_table_data.png)
+
+- Switch to pgAdmin
+- Navigate to **Databases->airbnb->Schemas->public->Tables**
+- Right-click the **Tables** node, select **Query Tool**
+- Run the following commands to see the imported data:
 
 ```sql
 select * from listings;
 select * from reviews;
 select * from calendar;
 ```
+
+![Alt text](media/02_01_select_queries.png)
 
 ## Task 2: Configuring a server parameters
 
@@ -112,7 +114,7 @@ There are several developer based changes in PostgreSQL 16. In this exercise we 
 
 The `IS JSON` checks include checks for values, arrays, objects, scalars, and unique keys.
 
-- Run the following pre-16 commands:
+- In pgAdmin, run the following pre-16 commands. The use of `->` and `->>` are pre-Postgres 14 commands used to navigate a json hierarchy:
 
 ```sql
 SELECT
@@ -123,7 +125,9 @@ FROM
    listings LIMIT 1;
 ```
 
-- The use of `->` and `->>` are pre-Postgres 14 commands used to navigate a json hierarchy.  The same query can also be written in Postgres 14 and higher, note the usage of the `[` `]`:
+![Alt text](media/02_02_json_01.png)
+
+- The same query can also be written in Postgres 14 and higher, note the usage of the bracket notation `[]`:
 
 ```sql
 SELECT
@@ -134,7 +138,9 @@ FROM
    listings LIMIT 1;
 ```
 
-- In Postgres 16, you can now use the following:
+![Alt text](media/02_02_json_02.png)
+
+- In Postgres 16, you can now use the SQL standard `IS JSON` syntax:
 
 ```sql
 SELECT
@@ -144,6 +150,8 @@ SELECT
 FROM
    listings LIMIT 1;
 ```
+
+![Alt text](media/02_02_json_03.png)
 
 - Additionally, you can get more granular about the type of JSON.
 
@@ -156,11 +164,13 @@ FROM
    listings LIMIT 1;
 ```
 
+![Alt text](media/02_02_json_04.png)
+
 ### Task 2: Add SQL/JSON constructors
 
 In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON_ARRAYAGG()`, and `JSON_OBJECT()` that are part of the SQL standard and now PostgreSQL 16.  
 
-- Run the following PostgreSQL 16 commands:
+- In pgAdmin, run the following PostgreSQL 16 commands:
 
 ```sql
 SELECT
@@ -169,6 +179,8 @@ FROM
    listings;
 ```
 
+![Alt text](media/02_02_json_05.png)
+
 ```sql
 SELECT
     json_arrayagg(data['id'])
@@ -176,9 +188,13 @@ FROM
     listings;
 ```
 
+![Alt text](media/02_02_json_06.png)
+
 ```sql
 SELECT json_object(ARRAY[1, 'a', true, row(2, 'b', false)]::TEXT[]);
 ```
+
+![Alt text](media/02_02_json_07.png)
 
 ### Task 3: Aggregate function ANY_VALUE()
 
@@ -198,7 +214,9 @@ FROM
 GROUP BY data['zipcode']
 ```
 
-This is the new v16 syntax:
+![Alt text](media/02_02_aggregate.png)
+
+- Modify the query to the new v16 syntax:
 
 ```sql
 SELECT 
@@ -208,21 +226,22 @@ SELECT
 FROM 
     listings
 GROUP BY data['zipcode']
-
 ```
+
+![Alt text](media/02_02_aggregate_02.png)
 
 ### Task 4: COPY batch_size support
 
 It is now possible to batch insert multiple records with the COPY statement for a foreign table using the `postgres_fdw` module.  Previously, this would insert a single record at a time from the foreign table which is much less efficient then doing multiple records.
 
-Setup the foreign table (windows), be sure to replace the `PREFIX` value:
+- Setup the foreign table (windows), be sure to replace the `PREFIX` value:
 
 ```sql
 SET PGPASSWORD=Seattle123Seattle123
 psql -h PREFIX-pg-flex-eastus-14.postgres.database.azure.com -d airbnb -U s2admin -p 5432 -a -w -f C:\microsoft-postgres-docs-project\artifacts\sql\createdb.sql
 ```
 
-Configure a new foriegn table (be sure to replace `PREFIX`):
+- Configure a new foriegn table (be sure to replace `PREFIX`):
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS postgres_fdw;
@@ -238,7 +257,7 @@ OPTIONS (user 's2admin', password 'Seattle123Seattle123');
 create schema postgres14;
 ```
 
-Now import the schema from the remote Azure Database for PostgreSQL Flexible Server:
+- Now import the schema from the remote Azure Database for PostgreSQL Flexible Server:
 
 ```sql
 IMPORT FOREIGN SCHEMA public LIMIT TO (reviews)
@@ -257,7 +276,7 @@ ALTER SERVER postgres14 options (add batch_size '10');
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=97da48246d34807196b404626f019c767b7af0df).
 
-### Allow a COPY FROM value to map to a column's DEFAULT
+### Task 5: Allow a COPY FROM value to map to a column's DEFAULT
 
 ```sql
 CREATE TABLE default_test(c1 INT PRIMARY KEY, c2 TEXT DEFAULT 'the_default_value') ;
@@ -548,7 +567,7 @@ References:
 
 ### Task 2: Performance without PgBouncer
 
-- Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password.  Notice the use of the `-c` parameter that will create 20 different connections:
+- Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password.  Notice the use of the `-c` parameter that will create 20 different connections, be sure to replace `PREFIX` with your lab information:
 
 ```sql
 pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U wsuser -d contosostore
@@ -560,7 +579,7 @@ pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p
 
 ### Task 3: Performance with PgBouncer
 
-- Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password. Notice the change of the port to the PgBouncer port of `6432`:
+- Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` with your lab information:
 
 ```sql
 pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 6432 -U wsuser -d contosostore

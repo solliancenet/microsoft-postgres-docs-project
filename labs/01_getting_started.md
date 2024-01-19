@@ -34,7 +34,7 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
 
     ![Alt text](media/01_00_databases.png)
 
-- Fill out the Basics tab with the following information:
+- Fill out the Basics tab with the following information, be sure to replace `PREFIX` with your lab information:
   - Resource Group: Name of your lab resource group
   - Server name:  `PREFIX-pg-flex-eastus-16`
   - Region: `East US`
@@ -172,7 +172,7 @@ If you are using the virtual machine from the lab environment, all the software 
   
   ![Alt text](media/01_14_pg_admin_register.png)
 
-- For name, type **PREFIX-pg-flex-eastus-16**
+- For name, type **PREFIX-pg-flex-eastus-16**, be sure to replace `PREFIX` with your lab information
 - Select the **Connection** tab
 - For the **host name/address**, paste the server name you copied from above
 - For the username, type **s2admin**
@@ -213,7 +213,7 @@ If you would like to run these labs in your own Azure subscription, you will nee
 - Select **Build your own template in the editor**
 - Copy and paste the `/artifacts/template.json` file into the window
 - Select **Save**
-- Set the prefix parameter.
+- Set the **prefix** parameter.
 - Select **Review + create**
 - Select **Create**, the deployment will take a few minutes.  Once deployed, you will have:
   - Two PostgreSQL servers (14 and 16).
