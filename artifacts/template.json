@@ -527,6 +527,9 @@
                 "version": "14",
                 "haEnabled": "Disabled",
                 "createMode": "Default",
+                "network": {
+                    "publicNetworkAccess": "Enabled"
+                },
                 "administratorLogin": "[parameters('adminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "storageProfile": {
@@ -555,6 +558,9 @@
                 "version": "16",
                 "haEnabled": "Disabled",
                 "createMode": "Default",
+                "network": {
+                    "publicNetworkAccess": "Enabled"
+                },
                 "administratorLogin": "[parameters('adminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "storageProfile": {
