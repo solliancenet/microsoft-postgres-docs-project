@@ -16,7 +16,7 @@
     - [Task 2: Allow parallelization of FULL and internal right OUTER hash joins](#task-2-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
     - [Task 3: Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task-3-allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
     - [Task 4: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-4-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
-    - [Task 5: Use new VACUUM options to improve the performance](#task-5-use-new-vacuum-options-to-improve-the-performance)
+    - [Task 5: Use new VACUUM options to improve VACUUM performance](#task-5-use-new-vacuum-options-to-improve-vacuum-performance)
     - [Task 6: Using pg\_stat\_io for enhanced IO monitoring](#task-6-using-pg_stat_io-for-enhanced-io-monitoring)
   - [Exercise 3: PgBouncer](#exercise-3-pgbouncer)
     - [Task 1: Enable PgBouncer](#task-1-enable-pgbouncer)
@@ -278,13 +278,21 @@ For a more in-depth look at the code change for this feature, reference [here](h
 
 ### Task 5: Allow a COPY FROM value to map to a column's DEFAULT
 
+The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data into a table using a common token in the source data.
+
+- Review the `C:\microsoft-postgres-docs-project\artifacts\data\default.csv` file, notice the usage of the `\D` in the source data:
+
+![Alt text](media/02_02_copy_from_default.png)
+
+- Run the following command to import the data:
+
 ```sql
 CREATE TABLE default_test(c1 INT PRIMARY KEY, c2 TEXT DEFAULT 'the_default_value') ;
 
 COPY default_test FROM 'C:\microsoft-postgres-docs-project\artifacts\data\default.csv'; WITH (format csv, default '\D', header);
 ```
 
-Enter the following values:
+- Run the following command to review the results of the `COPY FROM` command:
 
 ```cmd
 SELECT
@@ -299,7 +307,9 @@ Notice every entry from the source file with the default of '\D' was converted t
 
 ### Task 1: New options for CREATE USER
 
-The new options control the valid-until date, bypassing of row-level security, and role membership.
+The new options for `CREATE USER` control the valid-until date, bypassing of row-level security, and role membership.
+
+- Run the following commands:
 
 ```sql
 CREATE USER adminuser1 CREATEROLE REPLICATION CREATEDB;
@@ -311,10 +321,10 @@ CREATE USER user_repl1 REPLICATION;
 CREATE USER user_db1 CREATEDB;
 ```
 
-Additionally, you can now do `VALID UNTIL`. The VALID UNTIL clause defines an expiration time for a password only, not for the user account:
+- Additionally, you can now do `VALID UNTIL`. The VALID UNTIL clause defines an expiration time for a password only, not for the user account.  Run the following:
 
 ```sql
-CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2024-01-01';
+CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2025-01-01';
 ```
 
 > NOTE: Although it is possible to do assign the `BYPASSRLS` for a user in PostgreSQL 16, Azure Database for PostgreSQL Flexible Server does not support this feature.
@@ -325,7 +335,8 @@ The more things you can do in parallel the faster you will get results.  As is t
 
 With this change, any queries you were performing using these joins will now run drastically faster.
 
-Here are some examples of performing these types of joins:
+- Switch to pgAdmin
+- Run the following commands to setup some sample tables and data on the PG16 instance.
 
 ```sql
 DROP TABLE IF EXISTS departments;
@@ -363,6 +374,8 @@ VALUES
 	('Julian Isla', NULL);
 ```
 
+- Run the following command to see the execution place of the the select statement:
+
 ```sql
 EXPLAIN SELECT
 	employee_name,
@@ -373,7 +386,11 @@ FULL OUTER JOIN departments d
         ON d.department_id = e.department_id;
 ```
 
-In the execution plan, you should notice the use of a `Parallel Hash Full Join`.  In previous versions of PostgreSQL, you would see a regular `Hash Full Join`.
+- In the execution plan, you should notice the use of a `Parallel Hash Full Join`.  
+
+TODO
+
+- In previous versions of PostgreSQL, you would see a regular `Hash Full Join`.
 
 ### Task 3: Allow aggregate functions string_agg() and array_agg() to be parallelized
 
@@ -388,6 +405,8 @@ partitions have been combined.**
 
 The following is an example of a query that performs aggregates with the two functions included.  If this were to run on a pre-16 version, the query would be much slower than in version 16.
 
+- In pgAdmin, run the following:
+
 ```sql
 create table agg_test (x int, y int);
 
@@ -396,7 +415,7 @@ select (case x % 4 when 1 then null else x end), x % 10
 from generate_series(1,5000) x;
 ```
 
-Run a select statement against it:
+- Run a select statement against it to review the data generated:
 
 ```sql
 SELECT
@@ -411,7 +430,9 @@ GROUP BY
     y;
 ```
 
-Review the `EXPLAIN` plan details, notice the `HashAggregate` plan and the costs:
+![Alt text](media/02_03_query_01.png)
+
+- Review the `EXPLAIN` plan details, notice the `HashAggregate` plan and the costs:
 
 ```sql
 EXPLAIN SELECT
@@ -426,7 +447,9 @@ GROUP BY
     y;
 ```
 
-Set the parallel setup costs parameters:
+![Alt text](media/02_03_query_02.png)
+
+- Set the parallel setup costs parameters:
 
 ```sql
 set parallel_setup_cost TO 0;
@@ -435,7 +458,7 @@ set parallel_leader_participation TO 0;
 set min_parallel_table_scan_size = 0;
 ```
 
-Again, review the `EXPLAIN` plan details, notice the new `Finalize GroupAggregate` plan and the significantly reduced costs:
+- Again, review the `EXPLAIN` plan details, notice the new `Finalize GroupAggregate` plan and the significantly reduced costs:
 
 ```sql
 EXPLAIN SELECT
@@ -450,7 +473,7 @@ GROUP BY
     y;
 ```
 
-To compare between versions, you can use the `EXPLAIN` command to see that the query plan in 16 will display a `FINALIZE GroupAggregate` versus a much more costly pre-16 `HashAggregate`.
+![Alt text](media/02_03_query_03.png)
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=16fd03e956540d1b47b743f6a84f37c54ac93dd4).
 
@@ -458,19 +481,23 @@ For a more in-depth look at the code change for this feature, reference [here](h
 
 Previously, attempting to get an execution plan for a parameterized query was fairly complicated.  For example, using a prepared statement will have several executions which may required you to execute those all separately and then put the results together. Using the new feature will eliminate those extra steps.
 
-Attempt to get an execution plan for a parameterized query using the old way:
+- Run the following command to attempt to get an execution plan for a parameterized query using the pre-16 method:
 
 ```sql
 EXPLAIN SELECT * FROM pg_class WHERE relname = $1;
 ```
 
-You should get an error.
+- You should get an error.
 
-To get an execution plan for a parametrized query, run the following:
+![Alt text](media/02_04_query_01.png)
+
+- To get an execution plan for a parametrized query, run the following:
 
 ```sql
 EXPLAIN (GENERIC_PLAN) SELECT * FROM pg_class WHERE relname = $1;
 ```
+
+![Alt text](media/02_04_query_02.png)
 
 > Note the use of the parenthesis.  The old way (shown above) was to not utilize parenthesis and is only for backwards compatibility. Newer options such as `GENERIC_PLAN` will only work with the new syntax.
 
@@ -479,7 +506,7 @@ As you can see above, you can use parameter placeholders like `$1` instead of an
 - You can use parameters only with the statements SELECT, INSERT, UPDATE, DELETE and VALUES.
 - You can only use parameters instead of constants (literals). You can’t use parameters instead of identifiers (object names) or keywords, among other things.
 
-### Task 5: Use new VACUUM options to improve the performance
+### Task 5: Use new VACUUM options to improve VACUUM performance
 
 The PostgreSQL `VACUUM` command is used to garbage-collect and analyze databases.  It works by removing `dead` tuples left over by large changes to a database (such as frequently updated tables). By removing the gaps between the data, you can speed up the performance of specific operations and increase your disk space.
 
@@ -491,13 +518,13 @@ These server parameters are called `vacuum_cost*` or `auto_vacuum_vacuum_cost*`.
 
 Perform the following steps to see how this could potentially work:
 
-Start a vacuum operation:
+- Execute the following to start a vacuum operation:
 
 ```sql
 vacuum analyze;
 ```
 
-While the operation is executing, run the following command to increase the cost limits:
+- While the operation is executing, run the following command to increase the cost limits:
 
 ```sql
 SET autovacuum_vacuum_cost_limit TO 300;
@@ -506,7 +533,7 @@ SET vacuum_cost_limit TO 400;
 
 > NOTE: These can also be set in the Azure Portal.
 
-Use the following command to monitor the vacuum operations:
+- Use the following command to monitor the vacuum operations:
 
 ```sql
 select schemaname,relname,n_dead_tup,n_live_tup,round(n_dead_tup::float/n_live_tup::float*100) dead_pct,autovacuum_count,last_vacuum,last_autovacuum,last_autoanalyze,last_analyze from pg_stat_all_tables where n_live_tup >0;
@@ -524,19 +551,19 @@ Per the [postgresql documentation](https://www.postgresql.org/docs/devel/monitor
 
 Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation I/O which bypasses shared buffers (e.g. when moving a table from one tablespace to another) is currently not tracked."
 
-Run the following command to see the information available:
+- Run the following command to see the information available:
 
 ```sql
 select * from pg_stat_io;
 ```
 
-Using `pgbench` you can generate some IO data:
+- Using `pgbench` you can generate some IO data:
 
 ```sql
-pgbench -i -s 10 postgres
+pgbench -i -s 10 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
 ```
 
-Again, run the previous command to see the newly generated IO information:
+- Again, run the previous command to see the newly generated IO information:
 
 ```sql
 select * from pg_stat_io;
