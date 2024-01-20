@@ -357,7 +357,11 @@ select (case x % 4 when 1 then null else x end), x % 10
 from generate_series(1,5000) x;
 ```
 
-- Ensure that your instance is enabled and configured for parallel hash joins:
+- Ensure that your instance is enabled and configured for parallel hash joins.  You should see the following values.
+  - parallel_type_cost = `0.1`
+  - parallel_setup_cost = `1000`
+  - max_parallel_workers_per_gather = `2`
+  - enable_parallel_hash = `on`
 
 ```sql
 show parallel_tuple_cost;
@@ -366,7 +370,7 @@ show max_parallel_workers_per_gather;
 show enable_parallel_hash;
 ```
 
-> NOTE: If the table values are very small, the effort of doing a parallel may be more than the effort to do a non-parallel execution.  The tables and rows above should be enough to generate a Parallel Hash Full Join plan.
+> NOTE: If the table values are very small, the effort of doing a parallel operation may be more than the effort to do a non-parallel execution.  The tables and rows above should be enough to generate a Parallel Hash Full Join plan.
 
 - Run the following command to see the execution plan of the the select statement:
 
