@@ -2,23 +2,23 @@
 
 - [Hands on Lab: Working with the latest capabilities of Postgres 16](#hands-on-lab-working-with-the-latest-capabilities-of-postgres-16)
   - [Prerequisites](#prerequisites)
-  - [Exercise 1: Setup](#exercise-1-setup)
+  - [Exercise 1: Setup and Configuration](#exercise-1-setup-and-configuration)
     - [Task 1: Create tables and data](#task-1-create-tables-and-data)
-  - [Task 2: Configuring a server parameters](#task-2-configuring-a-server-parameters)
+    - [Task 2: Configuring server parameters](#task-2-configuring-server-parameters)
   - [Exercise 2: Developer Features](#exercise-2-developer-features)
     - [Task 1: Add SQL/JSON object checks](#task-1-add-sqljson-object-checks)
     - [Task 2: Add SQL/JSON constructors](#task-2-add-sqljson-constructors)
     - [Task 3: Aggregate function ANY\_VALUE()](#task-3-aggregate-function-any_value)
     - [Task 4: COPY batch\_size support](#task-4-copy-batch_size-support)
     - [Task 5: Allow a COPY FROM value to map to a column's DEFAULT](#task-5-allow-a-copy-from-value-to-map-to-a-columns-default)
-  - [Exercise 3: Infra Features](#exercise-3-infra-features)
+  - [Exercise 3: Performance Features](#exercise-3-performance-features)
     - [Task 1: New options for CREATE USER](#task-1-new-options-for-create-user)
-    - [Task 2: Allow parallelization of FULL and internal right OUTER hash joins](#task-2-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
+    - [Task 2: Allow parallelization of FULL and internal RIGHT OUTER hash joins](#task-2-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
     - [Task 3: Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task-3-allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
     - [Task 4: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-4-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
     - [Task 5: Use new VACUUM options to improve VACUUM performance](#task-5-use-new-vacuum-options-to-improve-vacuum-performance)
     - [Task 6: Using pg\_stat\_io for enhanced IO monitoring](#task-6-using-pg_stat_io-for-enhanced-io-monitoring)
-  - [Exercise 3: PgBouncer](#exercise-3-pgbouncer)
+  - [Exercise 4: PgBouncer](#exercise-4-pgbouncer)
     - [Task 1: Enable PgBouncer](#task-1-enable-pgbouncer)
     - [Task 2: Performance without PgBouncer](#task-2-performance-without-pgbouncer)
     - [Task 3: Performance with PgBouncer](#task-3-performance-with-pgbouncer)
@@ -29,7 +29,7 @@ In this lab you will explore the new developer and infrastructure features of Po
 
 - Perform Lab 01 steps
 
-## Exercise 1: Setup
+## Exercise 1: Setup and Configuration
 
 In this exercise you will create some tables and use the COPY command to move data into those tables.  The data is in JSON format and not SQL format.
 
@@ -74,6 +74,9 @@ FROM temp_calendar;
 - Switch to pgAdmin
 - Navigate to **Databases->airbnb->Schemas->public->Tables**
 - Right-click the **Tables** node, select **Query Tool**
+
+![Alt text](media/query_tool.png)
+
 - Run the following commands to see the imported data:
 
 ```sql
@@ -84,7 +87,7 @@ select * from calendar;
 
 ![Alt text](media/02_01_select_queries.png)
 
-## Task 2: Configuring a server parameters
+### Task 2: Configuring server parameters
 
 In order to demonstrate some of the existing and new features of Azure Databse for PostgreSQL, we will have you modify some server parameters to support this lab.  Note that you may or may not need to do this when running your own environments and appications.
 
@@ -266,7 +269,7 @@ FROM SERVER postgres14 INTO postgres14;
 
 > NOTE: You must have the **Allow public access from any Azure service within Azure to this server** enabled on the Postgres 14 server for the command to successfully execute.
 
-Use the new batch feature to use `COPY` to copy values from the foreign table:
+- Use the new batch feature to use `COPY` to copy values from the foreign table:
 
 ```sql
 ALTER SERVER postgres14 options (add batch_size '10');
@@ -303,7 +306,7 @@ FROM
 
 Notice every entry from the source file with the default of '\D' was converted to the `DEFAULT` value from the column definition.
 
-## Exercise 3: Infra Features
+## Exercise 3: Performance Features
 
 ### Task 1: New options for CREATE USER
 
@@ -329,9 +332,9 @@ CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2025-01-01';
 
 > NOTE: Although it is possible to do assign the `BYPASSRLS` for a user in PostgreSQL 16, Azure Database for PostgreSQL Flexible Server does not support this feature.
 
-### Task 2: Allow parallelization of FULL and internal right OUTER hash joins
+### Task 2: Allow parallelization of FULL and internal RIGHT OUTER hash joins
 
-The more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal right `OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs where more to perform them.
+The more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal `RIGHT OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs where more to perform them.
 
 With this change, any queries you were performing using these joins will now run drastically faster.
 
@@ -339,58 +342,50 @@ With this change, any queries you were performing using these joins will now run
 - Run the following commands to setup some sample tables and data on the PG16 instance.
 
 ```sql
-DROP TABLE IF EXISTS departments;
-DROP TABLE IF EXISTS employees;
+DROP TABLE IF EXISTS left_table;
+DROP TABLE IF EXISTS right_table;
 
-CREATE TABLE departments (
-	department_id serial PRIMARY KEY,
-	department_name VARCHAR (255) NOT NULL
-);
+create table left_table (x int, y int);
+create table right_table (x int, y int);
 
-CREATE TABLE employees (
-	employee_id serial PRIMARY KEY,
-	employee_name VARCHAR (255),
-	department_id INTEGER
-);
+insert into left_table
+select (case x % 4 when 1 then null else x end), x % 10
+from generate_series(1,5000) x;
 
-INSERT INTO departments (department_name)
-VALUES
-	('Sales'),
-	('Marketing'),
-	('HR'),
-	('IT'),
-	('Production');
-
-INSERT INTO employees (
-	employee_name,
-	department_id
-)
-VALUES
-	('Dan Jump', 1),
-	('Molly Dempsey', 1),
-	('Miriam Graham', 2),
-	('Casey Jensen', 3),
-	('Eric Smith', 4),
-	('Julian Isla', NULL);
+insert into right_table
+select (case x % 4 when 1 then null else x end), x % 10
+from generate_series(1,5000) x;
 ```
 
-- Run the following command to see the execution place of the the select statement:
+- Ensure that your instance is enabled and configured for parallel hash joins:
 
 ```sql
-EXPLAIN SELECT
-	employee_name,
-	department_name
+show parallel_tuple_cost;
+show parallel_setup_cost;
+show max_parallel_workers_per_gather;
+show enable_parallel_hash;
+```
+
+> NOTE: If the table values are very small, the effort of doing a parallel may be more than the effort to do a non-parallel execution.  The tables and rows above should be enough to generate a Parallel Hash Full Join plan.
+
+- Run the following command to see the execution plan of the the select statement:
+
+```sql
+EXPLAIN analyze SELECT
+	*
 FROM
-	employees e
-FULL OUTER JOIN departments d 
-        ON d.department_id = e.department_id;
+	left_table lt
+FULL OUTER JOIN right_table rt
+        ON lt.x = rt.x
 ```
 
 - In the execution plan, you should notice the use of a `Parallel Hash Full Join`.  
 
-TODO
+![Alt text](media/parallel_full_outer_join.png)
 
 - In previous versions of PostgreSQL, you would see a regular `Hash Full Join`.
+
+Full JOINs are commonly used to find the differences between 2 tables. Prior to Postgres 16, parallelism was not implemented for full hash JOINs, which made them slow. [(link to commit)](https://github.com/postgres/postgres/commit/11c2d6fdf)
 
 ### Task 3: Allow aggregate functions string_agg() and array_agg() to be parallelized
 
@@ -524,10 +519,9 @@ Perform the following steps to see how this could potentially work:
 vacuum analyze;
 ```
 
-- While the operation is executing, run the following command to increase the cost limits:
+- While the operation is executing, run the following command to increase the cost limits.  Note that in pre-16 versions, this command would have no effect on currently running operations, in 16, this action applies during the execution:
 
 ```sql
-SET autovacuum_vacuum_cost_limit TO 300;
 SET vacuum_cost_limit TO 400;
 ```
 
@@ -554,27 +548,31 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 - Run the following command to see the information available:
 
 ```sql
-select * from pg_stat_io;
+select * from pg_stat_io order by reads desc, writes desc;
 ```
 
 - Using `pgbench` you can generate some IO data:
 
 ```sql
-pgbench -i -s 10 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
+pgbench -i -s 100 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
 ```
 
-- Again, run the previous command to see the newly generated IO information:
+- Again, run the previous command to see the newly generated IO information.
 
 ```sql
-select * from pg_stat_io;
+select * from pg_stat_io order by reads desc, writes desc;
 ```
+
+- You should see the `client_backend` values change to be much higher:
+
+![Alt text](media/pg_stat_io.png)
 
 Some common uses for this data include:
 
 - Review if high evictions are occurring.  If so, shared buffers should be increased.
 - Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer.
 
-## Exercise 3: PgBouncer
+## Exercise 4: PgBouncer
 
 PgBouncer is a well known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
 
