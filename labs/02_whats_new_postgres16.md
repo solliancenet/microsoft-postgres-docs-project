@@ -1,18 +1,17 @@
-# Hands on Lab: Working with the latest capabilities of Postgres 16
+# Hands on Lab: Working with the latest developer capabilities of Postgres 16
 
-- [Hands on Lab: Working with the latest capabilities of Postgres 16](#hands-on-lab-working-with-the-latest-capabilities-of-postgres-16)
+- [Hands on Lab: Working with the latest developer capabilities of Postgres 16](#hands-on-lab-working-with-the-latest-developer-capabilities-of-postgres-16)
   - [Prerequisites](#prerequisites)
   - [Exercise 1: Setup and Configuration](#exercise-1-setup-and-configuration)
     - [Task 1: Create tables and data](#task-1-create-tables-and-data)
-    - [Task 2: Configuring server parameters](#task-2-configuring-server-parameters)
   - [Exercise 2: Developer Features](#exercise-2-developer-features)
     - [Task 1: Add SQL/JSON object checks](#task-1-add-sqljson-object-checks)
     - [Task 2: Add SQL/JSON constructors](#task-2-add-sqljson-constructors)
     - [Task 3: Aggregate function ANY\_VALUE()](#task-3-aggregate-function-any_value)
-    - [Task 4: COPY batch\_size support](#task-4-copy-batch_size-support)
-    - [Task 5: Allow a COPY FROM value to map to a column's DEFAULT](#task-5-allow-a-copy-from-value-to-map-to-a-columns-default)
+    - [Task 4: Configuring server parameters](#task-4-configuring-server-parameters)
+    - [Task 5: COPY batch\_size support](#task-5-copy-batch_size-support)
+    - [Task 6: Allow a COPY FROM value to map to a column's DEFAULT](#task-6-allow-a-copy-from-value-to-map-to-a-columns-default)
   - [Exercise 3: Performance Features](#exercise-3-performance-features)
-    - [Task 1: New options for CREATE USER](#task-1-new-options-for-create-user)
     - [Task 2: Allow parallelization of FULL and internal RIGHT OUTER hash joins](#task-2-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
     - [Task 3: Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task-3-allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
     - [Task 4: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-4-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
@@ -22,6 +21,8 @@
     - [Task 1: Enable PgBouncer](#task-1-enable-pgbouncer)
     - [Task 2: Performance without PgBouncer](#task-2-performance-without-pgbouncer)
     - [Task 3: Performance with PgBouncer](#task-3-performance-with-pgbouncer)
+  - [Exercise 5: Security Features (Optional)](#exercise-5-security-features-optional)
+    - [Task 1: New options for CREATE USER](#task-1-new-options-for-create-user)
 
 In this lab you will explore the new developer and infrastructure features of PostgreSQL 16.
 
@@ -31,7 +32,7 @@ In this lab you will explore the new developer and infrastructure features of Po
 
 ## Exercise 1: Setup and Configuration
 
-In this exercise you will create some tables and use the COPY command to move data into those tables.  The data is in JSON format and not SQL format.
+In this exercise you will create some tables and use the COPY command to move data into those tables.  The data is in JSON format and not SQL format so the usage of `jsonb` data type with be required to import the data into a temporary table.  We will use this initial data to run some queries to transform the data such that we can utilize the new JSON syntax in PostgreSQL 16.
 
 ### Task 1: Create tables and data
 
@@ -41,7 +42,9 @@ In this exercise you will create some tables and use the COPY command to move da
 psql -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -U s2admin -d airbnb
 ```
 
-- Run the following commands to create the tables and import the data to the server:
+- Run the following commands to create the tables and import the data to the server.  Notice the usage of `json` files to do the import using the `COPY` command. Once into a temporary table, we than do some massaging:
+
+> NOTE: These paths are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
 
 ```sql
 CREATE TABLE temp_calendar (data jsonb);
@@ -77,39 +80,19 @@ FROM temp_calendar;
 
 ![Alt text](media/query_tool.png)
 
-- Run the following commands to see the imported data:
+- Run each of the following commands to see the imported data after its tranformation.  Note that we did not fully expand the JSON into all possible column so as to show the new JSON syntax later:
 
 ```sql
-select * from listings;
-select * from reviews;
-select * from calendar;
+select top 10 * from listings;
+select top 10 * from reviews;
+select top 10 * from calendar;
 ```
 
 ![Alt text](media/02_01_select_queries.png)
 
-### Task 2: Configuring server parameters
-
-In order to demonstrate some of the existing and new features of Azure Databse for PostgreSQL, we will have you modify some server parameters to support this lab.  Note that you may or may not need to do this when running your own environments and appications.
-
-- Under **Settings**, select **Server parameters**.
-- In the tabs, select **Static**, notice only static items are shown.
-- Search for **max_connections**, then highlight the info icon. Notice the values range from 25 to 5000.
-  
-  ![Alt text](media/01_13_pg_server_params_static.png)
-
-- Modify the value to **100**.  
-- In the tabs, select **All**
-- Search for **azure.extensions**
-- Enable the **POSTGRES_FDW** extension.
-
-    ![Alt text](media/01_13_server_params_vector.png)
-
-- Select **Save**.
-- In the dialog, select **Save and Restart**
-
 ## Exercise 2: Developer Features
 
-There are several developer based changes in PostgreSQL 16. In this exercise we explore several of them including the new SQL standard JSON functions.
+There are several developer based changes in PostgreSQL 16 as related to SQL syntax. In this exercise we explore several of them including the new SQL standard JSON functions.
 
 - [Function Json](https://www.postgresql.org/docs/16/functions-json.html)
 
@@ -233,7 +216,28 @@ GROUP BY data['zipcode']
 
 ![Alt text](media/02_02_aggregate_02.png)
 
-### Task 4: COPY batch_size support
+### Task 4: Configuring server parameters
+
+In order to demonstrate some of the existing and new features of Azure Databse for PostgreSQL, we will have you modify some server parameters to support this lab.  Note that you may or may not need to do this when running your own environments and appications.
+
+- Under **Settings**, select **Server parameters**.
+- In the tabs, select **Static**, notice only static items are shown.
+- Search for **max_connections**, then highlight the info icon. Notice the values range from 25 to 5000.
+  
+  ![Alt text](media/01_13_pg_server_params_static.png)
+
+- Modify the value to **100**.
+- **Note that this change is to support showing how `PgBouncer` works in a later exercise and is not a recommendation to change in your specific environments.**
+- In the tabs, select **All**
+- Search for **azure.extensions**
+- Enable the **POSTGRES_FDW** extension.
+
+    ![Alt text](media/01_13_server_params_fdw.png)
+
+- Select **Save**.
+- In the dialog, select **Save and Restart**
+
+### Task 5: COPY batch_size support
 
 It is now possible to batch insert multiple records with the COPY statement for a foreign table using the `postgres_fdw` module.  Previously, this would insert a single record at a time from the foreign table which is much less efficient then doing multiple records.
 
@@ -279,7 +283,7 @@ ALTER SERVER postgres14 options (add batch_size '10');
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=97da48246d34807196b404626f019c767b7af0df).
 
-### Task 5: Allow a COPY FROM value to map to a column's DEFAULT
+### Task 6: Allow a COPY FROM value to map to a column's DEFAULT
 
 The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data into a table using a common token in the source data.
 
@@ -308,35 +312,11 @@ Notice every entry from the source file with the default of '\D' was converted t
 
 ## Exercise 3: Performance Features
 
-### Task 1: New options for CREATE USER
-
-The new options for `CREATE USER` control the valid-until date, bypassing of row-level security, and role membership.
-
-- Run the following commands:
-
-```sql
-CREATE USER adminuser1 CREATEROLE REPLICATION CREATEDB;
-
-\connect postgres adminuser1
-
-CREATE USER user_repl1 REPLICATION; 
-
-CREATE USER user_db1 CREATEDB;
-```
-
-- Additionally, you can now do `VALID UNTIL`. The VALID UNTIL clause defines an expiration time for a password only, not for the user account.  Run the following:
-
-```sql
-CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2025-01-01';
-```
-
-> NOTE: Although it is possible to do assign the `BYPASSRLS` for a user in PostgreSQL 16, Azure Database for PostgreSQL Flexible Server does not support this feature.
-
 ### Task 2: Allow parallelization of FULL and internal RIGHT OUTER hash joins
 
-The more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal `RIGHT OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs where more to perform them.
+In general, the more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal `RIGHT OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs were more to perform than the parallezation setup.
 
-With this change, any queries you were performing using these joins will now run drastically faster.
+With this change, many queries you were performing using these joins will now run drastically faster.
 
 - Switch to pgAdmin
 - Run the following commands to setup some sample tables and data on the PG16 instance.
@@ -357,7 +337,7 @@ select (case x % 4 when 1 then null else x end), x % 10
 from generate_series(1,5000) x;
 ```
 
-- Ensure that your instance is enabled and configured for parallel hash joins.  You should see the following values.
+- Ensure that your instance is enabled and configured for parallel hash joins, this is the default for instances, but depending is always worth verifying.  You should see the following values.
   - parallel_type_cost = `0.1`
   - parallel_setup_cost = `1000`
   - max_parallel_workers_per_gather = `2`
@@ -389,7 +369,7 @@ FULL OUTER JOIN right_table rt
 
 - In previous versions of PostgreSQL, you would see a regular `Hash Full Join`.
 
-Full JOINs are commonly used to find the differences between 2 tables. Prior to Postgres 16, parallelism was not implemented for full hash JOINs, which made them slow. [(link to commit)](https://github.com/postgres/postgres/commit/11c2d6fdf)
+Full JOINs are commonly used to find the differences between 2 tables. Prior to Postgres 16, parallelism was not implemented for full hash JOINs, which made them slower to execute. [(link to commit)](https://github.com/postgres/postgres/commit/11c2d6fdf)
 
 ### Task 3: Allow aggregate functions string_agg() and array_agg() to be parallelized
 
@@ -448,7 +428,7 @@ GROUP BY
 
 ![Alt text](media/02_03_query_02.png)
 
-- Set the parallel setup costs parameters:
+- In order to show how this works, you will need to set the parallel setup costs parameters to the following.  **Note that this is only for this lab and not a suggestion for performing in your development or production environments**:
 
 ```sql
 set parallel_setup_cost TO 0;
@@ -478,7 +458,7 @@ For a more in-depth look at the code change for this feature, reference [here](h
 
 ### Task 4: Add EXPLAIN option GENERIC_PLAN to display the generic plan for a parameterized query
 
-Previously, attempting to get an execution plan for a parameterized query was fairly complicated.  For example, using a prepared statement will have several executions which may required you to execute those all separately and then put the results together. Using the new feature will eliminate those extra steps.
+Previously, attempting to get an execution plan for a parameterized query was fairly complicated.  For example, using a prepared statement will have several executions which may required you to execute all the sub-executions separately and then put the results together. Using the new PG16 feature will eliminate those extra steps when attempting to find performance issues with parameterized queries.
 
 - Run the following command to attempt to get an execution plan for a parameterized query using the pre-16 method:
 
@@ -552,19 +532,19 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 - Run the following command to see the information available:
 
 ```sql
-select * from pg_stat_io order by reads desc, writes desc;
+select * from pg_stat_io order by writes desc;
 ```
 
 - Using `pgbench` you can generate some IO data:
 
 ```sql
-pgbench -i -s 100 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
+pgbench -i -s 50 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
 ```
 
 - Again, run the previous command to see the newly generated IO information.
 
 ```sql
-select * from pg_stat_io order by reads desc, writes desc;
+select * from pg_stat_io order by writes desc;
 ```
 
 - You should see the `client_backend` values change to be much higher:
@@ -614,6 +594,32 @@ pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p
 pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 6432 -U wsuser -d contosostore
 ```
 
-- The test should complete successfully with no connection errors:
+- The test should complete successfully with no connection errors as you are now using PgBouncer to re-use connections and prevent failures due to the change to max connections of `100`:
 
     ![Alt text](media/02_03_test_with_pgbouncer.png)
+
+## Exercise 5: Security Features (Optional)
+
+### Task 1: New options for CREATE USER
+
+The new options for `CREATE USER` control the valid-until date, bypassing of row-level security, and role membership.
+
+- Run the following commands:
+
+```sql
+CREATE USER adminuser1 CREATEROLE REPLICATION CREATEDB;
+
+\connect postgres adminuser1
+
+CREATE USER user_repl1 REPLICATION; 
+
+CREATE USER user_db1 CREATEDB;
+```
+
+- Additionally, you can now do `VALID UNTIL`. The VALID UNTIL clause defines an expiration time for a password only, not for the user account.  Run the following:
+
+```sql
+CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2025-01-01';
+```
+
+> NOTE: Although it is possible to do assign the `BYPASSRLS` for a user in PostgreSQL 16, Azure Database for PostgreSQL Flexible Server does not support this feature.
