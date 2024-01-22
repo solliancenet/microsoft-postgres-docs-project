@@ -6,22 +6,24 @@
     - [Task 1: Create tables and data](#task-1-create-tables-and-data)
   - [Exercise 2: Developer Features](#exercise-2-developer-features)
     - [Task 1: Add SQL/JSON object checks](#task-1-add-sqljson-object-checks)
-    - [Task 2: Add SQL/JSON constructors](#task-2-add-sqljson-constructors)
-    - [Task 3: Aggregate function ANY\_VALUE()](#task-3-aggregate-function-any_value)
-    - [Task 4: Configuring server parameters](#task-4-configuring-server-parameters)
-    - [Task 5: COPY batch\_size support](#task-5-copy-batch_size-support)
-    - [Task 6: Allow a COPY FROM value to map to a column's DEFAULT](#task-6-allow-a-copy-from-value-to-map-to-a-columns-default)
-  - [Exercise 3: Performance Features](#exercise-3-performance-features)
-    - [Task 2: Allow parallelization of FULL and internal RIGHT OUTER hash joins](#task-2-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
-    - [Task 3: Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task-3-allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
-    - [Task 4: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-4-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
-    - [Task 5: Use new VACUUM options to improve VACUUM performance](#task-5-use-new-vacuum-options-to-improve-vacuum-performance)
-    - [Task 6: Using pg\_stat\_io for enhanced IO monitoring](#task-6-using-pg_stat_io-for-enhanced-io-monitoring)
-  - [Exercise 4: PgBouncer](#exercise-4-pgbouncer)
+    - [Task 2: Exploring JSON\_ARRAY, JSON\_ARRAYAGG and JSON\_OBJECT](#task-2-exploring-json_array-json_arrayagg-and-json_object)
+    - [Task 3: Creating GIN indexes](#task-3-creating-gin-indexes)
+    - [Task 4: Aggregate function ANY\_VALUE()](#task-4-aggregate-function-any_value)
+  - [Exercise 3: COPY Features](#exercise-3-copy-features)
+    - [Task 1: Configuring server parameters](#task-1-configuring-server-parameters)
+    - [Task 2: COPY batch\_size support](#task-2-copy-batch_size-support)
+    - [Task 3: Allow a COPY FROM value to map to a column's DEFAULT](#task-3-allow-a-copy-from-value-to-map-to-a-columns-default)
+  - [Exercise 4: Performance Features](#exercise-4-performance-features)
+    - [Task 1: Allow parallelization of FULL and internal RIGHT OUTER hash joins](#task-1-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
+    - [Task : Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task--allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
+    - [Task 3: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-3-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
+    - [Task 4: Use new VACUUM options to improve VACUUM performance](#task-4-use-new-vacuum-options-to-improve-vacuum-performance)
+    - [Task 5: Using pg\_stat\_io for enhanced IO monitoring](#task-5-using-pg_stat_io-for-enhanced-io-monitoring)
+  - [Exercise 5: PgBouncer](#exercise-5-pgbouncer)
     - [Task 1: Enable PgBouncer](#task-1-enable-pgbouncer)
     - [Task 2: Performance without PgBouncer](#task-2-performance-without-pgbouncer)
     - [Task 3: Performance with PgBouncer](#task-3-performance-with-pgbouncer)
-  - [Exercise 5: Security Features (Optional)](#exercise-5-security-features-optional)
+  - [Exercise 6: Security Features (Optional)](#exercise-6-security-features-optional)
     - [Task 1: New options for CREATE USER](#task-1-new-options-for-create-user)
 
 In this lab you will explore the new developer and infrastructure features of PostgreSQL 16.
@@ -41,12 +43,16 @@ In this exercise you will create some tables and use the COPY command to move da
     ```cmd
     psql -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -U s2admin -d airbnb
     ```
-    
+
 2. Run the following commands to create the tables and import the data to the server.  Notice the usage of `json` files to do the import using the `COPY` command. Once into a temporary table, we than do some massaging:
 
     > NOTE: These paths are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
-    
+
     ```sql
+    DROP TABLE temp_calendar;
+    DROP TABLE temp_listings;
+    DROP TABLE temp_reviews;
+    
     CREATE TABLE temp_calendar (data jsonb);
     CREATE TABLE temp_listings (data jsonb);
     CREATE TABLE temp_reviews (data jsonb);
@@ -55,7 +61,30 @@ In this exercise you will create some tables and use the COPY command to move da
     \COPY temp_listings (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\listings.json';
     \COPY temp_reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';
     
-    CREATE TABLE listings (listing_id varchar(50), data jsonb);
+    drop table listings;
+
+    CREATE TABLE listings (
+    	listing_id varchar(50),
+    	name varchar(50),
+    	street varchar(50),
+    	city varchar(50),
+    	state varchar(50),
+    	amenities jsonb,
+    	host_verifications jsonb,
+    	data jsonb);
+
+    INSERT INTO listings
+    SELECT 
+        replace(data['id']::varchar(50), '"', ''), 
+        replace(data['name']::varchar(50), '"', ''),
+        replace(data['street']::varchar(50), '"', ''),
+        replace(data['city']::varchar(50), '"', ''),
+        replace(data['state']::varchar(50), '"', ''),
+        data['amenities']::jsonb,
+        data['host_verifications']::jsonb,
+        data::jsonb
+    FROM temp_listings;
+
     CREATE TABLE reviews (listing_id varchar(50), data jsonb);
     CREATE TABLE calendar (listing_id varchar(50), data jsonb);
     
@@ -71,8 +100,10 @@ In this exercise you will create some tables and use the COPY command to move da
     SELECT replace(data['listing_id']::varchar(50), '"', ''), data::jsonb
     FROM temp_calendar;
     ```
-    
+
     ![Alt text](media/02_01_insert_table_data.png)
+
+    > NOTE: We are storing data in the tables as JSONB for lab purposes.  In the real world, you may not want to do something like this as with normal columns, PostgreSQL maintains statistics about the distributions of values in each column of the table – most common values (MCV), NULL entries, histogram of distribution. Based on this data, the PostgreSQL query planner makes smart decisions on the plan to use for the query. At this point, PostgreSQL does not store any stats for JSONB columns or keys. This can sometimes result in poor choices like using nested loop joins vs. hash joins.
 
 3. Switch to pgAdmin
 4. Navigate to **Databases->airbnb->Schemas->public->Tables**
@@ -97,8 +128,6 @@ There are several developer based changes in PostgreSQL 16 as related to SQL syn
 - [Function Json](https://www.postgresql.org/docs/16/functions-json.html)
 
 ### Task 1: Add SQL/JSON object checks
-
-The `IS JSON` checks include checks for values, arrays, objects, scalars, and unique keys.
 
 1. In pgAdmin, run the following pre-16 commands. The use of `->` and `->>` are pre-Postgres 14 commands used to navigate a json hierarchy:
 
@@ -126,7 +155,7 @@ The `IS JSON` checks include checks for values, arrays, objects, scalars, and un
 
     ![Alt text](media/02_02_json_02.png)
 
-3. In Postgres 16, you can now use the SQL standard `IS JSON` syntax:
+3. In Postgres 16, you can now use the SQL standard `IS JSON` syntax.  The `IS JSON` checks include checks for values, arrays, objects, scalars, and unique keys:
 
     ```sql
     SELECT
@@ -152,7 +181,16 @@ The `IS JSON` checks include checks for values, arrays, objects, scalars, and un
 
     ![Alt text](media/02_02_json_04.png)
 
-### Task 2: Add SQL/JSON constructors
+5. And of course all the basic JSON functionality that has existed pre-PG16 can also be used such as containment (where one json document is contained inside another):
+
+    ```sql
+    SELECT *
+    from listings
+    where
+    host_verifications @> '["email"]'::jsonb;
+    ```
+
+### Task 2: Exploring JSON_ARRAY, JSON_ARRAYAGG and JSON_OBJECT
 
 In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON_ARRAYAGG()`, and `JSON_OBJECT()` that are part of the SQL standard and now PostgreSQL 16.  
 
@@ -176,13 +214,31 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
 
     ![Alt text](media/02_02_json_06.png)
 
+2. You can also convert regular types into JSON using the `JSON_OBJECT` function.  The following will take several data types and create a JSON object from them:
+
     ```sql
     SELECT json_object(ARRAY[1, 'a', true, row(2, 'b', false)]::TEXT[]);
     ```
 
     ![Alt text](media/02_02_json_07.png)
 
-### Task 3: Aggregate function ANY_VALUE()
+### Task 3: Creating GIN indexes
+
+Although indexes on JSON data is not new to PG16 (available since 8.2 with JSON support since 9.2), it is a valuable feature to be aware of when working with PostgreSQL and JSON. GIN indexes can be used to efficiently search for keys or key/value pairs occurring within a large number of jsonb documents (datums). Two GIN “operator classes” are provided, offering different performance and flexibility trade-offs.
+
+1. In pgAdmin, run the following command:
+
+    ```sql
+    CREATE INDEX idxgin ON listings USING GIN (host_verifications);
+    ```
+
+2. After creating the index, you can now perform various operations against the data including searching for specific array values in jsonb data:
+
+    ```sql
+    SELECT data['id'], data['name'], data['host_verifications'] FROM listings WHERE data -> 'host_verifications' ? 'google';
+    ```
+
+### Task 4: Aggregate function ANY_VALUE()
 
 The `ANY_VALUE()` function is a PostgreSQL aggregate function that helps optimize queries when utilizing GROUP BY clauses. The function will return an arbitrary non-null value in a given set of values.
 
@@ -216,7 +272,9 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
 
     ![Alt text](media/02_02_aggregate_02.png)
 
-### Task 4: Configuring server parameters
+## Exercise 3: COPY Features
+
+### Task 1: Configuring server parameters
 
 In order to demonstrate some of the existing and new features of Azure Databse for PostgreSQL, we will have you modify some server parameters to support this lab.  Note that you may or may not need to do this when running your own environments and appications.
 
@@ -224,7 +282,7 @@ In order to demonstrate some of the existing and new features of Azure Databse f
 2. In the tabs, select **Static**, notice only static items are shown.
 3. Search for **max_connections**, then highlight the info icon. Notice the values range from 25 to 5000.
   
-  ![Alt text](media/01_13_pg_server_params_static.png)
+    ![Alt text](media/01_13_pg_server_params_static.png)
 
 4. Modify the value to **100**.
 5. **Note that this change is to support showing how `PgBouncer` works in a later exercise and is not a recommendation to change in your specific environments.**
@@ -237,7 +295,7 @@ In order to demonstrate some of the existing and new features of Azure Databse f
 9. Select **Save**.
 10. In the dialog, select **Save and Restart**
 
-### Task 5: COPY batch_size support
+### Task 2: COPY batch_size support
 
 It is now possible to batch insert multiple records with the COPY statement for a foreign table using the `postgres_fdw` module.  Previously, this would insert a single record at a time from the foreign table which is much less efficient then doing multiple records.
 
@@ -283,7 +341,7 @@ It is now possible to batch insert multiple records with the COPY statement for 
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=97da48246d34807196b404626f019c767b7af0df).
 
-### Task 6: Allow a COPY FROM value to map to a column's DEFAULT
+### Task 3: Allow a COPY FROM value to map to a column's DEFAULT
 
 The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data into a table using a common token in the source data.
 
@@ -310,9 +368,9 @@ The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data int
 
 Notice every entry from the source file with the default of '\D' was converted to the `DEFAULT` value from the column definition.
 
-## Exercise 3: Performance Features
+## Exercise 4: Performance Features
 
-### Task 2: Allow parallelization of FULL and internal RIGHT OUTER hash joins
+### Task 1: Allow parallelization of FULL and internal RIGHT OUTER hash joins
 
 In general, the more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal `RIGHT OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs were more to perform than the parallezation setup.
 
@@ -371,7 +429,7 @@ With this change, many queries you were performing using these joins will now ru
 
 Full JOINs are commonly used to find the differences between 2 tables. Prior to Postgres 16, parallelism was not implemented for full hash JOINs, which made them slower to execute. [(link to commit)](https://github.com/postgres/postgres/commit/11c2d6fdf)
 
-### Task 3: Allow aggregate functions string_agg() and array_agg() to be parallelized
+### Task : Allow aggregate functions string_agg() and array_agg() to be parallelized
 
 Aggregate functions typically perform some kind of mathematical operation on a column or set of columns.  If you were to calculate several aggregates at once, you could probably imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
 
@@ -456,7 +514,7 @@ The following is an example of a query that performs aggregates with the two fun
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=16fd03e956540d1b47b743f6a84f37c54ac93dd4).
 
-### Task 4: Add EXPLAIN option GENERIC_PLAN to display the generic plan for a parameterized query
+### Task 3: Add EXPLAIN option GENERIC_PLAN to display the generic plan for a parameterized query
 
 Previously, attempting to get an execution plan for a parameterized query was fairly complicated.  For example, using a prepared statement will have several executions which may required you to execute all the sub-executions separately and then put the results together. Using the new PG16 feature will eliminate those extra steps when attempting to find performance issues with parameterized queries.
 
@@ -485,7 +543,7 @@ As you can see above, you can use parameter placeholders like `$1` instead of an
 - You can use parameters only with the statements SELECT, INSERT, UPDATE, DELETE and VALUES.
 - You can only use parameters instead of constants (literals). You can’t use parameters instead of identifiers (object names) or keywords, among other things.
 
-### Task 5: Use new VACUUM options to improve VACUUM performance
+### Task 4: Use new VACUUM options to improve VACUUM performance
 
 The PostgreSQL `VACUUM` command is used to garbage-collect and analyze databases.  It works by removing `dead` tuples left over by large changes to a database (such as frequently updated tables). By removing the gaps between the data, you can speed up the performance of specific operations and increase your disk space.
 
@@ -521,7 +579,7 @@ For more information on Azure Database for PostgreSQL Flexible Server autovacuum
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=7d71d3dd080b9b147402db3365fe498f74704231).
 
-### Task 6: Using pg_stat_io for enhanced IO monitoring
+### Task 5: Using pg_stat_io for enhanced IO monitoring
 
 `pg_stat_io` is a new catalog view that displays statistics around `reads` and `writes` and as of Postgres 16, `extends` information.
 
@@ -556,7 +614,7 @@ Some common uses for this data include:
    - Review if high evictions are occurring.  If so, shared buffers should be increased.
    - Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer.
 
-## Exercise 4: PgBouncer
+## Exercise 5: PgBouncer
 
 PgBouncer is a well known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
 
@@ -576,13 +634,13 @@ References:
 
 ### Task 2: Performance without PgBouncer
 
-- Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password.  Notice the use of the `-c` parameter that will create 20 different connections, be sure to replace `PREFIX` with your lab information:
+- Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password.  Notice the use of the `-c` parameter that will create 1000 different connections, be sure to replace `PREFIX` with your lab information:
 
 ```sql
 pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U wsuser -d contosostore
 ```
 
-1. You should get an error about `error: could not create connection for client...`
+1. You should get an error about `error: could not create connection for client...`.  Note that this occurs becuase the limit we set was `100`.  This can also occur when you run out of resources to create new connections.
 
     ![Alt text](media/02_03_test_without_pgbouncer.png)
 
@@ -598,7 +656,7 @@ pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p
 
     ![Alt text](media/02_03_test_with_pgbouncer.png)
 
-## Exercise 5: Security Features (Optional)
+## Exercise 6: Security Features (Optional)
 
 ### Task 1: New options for CREATE USER
 
