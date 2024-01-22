@@ -24,62 +24,64 @@ In this lab you will create an [Azure Database for PostgreSQL Flexible Server](h
 
 In this exercise you will create a new Azure Database for PostgreSQL Flexible Server using the Azure Portal.
 
-- Open the [Azure Portal](https://portal.azure.com/), if prompted, login using your lab credentials
-- Select **Create a resource (+)** in the upper-left corner of the portal or select **Create a resource** under **Azure services**.
+1. Open the [Azure Portal](https://portal.azure.com/), if prompted, login using your lab credentials
+2. Select **Create a resource (+)** in the upper-left corner of the portal or select **Create a resource** under **Azure services**.
 
     ![Alt text](media/01_00_create_resource.png)
 
-- In the left side navigation, select **Databases**
-- Under **Azure Database for PostgreSQL Flexible Server**, select **Create**
+3. In the left side navigation, select **Databases**
+4. Under **Azure Database for PostgreSQL Flexible Server**, select **Create**
 
     ![Alt text](media/01_00_databases.png)
 
-- Fill out the Basics tab with the following information, be sure to replace `PREFIX` with your lab information:
-  - Resource Group: Name of your lab resource group
-  - Server name:  `PREFIX-pg-flex-eastus-16`
-  - Region: `East US`
-  - PostgreSQL Version: `16`
-  - Workload Type: `Production (Small/Medium-size)`
+5. Fill out the Basics tab with the following information, be sure to replace `PREFIX` with your lab information:
+
+   - Resource Group: Name of your lab resource group
+   - Server name:  `PREFIX-pg-flex-eastus-16`
+   - Region: `East US`
+   - PostgreSQL Version: `16`
+   - Workload Type: `Production (Small/Medium-size)`
   
     ![Alt text](media/01_02_create_server_basics_00.png)
 
-  - Under **Compute + Storage**, select **Configure Server**
-  - For the size, select `Standard_D2ds_v5`
-  - Please **DO NOT** select the **High Availability** option as it is subject to availability and capacity limits in various regions.
+6. Under **Compute + Storage**, select **Configure Server**
+7. For the size, select `Standard_D2ds_v5`
+8. Please **DO NOT** select the **High Availability** option as it is subject to availability and capacity limits in various regions.
 
     ![Alt text](media/01_03_create_server_basics_02.png)
   
-  - Select **Save**
-  - Authentication method: `PostgreSQL`
-  - Admin username: `s2admin`
-  - Password and confirm password: `Seattle123Seattle123`
+9. Select **Save**
+10. Authentication method: `PostgreSQL`
+11. Admin username: `s2admin`
+12. Password and confirm password: `Seattle123Seattle123`
 
     ![Alt text](media/01_03_create_server_basics_03.png)
 
-- Select **Next: Networking**. On the Networking tab, you can choose how your server is reachable.
-- Configure Networking options:
-  - Select **Public access (allowed IP addresses)**
-
-  ![Alt text](media/01_04_networking_01.png)
-
-  - Add your client IP address to ensure you can connect to your new instance
-
-    > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
-
-  - Additonally, select the **Allow public access from any Azure service with Azure to the server**
+13. Select **Next: Networking**. On the Networking tab, you can choose how your server is reachable.
+14. Configure Networking options:
   
-  ![Alt text](media/01_04_networking_02.png)
+    - Select **Public access (allowed IP addresses)**
 
-- Select **Review + create** to review your selections.
+      ![Alt text](media/01_04_networking_01.png)
 
-  ![Alt text](media/01_07_review_create.png)
+    - Add your client IP address to ensure you can connect to your new instance
 
-- Select **Create** to provision the server. This operation may take a few minutes.
-- In the top right of the toolbar, select the Notifications icon (a bell)
+        > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
 
-  ![Alt text](media/01_08_deployment_00.png)
+    - Additonally, select the **Allow public access from any Azure service with Azure to the server**
 
-- Select **Deployment in progress** link.  You can now monitor the deployment process:
+    ![Alt text](media/01_04_networking_02.png)
+
+15. Select **Review + create** to review your selections.
+
+    ![Alt text](media/01_07_review_create.png)
+
+16. Select **Create** to provision the server. This operation may take a few minutes.
+17. In the top right of the toolbar, select the Notifications icon (a bell)
+
+      ![Alt text](media/01_08_deployment_00.png)
+
+18. Select **Deployment in progress** link.  You can now monitor the deployment process:
 
   ![Alt text](media/01_08_deployment.png)
 
@@ -98,26 +100,26 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
 
 In this exercise you will use the Azure Portal to add a new database to your newly created Azure Database for PostgreSQL Flexible Server.
 
-- Under **Settings**, select **Databases**
-- In the menu, select **+Add**
-- For the name, type **airbnb**
+1. Under **Settings**, select **Databases**
+2. In the menu, select **+Add**
+3. For the name, type **airbnb**
 
     ![Alt text](media/01_11_pg_database_create.png)
 
-- Select **Save**
+4. Select **Save**
 
 ## Exercise 3: Configuring maintenance
 
 In this exercise you will modify the [maintennce schedule](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-maintenance) of your Azure Database for PostgreSQL Flexible Server. By changing the scheulde you can match the Azure update schedule to your own internal update schedule.
 
-- Under **Settings**, select **Maintenance**
-- Select **Custom schedule**
-- For the **Day of week**, select **Saturday**
-- For the **Start time (UTC)**, select **23**
+1. Under **Settings**, select **Maintenance**
+2. Select **Custom schedule**
+3. For the **Day of week**, select **Saturday**
+4. For the **Start time (UTC)**, select **23**
   
   ![Alt text](media/01_12_pg_maintenance.png)
 
-- Select **Save**
+5. Select **Save**
 
 ## Exercise 4: Connecting with pgAdmin
 
@@ -127,70 +129,70 @@ If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you c
 
 If you are using your own device, ensure the following has been completed:
 
-- Download and Install [pgAdmin](https://www.pgadmin.org/download/)
-- Download and Install [PostgreSQL 16](https://www.postgresql.org/download/)
-- Switch back to the Azure Portal
-- Browse to the `PREFIX-pg-flex-eastus-16` instance
-- Under **Settings**, select **Networking**
-- Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
-- Under **Firewall rules**, add an entry for the IP address of your device.
+1. Download and Install [pgAdmin](https://www.pgadmin.org/download/)
+2. Download and Install [PostgreSQL 16](https://www.postgresql.org/download/)
+3. Switch back to the Azure Portal
+4. Browse to the `PREFIX-pg-flex-eastus-16` instance
+5. Under **Settings**, select **Networking**
+6. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
+7. Under **Firewall rules**, add an entry for the IP address of your device.
 
     > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
 
-- Select **Save**
-- Repeat for the `PREFIX-pg-flex-eastus-14` instance
+8. Select **Save**
+9. Repeat for the `PREFIX-pg-flex-eastus-14` instance
 
 ### Task 2: Networking Setup (Lab Environment)
 
 If you are using the virtual machine from the lab environment, all the software has been installed for you. Login using the following:
 
-- Switch to the Azure Portal
-- Browse to your resource group
-- Select the **PREFIX-paw-1** virtual machine
-- In the tabs, select **Connect->Connect**
-- Copy and save the IP address
-- Select **Download RDP file**
-- Open the RDP file with Remote Desktop
-- Select **Connect**
-- Login with `s2admin` and password `Seattle123Seattle123`
-- When prompted, select **Next**, then **Accept**
-- Switch back to the Azure Portal
-- Browse to the `PREFIX-pg-flex-eastus-16` instance
-- Under **Settings**, select **Networking**
-- Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
-- Under **Firewall rules**, add an entry using the IP address you copied above
+1. Switch to the Azure Portal
+2. Browse to your resource group
+3. Select the **PREFIX-paw-1** virtual machine
+4. In the tabs, select **Connect->Connect**
+5. Copy and save the IP address
+6. Select **Download RDP file**
+7. Open the RDP file with Remote Desktop
+8. Select **Connect**
+9. Login with `s2admin` and password `Seattle123Seattle123`
+10. When prompted, select **Next**, then **Accept**
+11. Switch back to the Azure Portal
+12. Browse to the `PREFIX-pg-flex-eastus-16` instance
+13. Under **Settings**, select **Networking**
+14. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
+15. Under **Firewall rules**, add an entry using the IP address you copied above
 
     > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
 
-- Select **Save**
-- Repeat for the `PREFIX-pg-flex-eastus-14` instance
+16. Select **Save**
+17. Repeat for the `PREFIX-pg-flex-eastus-14` instance
 
 ### Task 2: Add Server to pgAdmin
 
-- From the lab virtual machine, open **pgAdmin**
-- Right-click the **Servers** node, select **Register->Server**
+1. From the lab virtual machine, open **pgAdmin**
+2. Right-click the **Servers** node, select **Register->Server**
   
-  ![Alt text](media/01_14_pg_admin_register.png)
+    ![Alt text](media/01_14_pg_admin_register.png)
 
-- For name, type **PREFIX-pg-flex-eastus-16**, be sure to replace `PREFIX` with your lab information
-- Select the **Connection** tab
-- For the **host name/address**, paste the server name you copied from above
-- For the username, type **s2admin**
-- For the password, type **Seattle123Seattle123**
-- Select **Save password?** to toggle it on.
-- Select **Save**
+3. For name, type **PREFIX-pg-flex-eastus-16**, be sure to replace `PREFIX` with your lab information
+4. Select the **Connection** tab
+5. For the **host name/address**, paste the server name you copied from above
+6. For the username, type **s2admin**
+7. For the password, type **Seattle123Seattle123**
+8. Select **Save password?** to toggle it on.
+9. Select **Save**
 
 ## Exercise 5: Writing your first query
 
 Using pgAdmin, you will execute some basic queries
 
-- Switch to pgAdmin
-- Expand the **PREFIX-pg-flex-eastus-14** node
-- Expand the **Databases** node
-- Expand the **airbnb->Schemas->public** nodes
-- Expand the **Tables** node
-- Right-click the new `airbnb` table, select **Query Tool**
-- Copy the following into the query tool window:
+1. Switch to pgAdmin
+2. Expand the **PREFIX-pg-flex-eastus-14** node
+3. Expand the **Databases** node
+4. Expand the **airbnb->Schemas->public** nodes
+5. Expand the **Tables** node
+6. Right-click the new `airbnb` table, select **Query Tool**
+7. Copy the following into the query tool window:
 
 ```sql
 TODO
@@ -206,16 +208,16 @@ In the next set of labs, you will explore the new developer and infrastructure f
 
 If you would like to run these labs in your own Azure subscription, you will need to execute the following ARM template:
 
-- Switch to the Azure Portal
-- Select the **+** in the top left
-- Search for **template**, select the **Template deployment (deploy using custom templates)
-- Select **Create**
-- Select **Build your own template in the editor**
-- Copy and paste the `/artifacts/template.json` file into the window
-- Select **Save**
-- Set the **prefix** parameter.
-- Select **Review + create**
-- Select **Create**, the deployment will take a few minutes.  Once deployed, you will have:
-  - Two PostgreSQL servers (14 and 16).
-  - Windows 10 Virtual Machine with necessary software installed.
-  - Various Azure supporting services
+1. Switch to the Azure Portal
+2. Select the **+** in the top left
+3. Search for **template**, select the **Template deployment (deploy using custom templates)
+4. Select **Create**
+5. Select **Build your own template in the editor**
+6. Copy and paste the `/artifacts/template.json` file into the window
+7. Select **Save**
+8. Set the **prefix** parameter.
+9. Select **Review + create**
+10. Select **Create**, the deployment will take a few minutes.  Once deployed, you will have:
+    - Two PostgreSQL servers (14 and 16).
+    - Windows 10 Virtual Machine with necessary software installed.
+    - Various Azure supporting services
