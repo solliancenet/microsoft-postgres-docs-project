@@ -62,6 +62,8 @@ In this exercise you will create some tables and use the COPY command to move da
     \COPY temp_reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';
     
     drop table listings;
+    drop table calendar;
+    drop table reviews;
 
     CREATE TABLE listings (
     	listing_id varchar(50),
@@ -69,9 +71,27 @@ In this exercise you will create some tables and use the COPY command to move da
     	street varchar(50),
     	city varchar(50),
     	state varchar(50),
+        bathrooms int,
+	    bedrooms int,
     	amenities jsonb,
     	host_verifications jsonb,
     	data jsonb);
+
+    CREATE TABLE reviews (
+        id varchar(50), 
+        listing_id varchar(50), 
+        reviewer_id varchar(50), 
+        reviewer_name varchar(50), 
+        date date,
+        comments varchar(2000),
+        data jsonb);
+
+    CREATE TABLE calendar (
+        listing_id varchar(50), 
+        date date,
+        price decimal(10,2), 
+        available varchar(50), 
+        data jsonb);
 
     INSERT INTO listings
     SELECT 
@@ -80,24 +100,31 @@ In this exercise you will create some tables and use the COPY command to move da
         replace(data['street']::varchar(50), '"', ''),
         replace(data['city']::varchar(50), '"', ''),
         replace(data['state']::varchar(50), '"', ''),
+        data['bathrooms']::int,
+        data['bedrooms']::int,
         data['amenities']::jsonb,
         data['host_verifications']::jsonb,
         data::jsonb
-    FROM temp_listings;
-
-    CREATE TABLE reviews (listing_id varchar(50), data jsonb);
-    CREATE TABLE calendar (listing_id varchar(50), data jsonb);
-    
-    INSERT INTO listings
-    SELECT replace(data['id']::varchar(50), '"', ''), data::jsonb
-    FROM temp_listings;
+    FROM temp_listings;    
     
     INSERT INTO reviews
-    SELECT replace(data['listing_id']::varchar(50), '"', ''), data::jsonb
+    SELECT 
+        replace(data['id']::varchar(50), '"', ''), 
+        replace(data['listing_id']::varchar(50), '"', ''), 
+        replace(data['reviewer_id']::varchar(50), '"', ''), 
+        replace(data['reviewer_name']::varchar(50), '"', ''), 
+        to_date(replace(data['date']::varchar(50), '"', ''), 'YYYY-MM-DD'),
+        replace(data['comments']::varchar(2000), '"', ''), 
+        data::jsonb
     FROM temp_reviews;
     
     INSERT INTO calendar
-    SELECT replace(data['listing_id']::varchar(50), '"', ''), data::jsonb
+    SELECT 
+        replace(data['listing_id']::varchar(50), '"', ''), 
+        to_date(replace(data['date']::varchar(50), '"', ''), 'YYYY-MM-DD'),
+        data['price']::decimal(10,2),
+        replace(data['available']::varchar(50), '"', ''), 
+        data::jsonb
     FROM temp_calendar;
     ```
 
@@ -181,7 +208,32 @@ There are several developer based changes in PostgreSQL 16 as related to SQL syn
 
     ![Alt text](media/02_02_json_04.png)
 
-5. And of course all the basic JSON functionality that has existed pre-PG16 can also be used such as containment (where one json document is contained inside another):
+5. When combining the above, you can create intricate `CASE` statements based on the target type:
+
+    ```sql
+    SELECT
+       CASE
+        WHEN
+            data -> 'street' IS JSON ARRAY
+        THEN
+            (data -> 'street')[0]
+        WHEN
+            data -> 'street' IS JSON OBJECT
+        THEN
+            data -> 'street'
+        WHEN
+            data IS JSON SCALAR
+        THEN
+            data
+        ELSE
+            data -> 'street'
+       END
+       AS primary_address
+    FROM
+       listings;
+    ```
+
+6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, you are using the containment operator (where one json document is contained inside another) to select data:
 
     ```sql
     SELECT *
@@ -198,7 +250,7 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
 
     ```sql
     SELECT
-       json_array(data['id'])
+       json_array(data['id'], name, bedrooms, city, state)
     FROM
        listings;
     ```
@@ -222,6 +274,20 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
 
     ![Alt text](media/02_02_json_07.png)
 
+3. Additionally, you can use the `json_agg` combined with `row_to_json` to convert a series of columns in a select statement into json:
+
+    ```sql
+    select 
+    	bedrooms,
+    	json_agg(row_to_json((name, street))) as jData
+	from 
+        listings
+	group by 
+        bedrooms
+    ```
+
+There are many other types of funtions and operators in PostgreSQL that you can utilize when working with JSON data.  You can reference the latest information for PG16 in the [9.16. JSON Functions and Operators](https://www.postgresql.org/docs/16/functions-json.html) documentation.
+
 ### Task 3: Creating GIN indexes
 
 Although indexes on JSON data is not new to PG16 (available since 8.2 with JSON support since 9.2), it is a valuable feature to be aware of when working with PostgreSQL and JSON. GIN indexes can be used to efficiently search for keys or key/value pairs occurring within a large number of jsonb documents (datums). Two GIN “operator classes” are provided, offering different performance and flexibility trade-offs.
@@ -240,7 +306,7 @@ Although indexes on JSON data is not new to PG16 (available since 8.2 with JSON 
 
 ### Task 4: Aggregate function ANY_VALUE()
 
-The `ANY_VALUE()` function is a PostgreSQL aggregate function that helps optimize queries when utilizing GROUP BY clauses. The function will return an arbitrary non-null value in a given set of values.
+The `ANY_VALUE()` function is a PostgreSQL aggregate function that helps optimize queries when utilizing GROUP BY clauses. The function will return an arbitrary non-null value in a given set of values. It effectively informs PostgreSQL that any value from the group is acceptable, resolving the ambiguity and allowing the query to execute successfully.
 
 Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the SELECT statement were included in the GROUP BY clause as well. Pre-16 PostgreSQL would throw an error if a non-aggregated column is not added in the GROUP BY clause.
 
@@ -248,29 +314,47 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
 
     ```sql
     SELECT 
-        data['zipcode'],
-        data['city'] as city_name,
-        SUM(cast(REPLACE(data['number_of_reviews']::text,'"','') as integer)) as total_reviews
+        l.city,
+        c.price
     FROM 
-        listings
-    GROUP BY data['zipcode']
+        listings l, calendar c
+    where 
+        l.listing_id = c.listing_id
+    GROUP 
+        BY l.city
     ```
 
     ![Alt text](media/02_02_aggregate.png)
 
-2. Modify the query to the new v16 syntax:
+2. Modify the query to utlize the new `ANY_VALUE` function:
 
     ```sql
     SELECT 
-        data['zipcode'],
-        ANY_VALUE(data['city']) as city_name,
-        SUM(cast(REPLACE(data['number_of_reviews']::text,'"','') as integer)) as total_reviews
+        l.city,
+        ANY_VALUE(c.price)
     FROM 
-        listings
-    GROUP BY data['zipcode']
+        listings l, calendar c
+    where 
+        l.listing_id = c.listing_id
+    GROUP 
+        BY l.city
     ```
 
     ![Alt text](media/02_02_aggregate_02.png)
+
+3. Keep in mind that the `ANY_VALUE` is the selection of an non-null item from the group, and does not act the same if you did the full `group by` clause:
+
+    ```sql
+    select
+        l.city,
+        c.price
+    from 
+        listings l, calendar c
+    where 
+        l.listing_id = c.listing_id
+    group 
+        by l.city, c.price
+    ```
 
 ## Exercise 3: COPY Features
 
