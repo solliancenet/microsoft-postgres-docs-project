@@ -7,24 +7,25 @@
   - [Exercise 2: Developer Features](#exercise-2-developer-features)
     - [Task 1: Add SQL/JSON object checks](#task-1-add-sqljson-object-checks)
     - [Task 2: Exploring JSON\_ARRAY, JSON\_ARRAYAGG and JSON\_OBJECT](#task-2-exploring-json_array-json_arrayagg-and-json_object)
-    - [Task 3: Creating GIN indexes](#task-3-creating-gin-indexes)
-    - [Task 4: Aggregate function ANY\_VALUE()](#task-4-aggregate-function-any_value)
+    - [Task 3: Creating Indexes](#task-3-creating-indexes)
+    - [Task 4: Creating GIN indexes](#task-4-creating-gin-indexes)
+    - [Task 5: Aggregate function ANY\_VALUE()](#task-5-aggregate-function-any_value)
   - [Exercise 3: COPY Features](#exercise-3-copy-features)
     - [Task 1: Configuring server parameters](#task-1-configuring-server-parameters)
     - [Task 2: COPY batch\_size support](#task-2-copy-batch_size-support)
     - [Task 3: Allow a COPY FROM value to map to a column's DEFAULT](#task-3-allow-a-copy-from-value-to-map-to-a-columns-default)
   - [Exercise 4: Performance Features](#exercise-4-performance-features)
     - [Task 1: Allow parallelization of FULL and internal RIGHT OUTER hash joins](#task-1-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
-    - [Task : Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task--allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
+    - [Task 2: Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task-2-allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
     - [Task 3: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-3-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
-    - [Task 4: Use new VACUUM options to improve VACUUM performance](#task-4-use-new-vacuum-options-to-improve-vacuum-performance)
-    - [Task 5: Using pg\_stat\_io for enhanced IO monitoring](#task-5-using-pg_stat_io-for-enhanced-io-monitoring)
+    - [Task 4: Using pg\_stat\_io for enhanced IO monitoring](#task-4-using-pg_stat_io-for-enhanced-io-monitoring)
   - [Exercise 5: PgBouncer](#exercise-5-pgbouncer)
-    - [Task 1: Enable PgBouncer](#task-1-enable-pgbouncer)
+    - [Task 1: Enable PgBouncer and PgBouncer Metrics](#task-1-enable-pgbouncer-and-pgbouncer-metrics)
     - [Task 2: Performance without PgBouncer](#task-2-performance-without-pgbouncer)
     - [Task 3: Performance with PgBouncer](#task-3-performance-with-pgbouncer)
-  - [Exercise 6: Security Features (Optional)](#exercise-6-security-features-optional)
+  - [Exercise 6: Other Features (Optional)](#exercise-6-other-features-optional)
     - [Task 1: New options for CREATE USER](#task-1-new-options-for-create-user)
+    - [Task 2: Use new VACUUM options to improve VACUUM performance](#task-2-use-new-vacuum-options-to-improve-vacuum-performance)
 
 In this lab you will explore the new developer and infrastructure features of PostgreSQL 16.
 
@@ -49,59 +50,100 @@ In this exercise you will create some tables and use the COPY command to move da
     > NOTE: These paths are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
 
     ```sql
-    DROP TABLE temp_calendar;
-    DROP TABLE temp_listings;
-    DROP TABLE temp_reviews;
+    DROP TABLE IF EXISTS temp_calendar;
+    DROP TABLE IF EXISTS temp_listings;
+    DROP TABLE IF EXISTS temp_reviews;
     
     CREATE TABLE temp_calendar (data jsonb);
     CREATE TABLE temp_listings (data jsonb);
     CREATE TABLE temp_reviews (data jsonb);
+
+    DROP TABLE IF EXISTS reviews_csv;
+    DROP TABLE IF EXISTS calendar_csv;
+
+    CREATE TABLE reviews_csv (
+        listing_id int, 
+        id int, 
+        date date,
+        reviewer_id int, 
+        reviewer_name varchar(50), 
+        comments varchar(2000)
+    );
+
+    CREATE TABLE calendar_csv (
+        listing_id varchar(50), 
+        date date,
+        available varchar(50),
+        price decimal(10,2)
+    );
     
     \COPY temp_calendar (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\calendar.json';
     \COPY temp_listings (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\listings.json';
     \COPY temp_reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';
+
+    \copy reviews_csv FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.csv' csv header;
+    \copy calendar_csv FROM 'C:\microsoft-postgres-docs-project\artifacts\data\calendar.csv' csv header;
     
-    drop table listings;
-    drop table calendar;
-    drop table reviews;
+    
+    DROP TABLE IF EXISTS listings;
+    DROP TABLE IF EXISTS calendar;
+    DROP TABLE IF EXISTS reviews;
 
     CREATE TABLE listings (
-    	listing_id varchar(50),
-    	name varchar(50),
-    	street varchar(50),
-    	city varchar(50),
-    	state varchar(50),
+        listing_id int,
+       	name varchar(50),
+       	street varchar(50),
+       	city varchar(50),
+        state varchar(50),
+        country varchar(50),
+        zipcode varchar(50),
         bathrooms int,
-	    bedrooms int,
-    	amenities jsonb,
-    	host_verifications jsonb,
-    	data jsonb);
+        bedrooms int,
+        latitude decimal(10,5), 
+        longitude decimal(10,5), 
+        summary varchar(2000),
+        host_id varchar(2000),
+        host_url varchar(2000),
+        listing_url varchar(2000),
+        room_type varchar(2000),
+        amenities jsonb,
+       	host_verifications jsonb,
+        data jsonb);
 
     CREATE TABLE reviews (
-        id varchar(50), 
-        listing_id varchar(50), 
-        reviewer_id varchar(50), 
+        id int, 
+        listing_id int, 
+        reviewer_id int, 
         reviewer_name varchar(50), 
         date date,
-        comments varchar(2000),
-        data jsonb);
+        comments varchar(2000)
+        );
 
     CREATE TABLE calendar (
-        listing_id varchar(50), 
+        listing_id int, 
         date date,
         price decimal(10,2), 
-        available varchar(50), 
-        data jsonb);
+        available varchar(50)
+        );
 
     INSERT INTO listings
     SELECT 
-        replace(data['id']::varchar(50), '"', ''), 
+        data['id']::int, 
         replace(data['name']::varchar(50), '"', ''),
         replace(data['street']::varchar(50), '"', ''),
         replace(data['city']::varchar(50), '"', ''),
         replace(data['state']::varchar(50), '"', ''),
+        replace(data['country']::varchar(50), '"', ''),
+        replace(data['zipcode']::varchar(50), '"', ''),
         data['bathrooms']::int,
         data['bedrooms']::int,
+        data['latitude']::decimal(10,5),
+        data['longitude']::decimal(10,5),
+        replace(data['summary']::varchar(50), '"', ''),        
+        replace(data['host_id']::varchar(50), '"', ''),
+        replace(data['host_url']::varchar(50), '"', ''),
+        replace(data['listing_url']::varchar(50), '"', ''),
+        replace(data['room_type']::varchar(50), '"', ''),
         data['amenities']::jsonb,
         data['host_verifications']::jsonb,
         data::jsonb
@@ -109,22 +151,20 @@ In this exercise you will create some tables and use the COPY command to move da
     
     INSERT INTO reviews
     SELECT 
-        replace(data['id']::varchar(50), '"', ''), 
-        replace(data['listing_id']::varchar(50), '"', ''), 
-        replace(data['reviewer_id']::varchar(50), '"', ''), 
+        data['id']::int,
+        data['listing_id']::int,
+        data['reviewer_id']::int,
         replace(data['reviewer_name']::varchar(50), '"', ''), 
         to_date(replace(data['date']::varchar(50), '"', ''), 'YYYY-MM-DD'),
-        replace(data['comments']::varchar(2000), '"', ''), 
-        data::jsonb
+        replace(data['comments']::varchar(2000), '"', '')
     FROM temp_reviews;
     
     INSERT INTO calendar
     SELECT 
-        replace(data['listing_id']::varchar(50), '"', ''), 
+        data['listing_id']::int,
         to_date(replace(data['date']::varchar(50), '"', ''), 'YYYY-MM-DD'),
         data['price']::decimal(10,2),
-        replace(data['available']::varchar(50), '"', ''), 
-        data::jsonb
+        replace(data['available']::varchar(50), '"', '')
     FROM temp_calendar;
     ```
 
@@ -288,23 +328,59 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
 
 There are many other types of funtions and operators in PostgreSQL that you can utilize when working with JSON data.  You can reference the latest information for PG16 in the [9.16. JSON Functions and Operators](https://www.postgresql.org/docs/16/functions-json.html) documentation.
 
-### Task 3: Creating GIN indexes
+### Task 3: Creating Indexes
 
-Although indexes on JSON data is not new to PG16 (available since 8.2 with JSON support since 9.2), it is a valuable feature to be aware of when working with PostgreSQL and JSON. GIN indexes can be used to efficiently search for keys or key/value pairs occurring within a large number of jsonb documents (datums). Two GIN “operator classes” are provided, offering different performance and flexibility trade-offs.
+Indexes help increase query performance.  
 
-1. In pgAdmin, run the following command:
+1. Run the following query, notice the usage of a `Seq Scan` on the table, also record the costs:
 
     ```sql
-    CREATE INDEX idxgin ON listings USING GIN (host_verifications);
+        EXPLAIN ANALYZE select *
+        from listings l, calendar c
+        where l.city = 'seattle'
+        and l.listing_id = c.listing_id
+        and l.listing_id = 241032
     ```
 
-2. After creating the index, you can now perform various operations against the data including searching for specific array values in jsonb data:
+2. Create an index on the `listing_id`` column:
+
+    ```sql
+    CREATE INDEX listings_listing_id ON listings (listing_id);
+    ```
+
+3. Re-run the query to see the Sequential Scan is now removed and a Index Scan is now used improving the costs:
+
+    ```sql
+        EXPLAIN ANALYZE select *
+        from listings l, calendar c
+        where l.city = 'seattle'
+        and l.listing_id = c.listing_id
+        and l.listing_id = 241032
+    ```
+
+### Task 4: Creating GIN indexes
+
+Although indexes on JSON data is not new to PG16 (available since 8.2 with JSON support since 9.2), it is a valuable feature to be aware of when working with PostgreSQL and JSON. GIN indexes can be used to efficiently search for keys or key/value pairs occurring within a large number of jsonb documents (datums). Two GIN "operator classes" are provided, offering different performance and flexibility trade-offs.
+
+1. Run the following query:
 
     ```sql
     SELECT data['id'], data['name'], data['host_verifications'] FROM listings WHERE data -> 'host_verifications' ? 'google';
     ```
 
-### Task 4: Aggregate function ANY_VALUE()
+2. In pgAdmin, run the following command:
+
+    ```sql
+    CREATE INDEX idxgin ON listings USING GIN (host_verifications);
+    ```
+
+3. Again, re-run the query, you should see a performance increase in the query:
+
+    ```sql
+    SELECT data['id'], data['name'], data['host_verifications'] FROM listings WHERE data -> 'host_verifications' ? 'google';
+    ```
+
+### Task 5: Aggregate function ANY_VALUE()
 
 The `ANY_VALUE()` function is a PostgreSQL aggregate function that helps optimize queries when utilizing GROUP BY clauses. The function will return an arbitrary non-null value in a given set of values. It effectively informs PostgreSQL that any value from the group is acceptable, resolving the ambiguity and allowing the query to execute successfully.
 
@@ -363,21 +439,14 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
 In order to demonstrate some of the existing and new features of Azure Databse for PostgreSQL, we will have you modify some server parameters to support this lab.  Note that you may or may not need to do this when running your own environments and appications.
 
 1. Under **Settings**, select **Server parameters**.
-2. In the tabs, select **Static**, notice only static items are shown.
-3. Search for **max_connections**, then highlight the info icon. Notice the values range from 25 to 5000.
-  
-    ![Alt text](media/01_13_pg_server_params_static.png)
-
-4. Modify the value to **100**.
-5. **Note that this change is to support showing how `PgBouncer` works in a later exercise and is not a recommendation to change in your specific environments.**
-6. In the tabs, select **All**
-7. Search for **azure.extensions**
-8. Enable the **POSTGRES_FDW** extension.
+2. In the tabs, select **All**
+3. Search for **azure.extensions**
+4. Enable the **POSTGRES_FDW** extension.
 
     ![Alt text](media/01_13_server_params_fdw.png)
 
-9. Select **Save**.
-10. In the dialog, select **Save and Restart**
+5. Select **Save**.
+6. In the dialog, select **Save and Restart**
 
 ### Task 2: COPY batch_size support
 
@@ -513,7 +582,7 @@ With this change, many queries you were performing using these joins will now ru
 
 Full JOINs are commonly used to find the differences between 2 tables. Prior to Postgres 16, parallelism was not implemented for full hash JOINs, which made them slower to execute. [(link to commit)](https://github.com/postgres/postgres/commit/11c2d6fdf)
 
-### Task : Allow aggregate functions string_agg() and array_agg() to be parallelized
+### Task 2: Allow aggregate functions string_agg() and array_agg() to be parallelized
 
 Aggregate functions typically perform some kind of mathematical operation on a column or set of columns.  If you were to calculate several aggregates at once, you could probably imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
 
@@ -529,6 +598,8 @@ The following is an example of a query that performs aggregates with the two fun
 1. In pgAdmin, run the following:
 
     ```sql
+    drop table is exists agg_test;
+
     create table agg_test (x int, y int);
     
     insert into agg_test
@@ -627,7 +698,138 @@ As you can see above, you can use parameter placeholders like `$1` instead of an
 - You can use parameters only with the statements SELECT, INSERT, UPDATE, DELETE and VALUES.
 - You can only use parameters instead of constants (literals). You can’t use parameters instead of identifiers (object names) or keywords, among other things.
 
-### Task 4: Use new VACUUM options to improve VACUUM performance
+### Task 4: Using pg_stat_io for enhanced IO monitoring
+
+`pg_stat_io` is a new catalog view that displays statistics around `reads` and `writes` and as of Postgres 16, `extends` information.
+
+Per the [postgresql documentation](https://www.postgresql.org/docs/devel/monitoring-stats.html#MONITORING-PG-STAT-IO-VIEW) : "The pg_stat_io view will contain one row for each combination of backend type, target I/O object, and I/O context, showing cluster-wide I/O statistics. Combinations which do not make sense are omitted.
+
+Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation I/O which bypasses shared buffers (e.g. when moving a table from one tablespace to another) is currently not tracked."
+
+1. Run the following command to see the information available:
+
+    ```sql
+    select * from pg_stat_io order by writes desc;
+    ```
+
+2. Using `pgbench` you can generate some IO data (~750MB of data):
+
+    ```sql
+    pgbench -i -s 50 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
+    ```
+
+3. Again, run the previous command to see the newly generated IO information.
+
+    ```sql
+    select * from pg_stat_io order by writes desc;
+    ```
+
+4. You should see the backend_type `client_backend` values change to be much higher:
+
+    ![Alt text](media/pg_stat_io.png)
+
+5. `pg_stat_io` will also break apart the operations into more granular statistics via the `context` column.  The `pgbench` test above generated context values in the `vacuum` and `bulkwrite` context categories.  When using basic DDL commands, the values will go into different context categories.
+6. Run the following command to create some more test data using basic DDL `INSERT`:
+
+    ```sql
+        insert into agg_test
+        select (case x % 4 when 1 then null else x end), x % 10
+        from generate_series(1,200000) x;
+    ```
+
+7. Again, run the previous command to see the newly generated IO information.
+
+    ```sql
+    select * from pg_stat_io order by writes desc;
+    ```
+
+8. Review the backendtype of `client_backend`, object of `relation`, context of `normal` and the `extends` column value.  Because you were adding data to an existing table, you are performing `extends` operations.
+
+Some common uses for this data include:
+
+- Review if high evictions are occurring.  If so, shared buffers should be increased.
+- Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer.
+
+## Exercise 5: PgBouncer
+
+PgBouncer is a well known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
+
+References:
+
+- https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-pgbouncer
+
+### Task 1: Enable PgBouncer and PgBouncer Metrics
+
+You can use PgBouncer metrics to monitor the performance of the PgBouncer process, including details for active connections, idle connections, total pooled connections, and the number of connection pools. Each metric is emitted at a 1-minute interval and has up to 93 days of history. Customers can configure alerts on the metrics and also access the new metrics dimensions to split and filter metrics data by database name. PgBouncer metrics are disabled by default. For PgBouncer metrics to work, both the server parameters pgbouncer.enabled and metrics.pgbouncer_diagnostics must be enabled. These parameters are dynamic and don't require an instance restart.
+
+- Browse to the Azure Portal and your **PREFIX-pg-flex-eastus-16** resource
+- Under **Settings**, select **Server parameters**
+- Search for the `pgbouncer.enabled` dynamic parameters
+- Toggle the setting to `TRUE`
+
+    ![Alt text](media/02_03_enable_pgbouncer.png)
+
+- Search for the `metrics.pgbouncer_diagnostics` dynamic parameters
+- Toggle the setting to `TRUE`
+- Select **Save**
+
+### Task 2: Performance without PgBouncer
+
+1. Switch to the Azure Portal
+2. Browse to the `PREFIX-pg-flex-eastus-16.postgres.database.azure.com` instance
+3. Under **Monitoring** select **Metrics**
+4. For the **Metric**, under the **TRAFFIC** category, select **Active client connections**
+5. Select **Add metric**
+6. Under the **PGBOUNCER** category, select **Active client connections**
+7. In the top right, select the time to be **Last 30 minutes** then select **Apply**
+8. Switch to a command prompt
+9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password.  Notice the use of the `-c` parameter that will create 1000 different connections, be sure to replace `PREFIX` with your lab information:
+
+    ```sql
+    pgbench -c 100 -T 120 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U wsuser -d airbnb
+    ```
+
+10. Switch back to the Metrics window, after a minute, you should see the active connections increase.
+11. Stop the test or wait for it to finish.
+
+### Task 3: Performance with PgBouncer
+
+1. Switch back to the command prompt.
+2. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` with your lab information:
+
+    ```sql
+    pgbench -c 100 -T 120 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U wsuser -d airbnb
+    ```
+
+3. Switch back to the metrics window.  After a minute, you should see that the server active connections will max out and the PgBouncer active client connections will increase to handle the load on behalf of the server.
+
+## Exercise 6: Other Features (Optional)
+
+### Task 1: New options for CREATE USER
+
+The new options for `CREATE USER` control the valid-until date, bypassing of row-level security, and role membership.
+
+1. Run the following commands:
+
+    ```sql
+    CREATE USER adminuser1 CREATEROLE REPLICATION CREATEDB;
+    
+    \connect postgres adminuser1
+    
+    CREATE USER user_repl1 REPLICATION; 
+    
+    CREATE USER user_db1 CREATEDB;
+    ```
+
+2. Additionally, you can now do `VALID UNTIL`. The VALID UNTIL clause defines an expiration time for a password only, not for the user account.  Run the following:
+
+    ```sql
+    CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2025-01-01';
+    ```
+
+    > NOTE: Although it is possible to do assign the `BYPASSRLS` for a user in PostgreSQL 16, Azure Database for PostgreSQL Flexible Server does not support this feature.
+
+### Task 2: Use new VACUUM options to improve VACUUM performance
 
 The PostgreSQL `VACUUM` command is used to garbage-collect and analyze databases.  It works by removing `dead` tuples left over by large changes to a database (such as frequently updated tables). By removing the gaps between the data, you can speed up the performance of specific operations and increase your disk space.
 
@@ -662,106 +864,3 @@ Perform the following steps to see how this could potentially work:
 For more information on Azure Database for PostgreSQL Flexible Server autovacuum features read [Autovacuum Tuning in Azure Database for PostgreSQL - Flexible Server](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-autovacuum-tuning).
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=7d71d3dd080b9b147402db3365fe498f74704231).
-
-### Task 5: Using pg_stat_io for enhanced IO monitoring
-
-`pg_stat_io` is a new catalog view that displays statistics around `reads` and `writes` and as of Postgres 16, `extends` information.
-
-Per the [postgresql documentation](https://www.postgresql.org/docs/devel/monitoring-stats.html#MONITORING-PG-STAT-IO-VIEW) : "The pg_stat_io view will contain one row for each combination of backend type, target I/O object, and I/O context, showing cluster-wide I/O statistics. Combinations which do not make sense are omitted.
-
-Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation I/O which bypasses shared buffers (e.g. when moving a table from one tablespace to another) is currently not tracked."
-
-1. Run the following command to see the information available:
-
-    ```sql
-    select * from pg_stat_io order by writes desc;
-    ```
-
-2. Using `pgbench` you can generate some IO data:
-
-    ```sql
-    pgbench -i -s 50 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
-    ```
-
-3. Again, run the previous command to see the newly generated IO information.
-
-    ```sql
-    select * from pg_stat_io order by writes desc;
-    ```
-
-4. You should see the `client_backend` values change to be much higher:
-
-    ![Alt text](media/pg_stat_io.png)
-
-Some common uses for this data include:
-
-   - Review if high evictions are occurring.  If so, shared buffers should be increased.
-   - Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer.
-
-## Exercise 5: PgBouncer
-
-PgBouncer is a well known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
-
-References:
-  - https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-pgbouncer
-
-### Task 1: Enable PgBouncer
-
-- Browse to the Azure Portal and your **PREFIX-pg-flex-eastus-16** resource
-- Under **Settings**, select **Server parameters**
-- Search for the `pgbouncer.enabled` dynamic parameters
-- Toggle the setting to `TRUE`
-
-    ![Alt text](media/02_03_enable_pgbouncer.png)
-
-- Select **Save**
-
-### Task 2: Performance without PgBouncer
-
-- Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password.  Notice the use of the `-c` parameter that will create 1000 different connections, be sure to replace `PREFIX` with your lab information:
-
-```sql
-pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U wsuser -d contosostore
-```
-
-1. You should get an error about `error: could not create connection for client...`.  Note that this occurs becuase the limit we set was `100`.  This can also occur when you run out of resources to create new connections.
-
-    ![Alt text](media/02_03_test_without_pgbouncer.png)
-
-### Task 3: Performance with PgBouncer
-
-1. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` with your lab information:
-
-    ```sql
-    pgbench -c 1000 -T 60 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 6432 -U wsuser -d contosostore
-    ```
-
-2. The test should complete successfully with no connection errors as you are now using PgBouncer to re-use connections and prevent failures due to the change to max connections of `100`:
-
-    ![Alt text](media/02_03_test_with_pgbouncer.png)
-
-## Exercise 6: Security Features (Optional)
-
-### Task 1: New options for CREATE USER
-
-The new options for `CREATE USER` control the valid-until date, bypassing of row-level security, and role membership.
-
-1. Run the following commands:
-
-    ```sql
-    CREATE USER adminuser1 CREATEROLE REPLICATION CREATEDB;
-    
-    \connect postgres adminuser1
-    
-    CREATE USER user_repl1 REPLICATION; 
-    
-    CREATE USER user_db1 CREATEDB;
-    ```
-
-2. Additionally, you can now do `VALID UNTIL`. The VALID UNTIL clause defines an expiration time for a password only, not for the user account.  Run the following:
-
-    ```sql
-    CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2025-01-01';
-    ```
-
-    > NOTE: Although it is possible to do assign the `BYPASSRLS` for a user in PostgreSQL 16, Azure Database for PostgreSQL Flexible Server does not support this feature.
