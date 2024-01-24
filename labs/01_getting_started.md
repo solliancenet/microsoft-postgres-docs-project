@@ -9,7 +9,7 @@
     - [Task 1: Networking Setup (Local Device) - OPTIONAL](#task-1-networking-setup-local-device---optional)
     - [Task 2: Networking Setup (Lab Environment)](#task-2-networking-setup-lab-environment)
     - [Task 2: Add Server to pgAdmin](#task-2-add-server-to-pgadmin)
-  - [Exercise 5: Enable Query Store](#exercise-5-enable-query-store)
+  - [Exercise 5: Modify Server Paramaeters](#exercise-5-modify-server-paramaeters)
   - [Exercise 6: Writing your first query](#exercise-6-writing-your-first-query)
   - [Summary](#summary)
   - [Miscellanous](#miscellanous)
@@ -183,18 +183,23 @@ If you are using the virtual machine from the lab environment, all the software 
 8. Select **Save password?** to toggle it on.
 9. Select **Save**
 
-## Exercise 5: Enable Query Store
+## Exercise 5: Modify Server Paramaeters
 
-The Query Store feature in Azure Database for PostgreSQL provides a way to track query performance over time. Query Store simplifies performance troubleshooting by helping you quickly find the longest running and most resource-intensive queries. Query Store automatically captures a history of queries and runtime statistics, and it retains them for your review. It separates data by time windows so that you can see database usage patterns. Data for all users, databases, and queries is stored in a database named azure_sys in the Azure Database for PostgreSQL instance.
-
-> NOTE: You are going to enable query store now as it takes a few minutes for the queries to start to be recorded.  You will utilize the query store in Lab 2.
+You are going to enable query store now as it takes a few minutes for the queries to start to be recorded.  You will utilize the query store in Lab 2.  Additionally, you will be enabling parameters to support logical replication in Lab 2.
 
 1. Swithc to the Azure Portal
 2. Browse to your **PREFIX-pg-flex-eastus-16** instance
 3. Under **Settings**, select **Server parameters**
 4. Browse for `pg_qs.query_capture_mode`
 5. Set the value to `TOP`
-6. Select **Save**
+6. Browse for the `wal_level` parameters
+7. Set the value to `logical`
+8. Browse for the `azure.extensions` parameter
+9. Select the **pglogical** checkbox
+10. Browse for the `max_worker_processes`parameter
+11. Set the value to `16`
+12. Select **Save**
+13. Repeat the same steps for the **PREFIX-pg-flex-eastus-14** instance
 
 ## Exercise 6: Writing your first query
 

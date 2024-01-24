@@ -20,7 +20,8 @@
     - [Task 3: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-3-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
     - [Task 4: Using pg\_stat\_io for enhanced IO monitoring](#task-4-using-pg_stat_io-for-enhanced-io-monitoring)
     - [Task 5: Using Query Store](#task-5-using-query-store)
-  - [Exercise 5: PgBouncer](#exercise-5-pgbouncer)
+  - [Exercise 5: Logical Replication](#exercise-5-logical-replication)
+  - [Exercise 6: PgBouncer](#exercise-6-pgbouncer)
     - [Task 1: Enable PgBouncer and PgBouncer Metrics](#task-1-enable-pgbouncer-and-pgbouncer-metrics)
     - [Task 2: Performance without PgBouncer](#task-2-performance-without-pgbouncer)
     - [Task 3: Performance with PgBouncer](#task-3-performance-with-pgbouncer)
@@ -734,21 +735,77 @@ Some common uses for this data include:
 
 ### Task 5: Using Query Store
 
-In lab 1 you enabled the Query Store via server parameters.  As you were working with Lab 2, you executed several actions against the database.
+The Query Store feature in Azure Database for PostgreSQL provides a way to track query performance over time. Query Store simplifies performance troubleshooting by helping you quickly find the longest running and most resource-intensive queries. Query Store automatically captures a history of queries and runtime statistics, and it retains them for your review. It separates data by time windows so that you can see database usage patterns. Data for all users, databases, and queries is stored in a database named azure_sys in the Azure Database for PostgreSQL instance.
 
-1. Run the following to see what the most expensive queries were:
+In lab 1 you enabled the Query Store via server parameters.  As you were working with Lab 2 exercises above, you executed several actions against the database.
+
+1. In pgAdmin, expand the `azure_sys` database, right-click it and select **Query Tool**
+2. Run the following to see what the most expensive queries were:
 
     ```sql
-    SELECT * FROM query_store.qs_view; 
+    SELECT * 
+    FROM query_store.qs_view
+    ORDER BY total_time desc;
     ```
 
-2. You should see a series of queries:
+3. You should see a series of queries sorted by their total time, you can also sort by `max_time`, `mean_time` or `stddev_time`:
 
-TODO
+    TODO
 
 For more information on the query store feature, reference [Monitor performance with the Query Store](https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-query-store)
 
-## Exercise 5: PgBouncer
+## Exercise 5: Logical Replication
+
+1. You will need to assign the `REPLICATION` permission in order to setup replication:
+
+    ```sql
+    ALTER ROLE wsuser WITH REPLICATION;
+    ```
+
+2. On the Postgres 16 server for the `airbnb` database, run the following to create a publication, add a table to it and then create a slot:
+
+    ```sql
+    create publication my_pub;
+    
+    alter publication my_pub add table calendar;
+    
+    SELECT pg_create_logical_replication_slot('my_pub_slot', 'pgoutput');
+    ```
+
+3. On the PostgreSQL 14 server for the `airbnb` database, run the following.  It will created the matching table and setup the subscription. Be sure to replace the `PREFIX` value:
+
+    ```sql
+    CREATE TABLE calendar (
+        listing_id int, 
+        date date,
+        price decimal(10,2), 
+        available varchar(50)
+        );
+
+    CREATE SUBSCRIPTION my_pub_subscription CONNECTION 'host=PREFIX-pg-flex-eastus-16.postgres.database.azure.com port=5432 dbname=airbnb user=wsuser password=Solliance123' PUBLICATION my_pub WITH (copy_data=true, enabled=true, create_slot=false, slot_name='my_pub_slot');
+    ```
+
+4. On the PostgreSQL 16 server, run the following to add some rows to the `calendar` table:
+
+    ```sql
+    INSERT INTO CALENDAR values (241032, '2024-01-01', 85, 't');
+    INSERT INTO CALENDAR values (241032, '2024-01-02', 85, 't');
+    INSERT INTO CALENDAR values (241032, '2024-01-03', 85, 't');
+    INSERT INTO CALENDAR values (241032, '2024-01-04', 85, 't');
+    INSERT INTO CALENDAR values (241032, '2024-01-05', 85, 't');
+    INSERT INTO CALENDAR values (241032, '2024-01-06', 85, 't');
+    INSERT INTO CALENDAR values (241032, '2024-01-07', 85, 't');
+    ```
+
+5. On the PostgreSQL 14 server, run the following, notice that the row has replicated to from 16 to 14 instance:
+
+    ```sql
+    SELECT * 
+    FROM calendar
+    ORDER BY date desc
+    ```
+
+## Exercise 6: PgBouncer
 
 PgBouncer is a well known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
 
