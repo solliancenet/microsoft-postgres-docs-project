@@ -8,7 +8,7 @@
     - [Task 1: Add SQL/JSON object checks](#task-1-add-sqljson-object-checks)
     - [Task 2: Exploring JSON\_ARRAY, JSON\_ARRAYAGG and JSON\_OBJECT](#task-2-exploring-json_array-json_arrayagg-and-json_object)
     - [Task 3: Creating Indexes](#task-3-creating-indexes)
-    - [Task 4: Creating GIN indexes](#task-4-creating-gin-indexes)
+    - [Task 4: Using Full Text + GIN indexes](#task-4-using-full-text--gin-indexes)
     - [Task 5: Aggregate function ANY\_VALUE()](#task-5-aggregate-function-any_value)
   - [Exercise 3: COPY Features](#exercise-3-copy-features)
     - [Task 1: Configuring server parameters](#task-1-configuring-server-parameters)
@@ -19,6 +19,7 @@
     - [Task 2: Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task-2-allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
     - [Task 3: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-3-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
     - [Task 4: Using pg\_stat\_io for enhanced IO monitoring](#task-4-using-pg_stat_io-for-enhanced-io-monitoring)
+    - [Task 5: Using Query Store](#task-5-using-query-store)
   - [Exercise 5: PgBouncer](#exercise-5-pgbouncer)
     - [Task 1: Enable PgBouncer and PgBouncer Metrics](#task-1-enable-pgbouncer-and-pgbouncer-metrics)
     - [Task 2: Performance without PgBouncer](#task-2-performance-without-pgbouncer)
@@ -58,32 +59,9 @@ In this exercise you will create some tables and use the COPY command to move da
     CREATE TABLE temp_listings (data jsonb);
     CREATE TABLE temp_reviews (data jsonb);
 
-    DROP TABLE IF EXISTS reviews_csv;
-    DROP TABLE IF EXISTS calendar_csv;
-
-    CREATE TABLE reviews_csv (
-        listing_id int, 
-        id int, 
-        date date,
-        reviewer_id int, 
-        reviewer_name varchar(50), 
-        comments varchar(2000)
-    );
-
-    CREATE TABLE calendar_csv (
-        listing_id varchar(50), 
-        date date,
-        available varchar(50),
-        price decimal(10,2)
-    );
-    
     \COPY temp_calendar (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\calendar.json';
     \COPY temp_listings (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\listings.json';
-    \COPY temp_reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';
-
-    \copy reviews_csv FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.csv' csv header;
-    \copy calendar_csv FROM 'C:\microsoft-postgres-docs-project\artifacts\data\calendar.csv' csv header;
-    
+    \COPY temp_reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';    
     
     DROP TABLE IF EXISTS listings;
     DROP TABLE IF EXISTS calendar;
@@ -358,26 +336,30 @@ Indexes help increase query performance.
         and l.listing_id = 241032
     ```
 
-### Task 4: Creating GIN indexes
+### Task 4: Using Full Text + GIN indexes
 
 Although indexes on JSON data is not new to PG16 (available since 8.2 with JSON support since 9.2), it is a valuable feature to be aware of when working with PostgreSQL and JSON. GIN indexes can be used to efficiently search for keys or key/value pairs occurring within a large number of jsonb documents (datums). Two GIN "operator classes" are provided, offering different performance and flexibility trade-offs.
 
 1. Run the following query:
 
     ```sql
-    SELECT data['id'], data['name'], data['host_verifications'] FROM listings WHERE data -> 'host_verifications' ? 'google';
+    ALTER TABLE listings 
+    ADD COLUMN ts_summary tsvector
+    GENERATED ALWAYS AS (to_tsvector('english', summary)) STORED;
     ```
 
 2. In pgAdmin, run the following command:
 
     ```sql
-    CREATE INDEX idxgin ON listings USING GIN (host_verifications);
+    CREATE INDEX ts_idx ON listings USING GIN (ts_summary);
     ```
 
 3. Again, re-run the query, you should see a performance increase in the query:
 
     ```sql
-    SELECT data['id'], data['name'], data['host_verifications'] FROM listings WHERE data -> 'host_verifications' ? 'google';
+    SELECT *
+    FROM listings
+    WHERE ts_summary @@ to_tsquery('amazing');
     ```
 
 ### Task 5: Aggregate function ANY_VALUE()
@@ -749,6 +731,22 @@ Some common uses for this data include:
 
 - Review if high evictions are occurring.  If so, shared buffers should be increased.
 - Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer.
+
+### Task 5: Using Query Store
+
+In lab 1 you enabled the Query Store via server parameters.  As you were working with Lab 2, you executed several actions against the database.
+
+1. Run the following to see what the most expensive queries were:
+
+    ```sql
+    SELECT * FROM query_store.qs_view; 
+    ```
+
+2. You should see a series of queries:
+
+TODO
+
+For more information on the query store feature, reference [Monitor performance with the Query Store](https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-query-store)
 
 ## Exercise 5: PgBouncer
 
