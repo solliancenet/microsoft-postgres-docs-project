@@ -1,6 +1,6 @@
-# Hands on Lab: Building AI Apps with Azure OpenAI (TODO: Change title to: Generative AI with Azure Database for PostgreSQL Flexible Server?)
+# Hands-on Lab: Generative AI with Azure Database for PostgreSQL Flexible Server
 
-- [Hands on Lab: Building AI Apps with Azure OpenAI (TODO: Change title to: Generative AI with Azure Database for PostgreSQL Flexible Server?)](#hands-on-lab-building-ai-apps-with-azure-openai-todo-change-title-to-generative-ai-with-azure-database-for-postgresql-flexible-server)
+- [Hands-on Lab: Generative AI with Azure Database for PostgreSQL Flexible Server](#hands-on-lab-generative-ai-with-azure-database-for-postgresql-flexible-server)
   - [Exercise 1: Add Azure AI and Vector extensions to allowlist](#exercise-1-add-azure-ai-and-vector-extensions-to-allowlist)
   - [Exercise 2: Create an Azure OpenAI resource](#exercise-2-create-an-azure-openai-resource)
     - [Task 1: Provision an Azure OpenAI service](#task-1-provision-an-azure-openai-service)
@@ -17,17 +17,20 @@
   - [Exercise 5: Integrate Azure AI Services](#exercise-5-integrate-azure-ai-services)
     - [Task 1: Provision an Azure AI Language service](#task-1-provision-an-azure-ai-language-service)
     - [Task 2: Set the Azure AI Language service endpoint and key](#task-2-set-the-azure-ai-language-service-endpoint-and-key)
-    - [Task 3: Analyze sentiment of reviews](#task-3-analyze-sentiment-of-reviews)
-  - [Exercise 6: Build sample app](#exercise-6-build-sample-app)
-  - [Exercise 7: Clean up](#exercise-7-clean-up)
+    - [Task 3: Analyze the sentiment of reviews](#task-3-analyze-the-sentiment-of-reviews)
+  - [Exercise 6: Execute a final query to tie it all together (Optional)](#exercise-6-execute-a-final-query-to-tie-it-all-together-optional)
+    - [Task 1: Connect to the database using pgAdmin](#task-1-connect-to-the-database-using-pgadmin)
+    - [Task 2: Execute a query and view results on a map](#task-2-execute-a-query-and-view-results-on-a-map)
+  - [Exercise 6: Clean up](#exercise-6-clean-up)
+  - [Summary](#summary)
 
-[Generative AI](https://learn.microsoft.com/training/paths/introduction-generative-ai/) is a form of artificial intelligence in which [large language models](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#large-language-model-llm) (LLMs) are trained to generate original content based on natural language input. LLMs are designed to understand and generate human-like language output, and are known for their ability to perform a wide range of natural language understanding and generation tasks. Generative AI has a wide range of applications for data-driven applications, including semantic search, recommendations systems, content generation, such as summarization, and many others.
+[Generative AI](https://learn.microsoft.com/training/paths/introduction-generative-ai/) is a form of artificial intelligence in which [large language models](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#large-language-model-llm) (LLMs) are trained to generate original content based on natural language input. LLMs are designed to understand and generate human-like language output and are known for their ability to perform a wide range of natural language understanding and generation tasks. Generative AI has a wide range of applications for data-driven applications, including semantic search, recommendation systems, and content generation, such as summarization, among many others.
 
-In this lab, you take advantage of [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/overview) and the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/) to integrate rich generative AI capabilities directly into your Azure Database for PostgreSQL Flexible Server using the the [Azure AI Extension](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-overview). The `azure_ai` extension adds the ability to leverage LLMs directly from your database.
+In this lab, you take advantage of [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/overview) and the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/) to integrate rich generative AI capabilities directly into your Azure Database for PostgreSQL Flexible Server using the [Azure AI Extension](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-overview). The `azure_ai` extension adds the ability to leverage LLMs directly from your database.
 
 > Important:
 >
-> This lab builds upon the work you did with extensions in Lab 3 and relies on data loaded into the Azure Database for PostgreSQL Flexible Server in that lab.
+> This lab builds upon your work with extensions in Lab 3 and relies on data loaded into the Azure Database for PostgreSQL Flexible Server in that lab.
 
 ## Exercise 1: Add Azure AI and Vector extensions to allowlist
 
@@ -67,16 +70,16 @@ In this task, you create a new Azure OpenAI service.
     | Parameter            | Value |
     | -------------------- | ----- |
     | **Project details**  |       |
-    | Subscription         | Select the subscription you are using for resources in this lab. |
+    | Subscription         | Select the subscription you use for lab resources. |
     | Resource group       | Select the resource group you created in Lab 1. |
     | **Instance details** |       |
-    | Region               | For this lab, you will use a `text-embedding-ada-002` (version 2) embedding model. This model is currently only available in [certain regions](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#embeddings-models). Please select a region from this list, such as `East US`, to use for this resource. |
+    | Region               | For this lab, you will use a `text-embedding-ada-002` (version 2) embedding model. This model is currently only available in [certain regions](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#embeddings-models). Please select a region from this list, such as `East US`, for this resource. |
     | Name                 | _Enter a globally unique name_, such as `aoai-postgres-labs-SUFFIX`, where `SUFFIX` is a unique string, such as your initials. |
     | Pricing tier         | Select **Standard S0**. |
 
     ![The Basics tab of the Create Azure OpenAI dialog is displayed, and the fields are populated with the values specified in the task.](media/create-azure-openai-basics-tab.png)
 
-    > Note: If you see a message that the Azure OpenAI Service is currently available to customer via an application form. The selected subscription has not been enabled for use of the service and does not have quota for any pricing tiers, you will need to click the link to request access to the Azure OpenAI service and fill out the request form.
+    > Note: If you see a message that the Azure OpenAI Service is currently available to customers via an application form. The selected subscription has not been enabled for the service and does not have a quota for any pricing tiers; you will need to click the link to request access to the Azure OpenAI service and fill out the request form.
 
 5. Select **Next** to move to the **Networking** tab.
 
@@ -88,7 +91,7 @@ In this task, you create a new Azure OpenAI service.
 
 ### Task 2: Deploy an embedding model
 
-The `azure_ai` extension provides the ability to create vector embeddings from text. To create these embeddings requires a deployed `text-embedding-ada-002` (version 2) model within your Azure OpenAI service. In this task, you will use [Azure OpenAI Studio](https://oai.azure.com/) to create a model deployment that use can use.
+The `azure_ai` extension allows the creation of vector embeddings from text. To create these embeddings requires a deployed `text-embedding-ada-002` (version 2) model within your Azure OpenAI service. In this task, you will use [Azure OpenAI Studio](https://oai.azure.com/) to create a model deployment that you can employ.
 
 1. Navigate to your newly provisioned Azure OpenAI resource in the [Azure portal](https://portal.azure.com/).
 
@@ -106,19 +109,19 @@ The `azure_ai` extension provides the ability to create vector embeddings from t
     - **Model version**: Ensure **2 (Default)** is selected.
     - **Deployment name**: Enter `embeddings`.
 
-    ![The Deploy model dialog is displayed with text-embedding-ada-002 selected in the select a model box, 2 (default) selected in the model version box, and embeddings entered for the deployment name.](media/azure-openai-studio-deployments-deploy-model-dialog.png)
+    ![The Deploy model dialog is displayed with text-embedding-ada-002 selected in the select a model box, 2 (default) specified in the model version box, and embeddings entered for the deployment name.](media/azure-openai-studio-deployments-deploy-model-dialog.png)
 
 5. Select **Create** to deploy the model. After a few moments, the deployment will appear in the list of deployments.
 
 ## Exercise 3: Install and configure the `azure_ai` extension
 
-In this exercise, you install the `azure_ai` extention into your database and configure it to connect to your Azure OpenAI service.
+In this exercise, you install the `azure_ai` extension into your database and configure it to connect to your Azure OpenAI service.
 
 ### Task 1: Connect to the database using psql in the Azure Cloud Shell
 
-In this task, you use the `psql` command line utility from the Azure Cloud Shell to connect to your database.
+In this task, you use the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) to connect to your database.
 
-1. You need the connection details for your database to connect to it using `psql` in the Cloud Shell. Navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/) and in the left-hand navigation menu, select **Connect** under **Settings**.
+1. You need the connection details for your database to connect to it using `psql` in the Cloud Shell. Navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/), and in the left-hand navigation menu, select **Connect** under **Settings**.
 
     ![The Connect menu item is highlighted under Settings in the left-hand navigation menu in the Azure portal.](media/azure-postgres-connect.png)
 
@@ -126,13 +129,13 @@ In this task, you use the `psql` command line utility from the Azure Cloud Shell
 
     ![The Cloud Shell icon is highlighted in the Azure portal toolbar and a Cloud Shell window is open at the bottom of the browser window.](media/portal-cloud-shell-postgres.png)
 
-3. From the database's **Connect** page, select **airbnb** for the **Database name** and copy the **Connection details** block.
+3. From the database's **Connect** page in the Azure portal, select **airbnb** for the **Database name**, then copy the **Connection details** block and paste it into the Cloud Shell.
 
     ![The Connection strings page of the Azure Cosmos DB Cluster resource is highlighted. On the Connection strings page, the copy to clipboard button to the right of the psql connection string is highlighted.](media/postgresql-connection-details-psql.png)
 
-4. Paste the connection details into the Cloud Shell, and replace the `{your_password}` token with the password you assigned to the `s2admin` user when creating your database. If the followed the instructions in Lab 1, the password should be `Seattle123Seattle123`.
+4. At the Cloud Shell prompt, replace the `{your_password}` token with the password you assigned to the `s2admin` user when creating your database, then run the command. If you followed the instructions in Lab 1, the password should be `Seattle123Seattle123`.
 
-5. Connect to your database using the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) by entering the following at the prompt.
+5. Connect to your database using the `psql` command-line utility by entering the following at the prompt:
 
     ```bash
     psql
@@ -158,7 +161,7 @@ The `azure_ai` extension allows you to integrate Azure OpenAI and Azure Cognitiv
 
 ### Task 3: Review the objects contained within the `azure_ai` extension
 
-Reviewing the objects contained within the `azure_ai` extension can provide a better understanding of the capabilities it offers. In this task, you inspect the various schemas, user-defined functions (UDFs), and composite types added to the database by the extension.
+Reviewing the objects within the `azure_ai` extension can provide a better understanding of its capabilities. In this task, you inspect the various schemas, user-defined functions (UDFs), and composite types added to the database by the extension.
 
 1. You can use the [`\dx` meta-command](https://www.postgresql.org/docs/current/app-psql.html#APP-PSQL-META-COMMAND-DX-LC) from the `psql` command prompt to list the objects contained within the extension.
 
@@ -196,7 +199,7 @@ Reviewing the objects contained within the `azure_ai` extension can provide a be
 
 ### Task 4: Set the Azure OpenAI endpoint and key
 
-Before using the `azure_openai` functions, you must configure the extension to your Azure OpenAI service endpoint and key.
+Before using the `azure_openai` functions, configure the extension to your Azure OpenAI service endpoint and key.
 
 1. Using the same browser tab where the Cloud Shell is open, navigate to your Azure OpenAI resource in the [Azure portal](https://portal.azure.com/) and select the **Keys and Endpoint** item under **Resource Management** from the left-hand menu, then copy your endpoint and access key.
 
@@ -222,9 +225,9 @@ Before using the `azure_openai` functions, you must configure the extension to y
 
 ## Exercise 4: Generate vector embeddings with Azure OpenAI
 
-The `azure_ai` extension's `azure_openai` schema enables the use of Azure OpenAI for creating vector embeddings for text values. Using this schema, you can [generate embeddings with Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/how-to/embeddings) directly from the database to create vector representations of input text, which can then be used in vector similarity searches, as well as consumed by machine learning models.
+The `azure_ai` extension's `azure_openai` schema enables Azure OpenAI to create vector embeddings for text values. Using this schema, you can [generate embeddings with Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/how-to/embeddings) directly from the database to create vector representations of input text, which can then be used in vector similarity searches, as well as consumed by machine learning models.
 
-[Embeddings](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#embeddings) are a concept in machine learning and natural language processing (NLP) that involves representing objects, such as words, documents, or entities, as [vectors](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#vectors) in a multi-dimensional space. Embeddings allow machine learning models to evaluate how closely related information is. This technique allows for efficient identification of relationships and similarities between data, allowing algorithms to identify patterns and make accurate predictions.
+[Embeddings](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#embeddings) are a concept in machine learning and natural language processing (NLP) that involves representing objects, such as words, documents, or entities, as [vectors](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#vectors) in a multi-dimensional space. Embeddings allow machine learning models to evaluate how closely related information is. This technique efficiently identifies relationships and similarities between data, allowing algorithms to identify patterns and make accurate predictions.
 
 ### Task 1: Enable vector support with the pgvector extension
 
@@ -262,11 +265,11 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
     | timeout_ms | `integer` | 3600000 | Timeout in milliseconds after which the operation is stopped. |
     | throw_on_error | `boolean` | true | Flag indicating whether the function should, on error, throw an exception resulting in a rollback of the wrapping transactions. |
 
-2. The first argument required by the `azure_openai.create_embeddings()` function is the `deployment_name`. This name was assigned when you deployed the embeddings model in your Azure OpenAI account. To retrieve this value, return to [Azure OpenAI Studio](https://oai.azure.com/), select **Deployments** under **Management** in the left-hand navigation menu. On the **Deployments** page, copy the **Deployment name** value associated with the `text-embedding-ada-002` model deployment.
+2. The first argument required by the `azure_openai.create_embeddings()` function is the `deployment_name`. This name was assigned when you deployed the embedding model in your Azure OpenAI account. To retrieve this value, return to [Azure OpenAI Studio](https://oai.azure.com/) and select **Deployments** under **Management** in the left-hand navigation menu. On the **Deployments** page, copy the **Deployment name** value associated with the `text-embedding-ada-002` model deployment.
 
     ![The embeddings deployment for the text-embedding-ada-002 model is highlighted on the Deployments tab in Azure OpenAI Studio.](media/azure-openai-studio-deployments-embeddings.png)
 
-3. Using the deployment name, run the following query to update each record in the `listings` table, inserting the generated vector embeddings for the `description` field into the `description_vector` column using the `azure_openai.create_embeddings()` function. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page:
+3. Using the deployment name, run the following query to update each record in the `listings` table, inserting the generated vector embeddings for the `description` field into the `description_vector` column using the `azure_openai.create_embeddings()` function. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page. **IMPORTANT**: You must rerun the above query until all the records are updated. Successfully updating all rows will be indicated by an output that reads `UPDATE ##`, where `##` is a number less than 100.
 
     ```sql
     WITH empty_vectors AS (
@@ -279,23 +282,33 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
     WHERE id IN (SELECT id FROM empty_vectors);
     ```
 
-    Rerun the above query until all of the records have been updated. This will be indicated by an output that reads `UPDATE ##`, where `##` is a number less than 100. TODO: Mention the requests per minute rate limit.
+    The above query uses a common table expression (CTE) to retrieve records from the `listings` table in the `abb` schema where the `description_vector` field is null. This CTE also includes `LIMIT 100` to reduce the number of records returns to only the first 100. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. The limited number of records when performing this update is to prevent the calls from exceeding the call rate limit of the Azure OpenAI service. The `throw_on_error` parameter is false, allowing the query to proceed if the rate limit is exceeded. If you exceed the limit, you will see a warning similar to the following:
 
-    **TODO: Determine if it makes sense to just do a couple hundred records and base the following queries off of those, or if we want to show how to handle cases, like above, where there are many records, and you have to account for rate limiting and token throttling.**
+    ```sql
+    WARNING:  azure_ai::azure_ai: 429: Requests to the Get a vector representation of a given input that can be easily consumed by machine learning models and algorithms. Operation under Azure OpenAI API version 2023-05-15 have exceeded call rate limit of your current OpenAI S0 pricing tier. Please retry after 1 second. Please go here: https://aka.ms/oai/quotaincrease if you would like to further increase the default rate limit.
+    ```
 
-4. Execute the following query to view the embeddings generated for the first record in the table.
+4. You can verify that the `description_vector` column has been populated for all `listings` records by running the following query:
+
+    ```sql
+    SELECT COUNT(*) FROM abb.listings WHERE description_vector IS NULL;
+    ```
+
+    The result of the query should be a count of 0.
+
+5. Once you have successfully updated the `description_vector` column for all records in the `listings` table, execute the following query to view the embeddings generated for the first record in the table.
 
     ```sql
     SELECT description_vector FROM abb.listings LIMIT 1;
     ```
 
-    Each embedding is a vector of floating point numbers, such that the distance between two embeddings in the vector space is correlated with semantic similarity between two inputs in the original format.
+    Each embedding is a vector of floating point numbers, so the distance between two embeddings in the vector space correlates with the semantic similarity between two inputs in the original format.
 
 ### Task 3: Perform a vector similarity search
 
-Vector similarity is a method used to measure how similar two items are by representing them as vectors, which are series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors.
+Vector similarity is a method used to measure two items' similarity by representing them as vectors, which are series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors.
 
-1. To enable more efficient searching over the `vector` field by creating an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to use the latest graph-based algorithms to approximate nearest-neighbor queries.
+1. To enable more efficient searching over the `vector` field by creating an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to utilize the latest graph-based algorithms to approximate nearest-neighbor queries.
 
     ```sql
     CREATE INDEX ON abb.listings USING hnsw (description_vector vector_cosine_ops);
@@ -313,13 +326,13 @@ Vector similarity is a method used to measure how similar two items are by repre
 
 ## Exercise 5: Integrate Azure AI Services
 
-The Azure AI services integrations included in the `azure_cognitive` schema of the `azure_ai` extension provide a rich set of AI Language features accessible directly from the database. The functionalities include sentiment analysis, language detection, key phrase extraction, entity recognition, and text summarization. Access to these capabilities is enabled through the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/overview).
+The Azure AI services integrations included in the `azure_cognitive` schema of the `azure_ai` extension provide a rich set of AI Language features accessible directly from the database. The functionalities include sentiment analysis, language detection, key phrase extraction, entity recognition, and text summarization. These capabilities are enabled through the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/overview).
 
 To review the complete list of Azure AI capabilities accessible through the extension, view the [Integrate Azure Database for PostgreSQL Flexible Server with Azure Cognitive Services documentation](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-cognitive).
 
 ### Task 1: Provision an Azure AI Language service
 
-An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-service/overview) service is required to take advantage of the `azure_ai` extensions cognitive functions. In this exercise, you will create an Azure AI Language service to use for the exercises in this lab.
+An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-service/overview) service is required to take advantage of the `azure_ai` extensions cognitive functions. In this exercise, you will create an Azure AI Language service.
 
 1. In a web browser, navigate to the [Azure portal](https://portal.azure.com/).
 
@@ -340,12 +353,12 @@ An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-se
     | Parameter            | Value |
     | -------------------- | ----- |
     | **Project details**  |       |
-    | Subscription         | Select the subscription you are using for resources in this lab. |
+    | Subscription         | Select the subscription you use for lab resources. |
     | Resource group       | Select the resource group you created in Lab 1. |
     | **Instance details** |       |
     | Region               | Select the region you used for your Azure Database for PostgreSQL Flexible Server resource. |
     | Name                 | _Enter a globally unique name_, such as `lang-postgres-labs-SUFFIX`, where `SUFFIX` is a unique string, such as your initials. |
-    | Pricing tier         | Select the free pricing tier, **Free F0**. |
+    | Pricing tier         | Select the standard pricing tier, **S (1K Calls per minute)**. |
     | Responsible AI Notice | Check the box to certify you have reviewed and acknowledged the Responsible AI Notice. |
 
     ![The Basics tab of the Create Language dialog is displayed and populated with the values specified above.](media/create-language-service-basics-tab.png)
@@ -354,7 +367,7 @@ An [Azure AI Language](https://learn.microsoft.com/azure/ai-services/language-se
 
 7. Select the **Create** button on the **Review + create** tab to provision the Language service.
 
-8. When the Language service deployment completes, select **Go to resource group** on the deployment page.
+8. Select **Go to resource group** on the deployment page when the language service deployment is complete.
 
     ![The go to resource group button is highlighted on the Language service deployment page.](media/create-language-service-deployment-complete.png)
 
@@ -373,50 +386,147 @@ As with the `azure_openai` functions, to successfully make calls against Azure A
     SELECT azure_ai.set_setting('azure_cognitive.subscription_key', '{api-key}');
     ```
 
-### Task 3: Analyze sentiment of reviews
+### Task 3: Analyze the sentiment of reviews
 
-In this task, you will use the `azure_cognitive.XXX` function to analyze the sentiment of reviews for properties and assign the sentiment score to a new column in the reviews table.
+In this task, you will use the `azure_cognitive.analyze_sentiment` function to evaluate reviews of Airbnb listings.
 
-TODO...
-
-1. To perform sentiment analysis using the `azure_cognitive` schema in the `azure_ai` extension, you use the `analyze_sentiment` function. Run the command below to quickly review that function:
+1. To perform sentiment analysis using the `azure_cognitive` schema in the `azure_ai` extension, you use the `analyze_sentiment` function. Run the command below to review that function:
 
     ```sql
     \df azure_cognitive.analyze_sentiment
     ```
 
-2. It is also important to understand the output of that function, so you can properly handle the value it returns. Run the following command to inspect the `sentiment_analysis_result` type:
+    The output shows the function's schema, name, result data type, and argument data types. This information helps in gaining an understanding of how to use the function.
+
+2. It is also essential to understand the structure of the result data type the function outputs so you can correctly handle its return value. Run the following command to inspect the `sentiment_analysis_result` type:
 
     ```sql
     \dT+ azure_cognitive.sentiment_analysis_result
     ```
 
-    This `azure_cognitive.sentiment_analysis_result` is a result record containing the sentiment predictions of the input text. It contains the sentiment, which can be positive, negative, neutral and mixed; and the score for positive, neutral and negative found in the text represented as a real number between 0 and 1. For example in (neutral,0.26,0.64,0.09), the sentiment is neutral with positive score at 0.26, neutral at 0.64 and negative at 0.09.
-
-3. Now that you have an understanding of how to analyze sentiment using the extension and what the expected return type is, execute the following query to see how it works:
+3. The output of the above command reveals the `sentiment_analysis_result` type is a `tuple`. To understand the structure of that `tuple`,  run the following command to look at the columns contained within the `sentiment_analysis_result` composite type:
 
     ```sql
+    \d+ azure_cognitive.sentiment_analysis_result
     ```
-    
 
-## Exercise 6: Build sample app
+    The output of that command should look similar to the following:
 
-Explore a low code/nocode chatbot using postgres? (Have to see how easy)
+    ```sql
+                     Composite type "azure_cognitive.sentiment_analysis_result"
+         Column     |       Type       | Collation | Nullable | Default | Storage  | Description 
+    ----------------+------------------+-----------+----------+---------+----------+-------------
+     sentiment      | text             |           |          |         | extended | 
+     positive_score | double precision |           |          |         | plain    | 
+     neutral_score  | double precision |           |          |         | plain    | 
+     negative_score | double precision |           |          |         | plain    |
+    ```
 
-Possibly use a simple Steamlit app to interact with database and execute vector similarity searches?
+    The `azure_cognitive.sentiment_analysis_result` is a composite type containing the sentiment predictions of the input text. It includes the sentiment, which can be positive, negative, neutral, or mixed, and the scores for positive, neutral, and negative aspects found in the text. The scores are represented as real numbers between 0 and 1. For example, in (neutral,0.26,0.64,0.09), the sentiment is neutral with a positive score of 0.26, neutral of 0.64, and negative at 0.09.
 
-Take a look at this example from Denzil: https://github.com/YugabyteDB-Samples/yugabytedb-azure-openai-lodging-service
+4. Now that you have an understanding of how to analyze sentiment using the extension and the shape of the return type, execute the following query to see how it works:
 
-TODO: Come up with some good queries that cross the boundaries of the work that has been done in labs 3 and 4 to really showcase the capabilities. Combine geospatial query with semantic search and other such things.
+    ```sql
+    WITH cte AS (
+        SELECT id, azure_cognitive.analyze_sentiment(comments, 'en') AS sentiment FROM abb.reviews LIMIT 3
+    )
+    SELECT
+        id,
+        (sentiment).sentiment,
+        (sentiment).positive_score,
+        (sentiment).neutral_score,
+        (sentiment).negative_score
+    FROM cte;
+    ```
 
-## Exercise 7: Clean up
+    The above query uses a common table expression or CTE to get the sentiment scores for the first three records in the `reviews` table. It then selects the `sentiment` composite type columns from the CTE to extract the individual values from the `sentiment_analysis_result`.
 
-It is crucial that you clean up any unused resources. You are charged for the configured capacity, not how much the database is used. To delete your resource group and all resources you created for this lab, follow these instructions:
+## Exercise 6: Execute a final query to tie it all together (Optional)
 
-1. Open a web browser and navigate to the [Azure portal](https://portal.azure.com/).
+In this exercise, you connect to your database in **pgAdmin** and execute a final query that ties together your work with the `azure_ai`, `postgis`, and `pgvector` extensions across labs 3 and 4.
 
-2. In the left-hand navigation menu, select **Resource Groups**, and then select the resource group you created as part of Exercise 1.
+### Task 1: Connect to the database using pgAdmin
+
+In Lab 1, you downloaded and installed [pgAdmin](https://www.pgadmin.org/download/) and registered a connection to your database server. In this task, you will open pgAdmin and connect to your database.
+
+> Note: you configured pgAdmin to connect to your server in Lab 1. If necessary, refer back to those steps to register your database server and establish a connection to your database.
+
+1. Open **pgAdmin** on your local or lab virtual machine.
+
+2. Expand the **Servers** node within the Object Explorer, select your database server from the list, then right-click the server and select **Connect Server** from the context menu.
+
+    ![The Azure Database for PostgreSQL Flexible Server instance is selected and highlighted in the Object Explorer in pgAdmin. In the server's context menu, Connect Server is highlighted.](media/pg-admin-server-connect.png)
+  
+3. Once connected to your server, expand the **Databases** node and select the **airbnb** database. Right-click the **airbnb** database and select **Query Tool** from the context menu.
+
+    ![Under the server databases, the airbnb database is selected and Query Tool is highlighted in the context menu.](media/pg-admin-airbnb-database-query-tool.png)
+
+### Task 2: Execute a query and view results on a map
+
+In this task, you run a final query that ties together your work across labs 3 and 4.
+
+1. Run the below query that incorporates elements of the `azure_ai` and `PostGIS` extensions you have worked with in labs 3 and 4:
+
+    ```sql
+    WITH listings_cte AS (
+        SELECT id, name, listing_location, summary FROM abb.listings l
+        INNER JOIN abb.calendar c ON l.id = c.listing_id
+        WHERE ST_DWithin(
+            listing_location,
+            ST_GeomFromText('POINT(-122.410347 47.655598)', 4326),
+            0.025
+        )
+        AND c.date = '2016-01-13'
+        AND c.available = true
+        AND c.price <= 75.00
+        AND id IN (SELECT listing_id FROM abb.reviews)
+        ORDER BY description_vector <=> azure_openai.create_embeddings('embeddings', 'Properties with a private room near Discovery Park')::vector
+        LIMIT 3
+    ),
+    sentiment_cte AS (
+        SELECT listing_id, comments, azure_cognitive.analyze_sentiment(comments, 'en') AS sentiment
+        FROM abb.reviews r
+        INNER JOIN listings_cte l ON r.listing_id = l.id
+    )
+    SELECT
+        id,
+        name,
+        listing_location,
+        summary,
+        avg((sentiment).positive_score) as avg_positive_score,
+        avg((sentiment).neutral_score) as avg_neutral_score,
+        avg((sentiment).negative_score) as avg_negative_score
+    FROM sentiment_cte s
+    INNER JOIN listings_cte l on s.listing_id = l.id
+    GROUP BY id, name, listing_location, summary;
+    ```
+
+2. In the **Data Output** panel, select the **View all geometries in this column** button displayed in the `listing_location` column of the query results.
+
+    ![In the query Data Output panel, the View all geometries in this column button is highlighted.](media/pgadmin-final-query-data-output.png)
+
+    The **View all geometries in this column** button opens the **Geometry Viewer**, allowing you to view the query results on a map.
+
+3. Select one of the three points displayed on the map to view details about the location, including the average positive, neutral, and negative sentiment scores across all ratings for the property.
+
+    ![The Geometry Viewer tab is highlighted and a property point is highlighted on the map.](media/pgadmin-final-query-geometry-viewer.png)
+
+## Exercise 6: Clean up
+
+It is crucial that you clean up any resources you created for these labs once you have completed them. You are charged for the configured capacity, not how much the database is used. To delete your resource group and all resources you created for this lab, follow the instructions below:
+
+1. Open a web browser and navigate to the [Azure portal](https://portal.azure.com/), and on the home page, select **Resource groups** under Azure services.
+
+    ![Resource groups is highlighted under Azure services in the Azure portal.](media/azure-portal-home-azure-services-resource-groups.png)
+
+2. In the filter for any field search box, enter the name of the resource group you created for these labs in Lab 1, and then select the resource group from the list.
 
 3. In the **Overview** pane, select **Delete resource group**.
 
-4. Enter the name of the resource group you created to confirm and then select **Delete**.
+    ![On the Overview blade of the resource group. The Delete resource group button is highlighted.](media/resource-group-delete.png)
+
+4. In the confirmation dialog, enter the name of the resource group you created to confirm and then select **Delete**.
+
+## Summary
+
+Congratulations! You have completed the **Generative AI with Azure Database for PostgreSQL Flexible Server** hands-on lab. In this lab, you explored the powerful extensibility of Azure Database for PostgreSQL Flexible Server by installing and using the `azure_ai` extension to directly add the power of generative AI and large language models into your database.
