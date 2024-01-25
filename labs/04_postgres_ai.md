@@ -242,7 +242,7 @@ The `azure_ai` extension allows you to generate embeddings for input text. To en
 2. With vector supported added to your database, add a new column to the `listings` table using the `vector` data type to store embeddings within the table. The `text-embedding-ada-002` model produces vectors with 1536 dimensions, so you must specify `1536` as the vector size.
 
     ```sql
-    ALTER TABLE abb.listings
+    ALTER TABLE listings
     ADD COLUMN description_vector vector(1536);
     ```
 
@@ -273,16 +273,16 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
 
     ```sql
     WITH empty_vectors AS (
-        SELECT id FROM abb.listings
+        SELECT id FROM listings
         WHERE description_vector IS NULL
         LIMIT 100
     )
-    UPDATE abb.listings l
+    UPDATE listings l
     SET description_vector = azure_openai.create_embeddings('{your-deployment-name}', l.description, throw_on_error => false)
     WHERE id IN (SELECT id FROM empty_vectors);
     ```
 
-    The above query uses a common table expression (CTE) to retrieve records from the `listings` table in the `abb` schema where the `description_vector` field is null. This CTE also includes `LIMIT 100` to reduce the number of records returns to only the first 100. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. The limited number of records when performing this update is to prevent the calls from exceeding the call rate limit of the Azure OpenAI service. The `throw_on_error` parameter is false, allowing the query to proceed if the rate limit is exceeded. If you exceed the limit, you will see a warning similar to the following:
+    The above query uses a common table expression (CTE) to retrieve records from the `listings` table where the `description_vector` field is null. This CTE also includes `LIMIT 100` to reduce the number of records returns to only the first 100. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. The limited number of records when performing this update is to prevent the calls from exceeding the call rate limit of the Azure OpenAI service. The `throw_on_error` parameter is false, allowing the query to proceed if the rate limit is exceeded. If you exceed the limit, you will see a warning similar to the following:
 
     ```sql
     WARNING:  azure_ai::azure_ai: 429: Requests to the Get a vector representation of a given input that can be easily consumed by machine learning models and algorithms. Operation under Azure OpenAI API version 2023-05-15 have exceeded call rate limit of your current OpenAI S0 pricing tier. Please retry after 1 second. Please go here: https://aka.ms/oai/quotaincrease if you would like to further increase the default rate limit.
@@ -291,7 +291,7 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
 4. You can verify that the `description_vector` column has been populated for all `listings` records by running the following query:
 
     ```sql
-    SELECT COUNT(*) FROM abb.listings WHERE description_vector IS NULL;
+    SELECT COUNT(*) FROM listings WHERE description_vector IS NULL;
     ```
 
     The result of the query should be a count of 0.
@@ -299,7 +299,7 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
 5. Once you have successfully updated the `description_vector` column for all records in the `listings` table, execute the following query to view the embeddings generated for the first record in the table.
 
     ```sql
-    SELECT description_vector FROM abb.listings LIMIT 1;
+    SELECT description_vector FROM listings LIMIT 1;
     ```
 
     Each embedding is a vector of floating point numbers, so the distance between two embeddings in the vector space correlates with the semantic similarity between two inputs in the original format.
@@ -311,13 +311,13 @@ Vector similarity is a method used to measure two items' similarity by represent
 1. To enable more efficient searching over the `vector` field by creating an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to utilize the latest graph-based algorithms to approximate nearest-neighbor queries.
 
     ```sql
-    CREATE INDEX ON abb.listings USING hnsw (description_vector vector_cosine_ops);
+    CREATE INDEX ON listings USING hnsw (description_vector vector_cosine_ops);
     ```
 
 2. With everything now in place, you are now ready to execute a [cosine similarity](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings#cosine-similarity) search query against the database. Run the query below to do a vector similarity search against listing descriptions. The embeddings are generated for an input question and then cast to a vector array (`::vector`), which allows it to be compared against the vectors stored in the `listings` table.
 
     ```sql
-    SELECT id, name, description FROM abb.listings
+    SELECT id, name, description FROM listings
     ORDER BY description_vector <=> azure_openai.create_embeddings('embeddings', 'Properties with a private room near Discovery Park')::vector
     LIMIT 3;
     ```
@@ -428,7 +428,7 @@ In this task, you will use the `azure_cognitive.analyze_sentiment` function to e
 
     ```sql
     WITH cte AS (
-        SELECT id, azure_cognitive.analyze_sentiment(comments, 'en') AS sentiment FROM abb.reviews LIMIT 3
+        SELECT id, azure_cognitive.analyze_sentiment(comments, 'en') AS sentiment FROM reviews LIMIT 3
     )
     SELECT
         id,
@@ -469,8 +469,8 @@ In this task, you run a final query that ties together your work across labs 3 a
 
     ```sql
     WITH listings_cte AS (
-        SELECT id, name, listing_location, summary FROM abb.listings l
-        INNER JOIN abb.calendar c ON l.id = c.listing_id
+        SELECT id, name, listing_location, summary FROM listings l
+        INNER JOIN calendar c ON l.id = c.listing_id
         WHERE ST_DWithin(
             listing_location,
             ST_GeomFromText('POINT(-122.410347 47.655598)', 4326),
@@ -479,13 +479,13 @@ In this task, you run a final query that ties together your work across labs 3 a
         AND c.date = '2016-01-13'
         AND c.available = true
         AND c.price <= 75.00
-        AND id IN (SELECT listing_id FROM abb.reviews)
+        AND id IN (SELECT listing_id FROM reviews)
         ORDER BY description_vector <=> azure_openai.create_embeddings('embeddings', 'Properties with a private room near Discovery Park')::vector
         LIMIT 3
     ),
     sentiment_cte AS (
         SELECT listing_id, comments, azure_cognitive.analyze_sentiment(comments, 'en') AS sentiment
-        FROM abb.reviews r
+        FROM reviews r
         INNER JOIN listings_cte l ON r.listing_id = l.id
     )
     SELECT

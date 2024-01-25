@@ -99,14 +99,14 @@ With the `PostGIS` extension now loaded, you are ready to begin working with geo
 1. To accommodate `point` data, add a new `geometry` column to the table that accepts `point` data. Copy and paste the following query into the open pgAdmin query window:
 
     ```sql
-    ALTER TABLE abb.listings
+    ALTER TABLE listings
     ADD COLUMN listing_location geometry(point, 4326);
     ```
 
 2. Next, update the table with geospatial data associated with each listing by adding the longitude and latitude values into the `geometry` column.
 
     ```sql
-    UPDATE abb.listings
+    UPDATE listings
     SET listing_location = ST_SetSRID(ST_Point(longitude, latitude), 4326);
     ```
 
@@ -117,7 +117,7 @@ With `PostGIS` installed in your database, you can take advantage of the [Geomet
 1. Copy and paste the following query into the open query editor, then run it to view the data stored in the `listing_location` column:
 
     ```sql
-    SELECT name, listing_location FROM abb.listings LIMIT 50;
+    SELECT name, listing_location FROM listings LIMIT 50;
     ```
 
 2. In the **Data Output** panel, select the **View all geometries in this column** button displayed in the `listing_location` column of the query results.
@@ -134,8 +134,8 @@ With `PostGIS` installed in your database, you can take advantage of the [Geomet
 
     ```sql
     SELECT name, listing_location, summary
-    FROM abb.listings l
-    INNER JOIN abb.calendar c ON l.id = c.listing_id
+    FROM listings l
+    INNER JOIN calendar c ON l.id = c.listing_id
     WHERE ST_DWithin(
         listing_location,
         ST_GeomFromText('POINT(-122.410347 47.655598)', 4326),
@@ -404,7 +404,7 @@ Now that you are connected to your database, you can install the `pg_azure_stora
 
 With the `pg_azure_storage` extension now connected to your blob storage account, you can import the data it contains into your database. Using the queries below, you will create a new schema in the database, add tables to the new schema, and then import data from the files in blob storage into the new tables using the `pg_azure_storage` extension.
 
-1. To host the new tables, you will create a new schema named `abb` in the database. To create a new schema, use the following command:
+1. To host the new tables, and avoid conflicts with the existing tables, you will create a new schema named `abb` in the database. To create a new schema, use the following command:
 
     ```sql
     CREATE SCHEMA IF NOT EXISTS abb;
