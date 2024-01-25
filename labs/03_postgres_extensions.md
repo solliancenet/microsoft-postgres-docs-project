@@ -1,19 +1,24 @@
 # Hands-on Lab: Working with common PostgreSQL extensions
 
 - [Hands-on Lab: Working with common PostgreSQL extensions](#hands-on-lab-working-with-common-postgresql-extensions)
-  - [Exercise 1: Load sample data into your database](#exercise-1-load-sample-data-into-your-database)
-    - [Task 1: Connect to the database using psql in the Azure Cloud Shell](#task-1-connect-to-the-database-using-psql-in-the-azure-cloud-shell)
-    - [Task 2: Create a new database schema and tables](#task-2-create-a-new-database-schema-and-tables)
-    - [Task 3: Load CSV data into tables](#task-3-load-csv-data-into-tables)
-  - [Exercise 2: Add extensions to allowlist](#exercise-2-add-extensions-to-allowlist)
-  - [Exercise 3: Store geospatial data with the PostGIS extension](#exercise-3-store-geospatial-data-with-the-postgis-extension)
+  - [Exercise 1: Add extensions to allowlist](#exercise-1-add-extensions-to-allowlist)
+  - [Exercise 2: Store geospatial data with the PostGIS extension](#exercise-2-store-geospatial-data-with-the-postgis-extension)
     - [Task 1: Connect to the database using pgAdmin](#task-1-connect-to-the-database-using-pgadmin)
     - [Task 2: Install the PostGIS extension](#task-2-install-the-postgis-extension)
     - [Task 3: Add a geospatial column to the listings table](#task-3-add-a-geospatial-column-to-the-listings-table)
     - [Task 4: View geospatial query results with the geometry data viewer](#task-4-view-geospatial-query-results-with-the-geometry-data-viewer)
-  - [Exercise 4: Set up scheduled jobs](#exercise-4-set-up-scheduled-jobs)
+  - [Exercise 3: Set up scheduled jobs](#exercise-3-set-up-scheduled-jobs)
     - [Task 1: Install pg\_cron extension](#task-1-install-pg_cron-extension)
     - [Task 2: Create a scheduled task using pg\_cron](#task-2-create-a-scheduled-task-using-pg_cron)
+  - [Exercise 4: Load data into the database from Azure storage using the Azure Storage extension (Optional)](#exercise-4-load-data-into-the-database-from-azure-storage-using-the-azure-storage-extension-optional)
+    - [Task 1: Add extension to allowlist](#task-1-add-extension-to-allowlist)
+    - [Task 2: Create an Azure Blob Storage account](#task-2-create-an-azure-blob-storage-account)
+    - [Task 3: Create a container](#task-3-create-a-container)
+    - [Task 4: Upload data files](#task-4-upload-data-files)
+    - [Task 5: Connect to the database using psql in the Azure Cloud Shell](#task-5-connect-to-the-database-using-psql-in-the-azure-cloud-shell)
+    - [Task 6: Enable and configure the pg\_azure\_storage extension](#task-6-enable-and-configure-the-pg_azure_storage-extension)
+    - [Task 7: Import data from blob storage](#task-7-import-data-from-blob-storage)
+    - [Task 8: Export data into blob storage using the blob\_put function](#task-8-export-data-into-blob-storage-using-the-blob_put-function)
   - [Summary](#summary)
 
 Azure Database for PostgreSQL Flexible Server is an extensible platform that provides the ability to extend a database's functionality using [many popular PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Extensions allow you to add extra functionality to your database by adding and extending the capabilities of processes within the database. They work by bundling multiple related SQL objects in a single package that can be loaded or removed from your database with a single command. After being loaded into the database, extensions function like built-in features.
@@ -30,14 +35,315 @@ In this lab, you work with the following common PostgreSQL extensions:
 | --------- | ----------- |
 | [postgis](https://www.postgis.net/) | Adds support for storing, indexing, and querying geospatial data (geometry, geography). |
 | [pg_cron](https://github.com/citusdata/pg_cron) | A cron-based job scheduler that allows you to schedule PostgreSQL commands directly from the database. |
+| [pg_azure_storage](https://learn.microsoft.com/azure/postgresql/flexible-server/reference-pg-azure-storage) (Optional) | Allows for importing and exporting data in multiple file formats directly between Azure blob storage and an Azure Database for PostgreSQL Flexible Server database. |
 
-## Exercise 1: Load sample data into your database
+## Exercise 1: Add extensions to allowlist
 
-Before exploring the power of extensions, you need to populate your database with some sample data. In this exercise, you will connect to your database using the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html), create a new schema and a few tables for hosting data, then use the `COPY` command to load data into those tables from a public blob storage account.
+Before you can install and use extensions in an Azure Database for PostgreSQL Flexible Server, you must _allowlist_ the desired extensions, as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
 
-### Task 1: Connect to the database using psql in the Azure Cloud Shell
+1. In a web browser, navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/).
 
-In this task, you use the `psql` command line utility to connect to your database from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview).
+2. From the database's left-hand navigation menu, select **Server parameters** under **Settings**, then enter `azure.extensions` into the search box. Expand the **VALUE** dropdown list, then locate and check the box next to each of the following extensions:
+
+    - PG_CRON
+    - POSTGIS
+
+    ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, azure.extensions is entered and highlighted in the search bar and the PG_CRON extension is selected.](media/postgresql-server-parameters-extensions-pg-cron-postgis.png)
+
+    If the extension you are attempting to allowlist is not present in the list, it may not be supported in the version of PostgreSQL you are using. You can review the [supported extension versions in the Microsoft docs](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Alternatively, you can run the query, `SELECT * FROM pg_available_extensions;`, against your database.
+
+3. Some extensions must also be included in the server's shared preloaded libraries. Of the extensions you use in this lab, `pg_cron` needs to be preloaded at the server start. Clear the search box on the **Server parameters** page and enter `shared_preload`. Expand the **VALUE** dropdown list, then locate the `PG_CRON` extension and ensure it is checked. This extension is preloaded by default, so you are verifying its state and should not have to make any changes.
+
+    ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, shared_preload is entered and highlighted in the search bar and the PG_CRON extension are selected and highlighted.](media/postgresql-server-parameters-shared-preloaded-libraries-pg-cron.png)
+
+4. Select **Save** on the toolbar to save the updates to the Azure extensions allowlist. This action will trigger a deployment on your database that should be completed within 20 to 30 seconds.
+
+## Exercise 2: Store geospatial data with the PostGIS extension
+
+[PostGIS](https://www.postgis.net/) is a 3rd party open-source spatial database extender for PostgreSQL object-relational databases, which adds support for geographic objects that allow location queries to be run in SQL. This extension enables complex geospatial queries and analysis within PostgreSQL, essential for mapping, location tracking, and spatial analysis. It provides a variety of spatial data types, indexing options, and functions to query and manipulate geospatial data efficiently.
+
+You will use [pgAdmin](https://www.pgadmin.org/docs/pgadmin4/latest/index.html) to connect to and execute queries against your database for this exercise. The pgAdmin tool offers a [Geometry Data Viewer](https://www.pgadmin.org/docs/pgadmin4/8.0/editgrid.html#the-data-grid), which allows you to view GIS objects on a map.
+
+### Task 1: Connect to the database using pgAdmin
+
+In Lab 1, you downloaded and installed [pgAdmin](https://www.pgadmin.org/download/) and registered a connection to your database server. In this task, you will open pgAdmin and connect to your database.
+
+> Note: you configured pgAdmin to connect to your server in Lab 1. If necessary, refer back to those steps to register your database server and establish a connection to your database.
+
+1. Open **pgAdmin** on your local or lab virtual machine.
+
+2. Expand the **Servers** node within the Object Explorer, select your database server from the list, then right-click the server and select **Connect Server** from the context menu.
+
+    ![The Azure Database for PostgreSQL Flexible Server instance is selected and highlighted in the Object Explorer in pgAdmin. In the server's context menu, Connect Server is highlighted.](media/pg-admin-server-connect.png)
+  
+3. Once connected to your server, expand the **Databases** node and select the **airbnb** database. Right-click the **airbnb** database and select **Query Tool** from the context menu.
+
+    ![Under the server databases, the airbnb database is selected and Query Tool is highlighted in the context menu.](media/pg-admin-airbnb-database-query-tool.png)
+
+### Task 2: Install the PostGIS extension
+
+To install the `postgis` extension in your database, you will use the [CREATE EXTENSION](https://www.postgresql.org/docs/current/static/sql-createextension.html) command, as you did with the `pg_azure_storage` extension. Behind the scenes, executing `CREATE EXTENSION` runs the extension's script file. The script typically creates new SQL objects such as functions, data types, operators, and index support methods. Additionally, `CREATE EXTENSION` records the identities of all the created objects so they can be dropped again if `DROP EXTENSION` is issued.
+
+1. In the query window you opened above, run the `CREATE EXTENSION` command to install the `postgis` extension in your database.
+
+    ```sql
+    CREATE EXTENSION IF NOT EXISTS postgis;
+    ```
+
+    If you attempt to install an extension with the same name as one already loaded in the database, you will receive an error that the extension already exists. Specifying the `IF NOT EXISTS` clause when running the `CREATE EXTENSION` command allows you to avoid this error.
+
+### Task 3: Add a geospatial column to the listings table
+
+With the `PostGIS` extension now loaded, you are ready to begin working with geospatial data in the database. The `listings` table you created and populated above contains the latitude and longitude of all listed properties. To use these data for geospatial analysis, you must alter the `listings` table to add a `geometry` column that accepts the `point` data type. These new data types are included in the `postgis` extension.
+
+1. To accommodate `point` data, add a new `geometry` column to the table that accepts `point` data. Copy and paste the following query into the open pgAdmin query window:
+
+    ```sql
+    ALTER TABLE abb.listings
+    ADD COLUMN listing_location geometry(point, 4326);
+    ```
+
+2. Next, update the table with geospatial data associated with each listing by adding the longitude and latitude values into the `geometry` column.
+
+    ```sql
+    UPDATE abb.listings
+    SET listing_location = ST_SetSRID(ST_Point(longitude, latitude), 4326);
+    ```
+
+### Task 4: View geospatial query results with the geometry data viewer
+
+With `PostGIS` installed in your database, you can take advantage of the [Geometry Data Viewer](https://www.pgadmin.org/docs/pgadmin4/8.0/editgrid.html#the-data-grid) in pgAdmin to view GIS objects in a map.
+
+1. Copy and paste the following query into the open query editor, then run it to view the data stored in the `listing_location` column:
+
+    ```sql
+    SELECT name, listing_location FROM abb.listings LIMIT 50;
+    ```
+
+2. In the **Data Output** panel, select the **View all geometries in this column** button displayed in the `listing_location` column of the query results.
+
+    ![In the query Data Output panel, the View all geometries in this column button is highlighted.](media/pg-admin-data-output-view-geometries-on-map.png)
+
+    The **View all geometries in this column** button opens the **Geometry Viewer**, allowing you to view the query results on a map.
+
+3. Select one of the points displayed on the map to view details about the location. In this case, the query only provided the name of the property.
+
+    ![The Geometry Viewer tab is highlighted and a property point is highlighted on the map.](media/pg-admin-geometry-viewer-property-name.png)
+
+4. Now, run the following query to perform a geospatial proximity query, returning properties that are available for the week of January 13, 2016, are under $75.00 per night, and are within a short distance of Discovery Park in Seattle. The query uses the [ST_DWithin](https://postgis.net/docs/ST_DWithin.html) function provided by the `PostGIS` extension to identify listings within a given distance from the park, which has a longitude of `-122.410347` and a latitude of `47.655598`.
+
+    ```sql
+    SELECT name, listing_location, summary
+    FROM abb.listings l
+    INNER JOIN abb.calendar c ON l.id = c.listing_id
+    WHERE ST_DWithin(
+        listing_location,
+        ST_GeomFromText('POINT(-122.410347 47.655598)', 4326),
+        0.025
+    )
+    AND c.date = '2016-01-13'
+    AND c.available = true
+    AND c.price <= 75.00;
+    ```
+
+5. Select the **View all geometries in this column** button displayed in the `listing_location` column of the query results to open the **Geometry Viewer** and examine the results.
+
+    ![The Geometry Viewer map shows several properties close to Discovery Park. One property has been selected, and its name and summary are displayed in a pop-up dialog.](media/pg-admin-proximity-query-geometry-viewer-results.png)
+
+## Exercise 3: Set up scheduled jobs
+
+The following extension you will work with is [pg_cron](https://github.com/citusdata/pg_cron), a simple, cron-based job scheduler for PostgreSQL that runs inside the database as an extension. This powerful and simple extension can be used for many tasks, including aggregating data in near-real time, database cleanup and administrative tasks, and much more.
+
+Extending your database with the [pg_cron](https://github.com/citusdata/pg_cron) extension allows you to schedule PostgreSQL commands directly from the database using a cron-based job scheduler. Using this extension, you can schedule a job that calls a function to execute on a schedule, such as every month, hour, or minute. In this exercise, you will create a scheduled task that runs the `VACUUM` operation against the `airbnb` database.
+
+### Task 1: Install pg_cron extension
+
+The `pg_cron` extension works slightly differently than the extensions you worked with above. It can only be installed in the `postgres` database, which requires access to the background worker process to schedule jobs. To install the `pg_cron` extension, you will open a new **pgAdmin** query window from the `postgres` database.
+
+1. In your open **pgAdmin** session, locate the `postgres` databases under the **Databases** node in the Object Explore, then right-click the database and select **Query Tool** from the context menu.
+
+    ![Under the server databases, the postgres database is selected and Query Tool is highlighted in the context menu.](media/pg-admin-postgres-database-query-tool.png)
+
+2. In the new query panel, run the `CREATE EXTENSION` command to install the `pg_cron` extension in the `postgres` database.
+
+    ```sql
+    CREATE EXTENSION IF NOT EXISTS pg_cron;
+    ```
+
+### Task 2: Create a scheduled task using pg_cron
+
+In this task, you will use `pg_cron` to create a scheduled job for performing garbage collection in the `airbnb` database using the [VACUUM](https://www.postgresql.org/docs/current/sql-vacuum.html) operation.
+
+1. Copy and paste the following query into the query window for the `postgres` database, then run it to schedule a `VACUUM` operation in the `airbnb` database every five minutes.
+
+    ```sql
+    SELECT cron.schedule_in_database('VACUUM','*/5 * * * * ','VACUUM','airbnb');
+    ```
+
+2. Run the following query to view the job list, including the one you just added.
+
+    ```sql
+    SELECT * FROM cron.job;
+    ```
+
+    ![The output from the SELECT * FROM cron.job query is displayed.](media/pg-admin-pg-cron-job-list.png)
+
+    If you need to stop a job, you must retrieve the `jobid` for your job using this query.
+
+3. To unschedule the job, use the following, replacing the `{job_id}` token with the `jobid` you retrieved from the previous query.
+
+    ```sql
+    SELECT cron.unschedule({job_id});
+    ```
+
+## Exercise 4: Load data into the database from Azure storage using the Azure Storage extension (Optional)
+
+The [pg_azure_storage extension](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-storage-extension) enables seamless integration of Azure blob storage with PostgreSQL databases. The extension allows you to import and export data in multiple file formats directly from Azure blob storage and your database. To use the `pg_azure_storage` extension for this lab, you must first provision an Azure Storage account, retrieve its access key, create a container, and copy the sample Seattle Airbnb data files into the container.
+
+### Task 1: Add extension to allowlist
+
+Before you can install and use extensions the `pg_azure_storage` extension, you must _allowlist_ it.
+
+1. In a web browser, navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/).
+
+2. From the database's left-hand navigation menu, select **Server parameters** under **Settings**, then enter `azure.extensions` into the search box. Expand the **VALUE** dropdown list, then locate and check the box next to each of the following extensions:
+
+    - AZURE_STORAGE
+
+    ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, azure.extensions is entered and highlighted in the search bar and the AZURE_STORAGE extension is selected and highlighted.](media/postgresql-server-parameters-extensions-azure-storage.png)
+
+    If the extension you are attempting to allowlist is not present in the list, it may not be supported in the version of PostgreSQL you are using. You can review the [supported extension versions in the Microsoft docs](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Alternatively, you can run the query, `SELECT * FROM pg_available_extensions;`, against your database.
+
+3. The `pg_azure_storage` extension must be preloaded at server start, and therefore must be added to the server's shared preloaded libraries list. Clear the search box on the **Server parameters** page and enter `shared_preload`. Expand the **VALUE** dropdown list, then locate and check the box next the `AZURE_STORAGE` extension:
+
+    ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, shared_preload is entered and highlighted in the search bar and the AZURE_STORAGE extension is selected and highlighted.](media/postgresql-server-parameters-shared-preloaded-libraries-azure-storage.png)
+
+4. Select **Save** on the toolbar, then select **Save and Restart** in the dialog that appears.
+
+    ![The Save and Restart button is highlighted on the Save server parameter dialog.](media/save-server-parameter-dialog.png)
+
+### Task 2: Create an Azure Blob Storage account
+
+In this task, you provision an Azure Storage account in the Azure portal to host the sample data files.
+
+1. In a web browser, navigate to the [Azure portal](https://portal.azure.com/).
+
+2. On the portal home page, select **Create a resource** under Azure services.
+
+    ![Create a resource is highlighted under Azure services on the portal home page.](media/create-a-resource.png)
+
+3. On the **Create a resource** page, select **Storage** in the left-hand menu then **Storage account**. You can also use the **Search** functionality to find the resource.
+
+    ![On the Azure portal's create a resource screen, Storage is highlighted in the left-hand menu and Storage account is highlighted under Popular Azure services.](media/create-a-resource-storage-account.png)
+
+4. On the Create a storage account **Basics** tab, enter the following information:
+
+    | Parameter            | Value |
+    | -------------------- | ----- |
+    | **Project details**  |       |
+    | Subscription         | Select the subscription you use for lab resources. |
+    | Resource group       | Select the resource group you created in Lab 1. |
+    | **Instance details** |       |
+    | Storage account name | _Enter a globally unique name_, such as `stpostgreslabs`. |
+    | Region               | Select the same region you chose for your Azure Database for PostgreSQL Flexible Server database. |
+    | Performance          | Select **Standard**. |
+    | Redundancy           | Select **Locally-redundant storage (LRS)**. |
+
+    ![The Basics tab of the Create a storage account dialog is displayed, and the fields are populated with the values specified in the exercise.](media/create-a-storage-account-basics-tab.png)
+
+5. The default settings will be used for the remaining tabs of the storage account configuration, so select the **Review** button.
+
+6. Select the **Create** button on the **Review** tab to provision the storage account.
+
+### Task 3: Create a container
+
+You have been provided with sample Seattle Airbnb data files in CSV format. To host these files, you will create a container named `seattle-airbnb-data` in the new storage account.
+
+1. Navigate to your new storage account in the [Azure portal](https://portal.azure.com/).
+
+2. In the left-hand navigation menu, select **Containers** under **Data storage**, and then select **+ Container** on the toolbar.
+
+    ![On the Storage account page, Containers is selected and highlighted under Data storage in the left-hand navigation menu, and + Container is highlighted on the Containers page.](media/storage-account-add-container.png)
+
+3. In the **New container** dialog, enter `seattle-airbnb-data` in the **Name** field and leave **Private (no anonymous access)** selected for the **Public access level** setting, then select **Create**.
+
+    ![The New container dialog is displayed, with the name set to seattle-airbnb-data and the public access level set to private (no anonymous access).](media/storage-account-new-container.png)
+
+    Setting the container's access level to **Private (no anonymous access)**prevents public access to the container and its contents. Below, you will provide the `pg_azure_storage` extension with the account name and access key, allowing it to access the files securely.
+
+### Task 4: Upload data files
+
+In this task, you upload the sample Seattle Airbnb data files into the container you created using the [Azure CLI](https://learn.microsoft.com/cli/azure/).
+
+1. You need the name and key associated with your storage account to upload files using the Azure CLI. In the left-hand navigation menu, select **Access keys** under **Security + networking**.
+
+    ![Access keys is selected and highlighted in the left-hand menu of the Storage account page.](media/storage-account-access-keys.png)
+
+2. With the **Access keys** page open, select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the bottom of your browser window.
+
+    ![The Cloud Shell icon is highlighted in the Azure portal toolbar and a Cloud Shell window is open at the bottom of the browser window.](media/portal-cloud-shell.png)
+
+3. At the Azure Cloud Shell prompt, execute the following `curl` commands to download the Seattle Airbnb data files.
+
+    ```bash
+    curl -O https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/listings.csv
+    ```
+
+    ```bash
+    curl -O https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/calendar.csv
+    ```
+
+    ```bash
+    curl -O https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/reviews.csv
+    ```
+
+    The above commands download the files into the storage account associated with your Cloud Shell.
+
+4. Next, you will use the [Azure CLI](https://learn.microsoft.com/cli/azure/) to upload the files into the `seattle-airbnb-data` container you created in your storage account. Create variables to hold your storage account name and key values to make things easier.
+
+    Copy your storage account name by selecting the **Copy to clipboard** button next to the storage account name on the Access keys page above your Cloud Shell:
+
+    ![The Copy to clipboard button is highlighted next to the Storage account name value, and the ACCOUNT_NAME variable declaration line is highlighted in the Cloud Shell.](media/storage-account-name.png)
+
+    Now, execute the following command at the Cloud Shell prompt to create a variable for your storage account name, replacing the `{your_storage_account_name}` token with your storage account name.
+
+    ```bash
+    ACCOUNT_NAME={your_storage_account_name}
+    ```
+
+    Next, select the **Show** button next to the **Key** for **key1** and then select the **Copy to clipboard** button next to the key's value.
+
+    ![The Copy to clipboard button is highlighted next to the key1 Key value, and the ACCOUNT_KEY variable declaration line is highlighted in the Cloud Shell.](media/storage-account-key.png)
+
+    Then, run the following, replacing the `{your_storage_account_key}` token with the key value you copied.
+
+    ```bash
+    ACCOUNT_KEY={your_storage_account_key}
+    ```
+
+5. You are now ready to upload the data files. To accomplish this, you will use the [`az storage blob upload`](https://learn.microsoft.com/cli/azure/storage/blob?view=azure-cli-latest#az-storage-blob-upload) CLI command from the Cloud Shell prompt. Run the following commands to upload the three data files into your storage account's `seattle-airbnb-data` container.
+
+    ```bash
+    az storage blob upload --account-name $ACCOUNT_NAME --account-key $ACCOUNT_KEY --container-name seattle-airbnb-data --file listings.csv --name listings.csv --overwrite
+    ```
+
+    ```bash
+    az storage blob upload --account-name $ACCOUNT_NAME --account-key $ACCOUNT_KEY --container-name seattle-airbnb-data --file calendar.csv --name calendar.csv --overwrite
+    ```
+
+    ```bash
+    az storage blob upload --account-name $ACCOUNT_NAME --account-key $ACCOUNT_KEY --container-name seattle-airbnb-data --file reviews.csv --name reviews.csv --overwrite
+    ```
+
+    In this exercise, you are working with a small number of files. You will most likely work with many more files in real-world scenarios. In those circumstances, you can review different methods for [migrating files to an Azure Storage account](https://learn.microsoft.com/azure/storage/common/storage-use-azcopy-migrate-on-premises-data) and select the technique that will work best for your situation.
+
+6. To verify the files uploaded successfully, you can navigate to your storage account's **Containers** page by selecting **Containers** from the left-hand navigation menu. Select the `seattle-airbnb-data` container from the list of containers and observe that it now contains three files, named `calendar.csv`, `listings.csv`, and `reviews.csv.`
+
+    ![The three CSV files are highlighted in the list of blobs in the seattle-airbnb-data container.](media/storage-account-container-blobs.png)
+
+### Task 5: Connect to the database using psql in the Azure Cloud Shell
+
+With the files now securely stored in blob storage, it's time to set up the `pg_azure_storage` extension in your database. To accomplish this, you will use the `psql` command line utility from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview).
 
 1. You need the connection details for your database to connect to it using `psql` in the Cloud Shell. Navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/), and in the left-hand navigation menu, select **Connect** under **Settings**.
 
@@ -61,19 +367,50 @@ In this task, you use the `psql` command line utility to connect to your databas
 
     Connecting to the database from the Cloud Shell requires that the `Allow public access from any Azure service within Azure to the server` box is checked on the **Networking** page of the database. If you receive a message that you are unable to connect, please verify this is checked and try again.
 
-### Task 2: Create a new database schema and tables
+### Task 6: Enable and configure the pg_azure_storage extension
 
-For this lab, you will use a small sample of Seattle Airbnb listing data, which you will access from a public storage account. The sample data consists of three CSV files, `calendar.csv`, `listings.csv`, and `reviews.csv`. In this task, you will create a new schema named `abb` in your database, then add three tables to that schema to host the sample data.
+Now that you are connected to your database, you can install the `pg_azure_storage` extension. You install extensions using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
 
-It is important to note that when loading data from CSV files into tables using the `COPY` command, the table structure and column data types must align precisely with the data in the CSV file to avoid errors.
+1. From the `psql` prompt in the Cloud Shell, run the following command to install the extension in your database:
 
-1. To host the tables, you will create a new schema named `abb` in the database. To make a new schema, use the following command:
+    ```sql
+    CREATE EXTENSION azure_storage;
+    ```
+
+    When creating and working with the `pg_azure_storage` extension in your database, note that the extension's name is abbreviated to `azure_storage`.
+
+2. With the extension now installed, you can configure the extension to connect to your storage account. You will need the name and key associated with your storage account. Using the same browser tab where the Cloud Shell is open, navigate to your storage account resource in the [Azure portal](https://portal.azure.com/). In the left-hand navigation menu, select **Access keys** under **Security + networking**.
+
+    ![Access keys is selected and highlighted in the left-hand menu of the Storage account page.](media/storage-account-access-keys-psql.png)
+
+3. Before importing data from blob storage, you need to map to the storage account using the `account_add` method, providing the account access key defined when the account was created. At the `psql` prompt, execute the following command after replacing the `{your_storage_account_name}` and `{your_storage_account_key}` tokens with the **Storage account name** and **Key** values, respectively.
+
+    ```sql
+    SELECT azure_storage.account_add('{your_storage_account_name}', '{your_storage_account_key}');
+    ```
+
+4. Once your storage account has been mapped, you can list the storage account contents. After replacing the `{your_storage_account_name}` token with the **Storage account name**, run the following command to view the list of files in the `seattle-airbnb-data` container:
+
+    ```sql
+    SELECT path, bytes, pg_size_pretty(bytes), content_type
+    FROM azure_storage.blob_list('{your_storage_account_name}', 'seattle-airbnb-data');
+    ```
+
+    The `blob_list` function output should be similar to the following:
+
+    ![The output from the azure_storage.blob_list function is displayed in the Azure Cloud Shell.](media/azure-storage-extension-blob-list-output.png)
+
+### Task 7: Import data from blob storage
+
+With the `pg_azure_storage` extension now connected to your blob storage account, you can import the data it contains into your database. Using the queries below, you will create a new schema in the database, add tables to the new schema, and then import data from the files in blob storage into the new tables using the `pg_azure_storage` extension.
+
+1. To host the new tables, you will create a new schema named `abb` in the database. To create a new schema, use the following command:
 
     ```sql
     CREATE SCHEMA IF NOT EXISTS abb;
     ```
 
-2. Before importing data, you must create tables to store data from the CSV files. Run the command below to build a table named `calendar` in the `abb` schema for hosting the data in the `calendar.csv` file. The table structure is based on the columns defined in each file.
+2. Before importing data, you must create tables to store data from the CSV files. Run the commands below to create the three required tables in the `abb` schema. The table structures are based on the columns defined in each file.
 
     ```sql
     CREATE TABLE abb.calendar
@@ -84,10 +421,6 @@ It is important to note that when loading data from CSV files into tables using 
         price text
     );
     ```
-
-    Observe that the `price` column on the `calendar` table above is assigned a `text` data type in the table. This data type assignment is necessary because the CSV file you will use to load data into the table contains dollar signs (`$`) and commas (`,`) in some values. You will correct this below to allow numeric operations to occur on the field.
-
-3. Next, create a table named `listings` in the `abb` schema for hosting the data in the `listings.csv` file.
 
     ```sql
     CREATE TABLE abb.listings
@@ -187,8 +520,6 @@ It is important to note that when loading data from CSV files into tables using 
     );
     ```
 
-4. Finally, create a `reviews` table in the `abb` schema for data in the `reviews.csv` file.
-
     ```sql
     CREATE TABLE abb.reviews
     (
@@ -201,99 +532,54 @@ It is important to note that when loading data from CSV files into tables using 
     );
     ```
 
-### Task 3: Load CSV data into tables
-
-You can now load the tables with sample data with your new schema and tables. In this task, you use the `COPY` command to perform a one-time bulk load of the sample Airbnb data into your new tables in the `abb` schema.
-
-1. Before using the `COPY` command to load data from CSV files, set the database's `CLIENT_ENCODING` to **utf8** to ensure the CSV files are read correctly.
+3. You can now import data using the `pg_azure_storage` extension. Starting with the `calendar.csv` file, use the [blob_get function](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-storage-extension#import-data-using-blob_get-function) with the [azure_storage.options_csv_get](https://learn.microsoft.com/azure/cosmos-db/postgresql/reference-pg-azure-storage#azure_storageoptions_csv_get) utility function to specify the decoding options for the CSV file. The `blob_get` function retrieves a file from blob storage. For `blob_get` to know how to parse the data, you can explicitly define the columns in the `FROM` clause. Run the following command to import data from the file. Be sure to replace the `{your_storage_account_name}` token with your storage account name.
 
     ```sql
-    SET CLIENT_ENCODING TO 'utf8';
+    INSERT INTO abb.calendar
+    SELECT * FROM azure_storage.blob_get('{your_storage_account_name}', 'seattle-airbnb-data', 'calendar.csv', options:= azure_storage.options_csv_get(header=>true)) AS cal_rec (
+        listing_id bigint,
+        date date,
+        available boolean,
+        price text
+    );
     ```
 
-2. Run the command below to load data into the `calendar` table in the `abb` schema:
+    Note the `price` column is assigned a `text` data type in the table. This data type assignment occurs because the CSV file contains dollar signs (`$`) and commas (`,`) in some values. You will correct this below to allow numeric operations to occur on the field.
 
-    ```sql
-    \COPY abb.calendar FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/calendar.csv' WITH CSV HEADER
-    ```
-
-    In the `COPY` command issued, the `FROM PROGRAM` clause informs the `psql` to retrieve the data file from an application, in this case, `curl`. The `WITH CSV HEADER` option provides information about the format and structure of the ingested file.
-
-    When the command is finished, you should see output stating how many rows the COPY command ingested into the table, similar to the following:
-
-    ```sql
-    COPY 1393570
-    ```
-
-3. Next, execute a simple query against the table to verify the data loaded into it. A typical query pattern when searching for an available Airbnb listing involves including a price range in their search. Run the following query to look for listings available for the week of January 13, 2016, which are in the price range of $100 to $125 per night.
-
-    ```sql
-    SELECT * FROM abb.calendar
-    WHERE date = '2016-01-13'
-    AND available = true
-    AND price BETWEEN 100 AND 125
-    LIMIT 10;
-    ```
-
-    **IMPORTANT**: The above query is expected to fail. Recall that the `price` column on the `calendar` table you created above was assigned a `text` data type in the table to allow the CSV file data to be loaded without error due to that column containing dollar signs (`$`) and commas (`,`) in some values. Because the `BETWEEN` operator expects numeric values, attempting the query for listings within a given price range results in the error below:
-
-    ```sql
-    ERROR:  operator does not exist: text >= integer
-    LINE 1: SELECT * FROM abb.calendar WHERE price BETWEEN 100 AND 125 L...
-    ```
-
-4. After completing the calendar data import, you can now remove non-numeric characters from the column and fix the data type associated with the `price` column. This change will allow numeric operations to be performed on the column.
+4. With the data imported, you can now fix the data type associated with the `price` column so numeric operations can be conducted on the column.
 
     ```sql
     ALTER TABLE abb.calendar ALTER column price TYPE numeric USING (REPLACE(REPLACE(price, ',', ''), '$', '')::numeric);
     ```
 
-5. Now, run the `SELECT` query again and observe the results:
+5. Above, you explicitly defined the columns in the `calendar.csv` file in the `FROM` clause in the `blob_get` function. Alternatively, you can pass a value (`NULL::table_name`), which infers the file's columns based on the definition of the target table. This method is beneficial when the target table has many columns, as with the `listings` table. Note that this requires the file and table to have the same structure. Run the following command to import the `listings` data from the file. Replace the `{your_storage_account_name}` token with your storage account name.
 
     ```sql
-    SELECT * FROM abb.calendar
-    WHERE date = '2016-01-13'
-    AND available = true
-    AND price BETWEEN 100 AND 125
-    LIMIT 10;
+    INSERT INTO abb.listings
+    SELECT * FROM azure_storage.blob_get('{your_storage_account_name}','seattle-airbnb-data','listings.csv', NULL::abb.listings,options:= azure_storage.options_csv_get(header=>true));
     ```
 
-    With the `price` column now represented as a numeric value, the query should run successfully with output similar to the following:
+6. To load data into the `reviews` table, you will employ the alternative approach for importing data in the `pg_azure_storage` extension and use the [COPY statement](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-storage-extension#import-data-using-copy-statement). Run the following command to import `reviews` data from blob storage. Be sure to replace the `{your_storage_account_name}` token with your storage account name.
 
     ```sql
-     listing_id |    date    | available | price  
-    ------------+------------+-----------+--------
-         953595 | 2016-01-13 | t         | 125.00
-        9218403 | 2016-01-13 | t         | 110.00
-        7680289 | 2016-01-13 | t         | 125.00
-        8515408 | 2016-01-13 | t         | 110.00
-        1148517 | 2016-01-13 | t         | 115.00
-        4085439 | 2016-01-13 | t         | 125.00
-        2686374 | 2016-01-13 | t         | 125.00
-        6590264 | 2016-01-13 | t         | 100.00
-        4317390 | 2016-01-13 | t         | 121.00
-        3053237 | 2016-01-13 | t         | 104.00
+    COPY abb.reviews
+    FROM 'https://{your_storage_account_name}.blob.core.windows.net/seattle-airbnb-data/reviews.csv'
+    WITH (FORMAT 'csv', header);
     ```
 
-6. Next, run the below command to load data into the `listing` table:
+    Using the `COPY` command in conjunction with the `pg_azure_storage` extension allows it to be used against a private, secured blob storage account container by extending the native PostgreSQL `COPY` command to make it capable of handling Azure Blob Storage resource URLs. The `COPY` statement does not allow you to specify columns, so verifying the table and file column definitions match precisely is essential.
 
-    ````sql
-    \COPY abb.listings FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/listings.csv' WITH CSV HEADER
+7. Run a few queries to verify the data loaded into each table.
+
+    ```sql
+    SELECT * FROM abb.calendar WHERE price BETWEEN 100 AND 125 LIMIT 10;
     ```
-
-7. Run the following query to verify the data is loaded correctly.
 
     ```sql
     SELECT COUNT(id) FROM abb.listings WHERE neighbourhood_group_cleansed = 'Ballard';
     ```
 
-8. Finally, load the `reviews` tables in the `abb` schema with data from the `reviews.csv` file.
-
-    ```sql
-    \COPY abb.reviews FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/reviews.csv' WITH CSV HEADER
-    ````
-
-9. Query the `reviews` table to verify the data loaded. By running the `\x auto` command below before executing the last query, you enable the extended display to be automatically applied when necessary to make the output from the command easier to view in the Azure Cloud Shell. This functionality is useful for tables with wide column values, such as the `reviews` table.
+    By running the `\x auto` command below before executing the last query, you enable the extended display to be automatically applied when necessary to make the output from the command easier to view in the Azure Cloud Shell.
 
     ```sql
     \x auto
@@ -303,164 +589,20 @@ You can now load the tables with sample data with your new schema and tables. In
     SELECT listing_id, date, reviewer_name, comments FROM abb.reviews WHERE listing_id = 7202016 LIMIT 3;
     ```
 
-## Exercise 2: Add extensions to allowlist
+### Task 8: Export data into blob storage using the blob_put function
 
-Before you can install and use extensions in an Azure Database for PostgreSQL Flexible Server, you must _allowlist_ the desired extensions, as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
+The `pg_azure_storage` extension also allows data to be exported from an Azure Database for PostgreSQL to Azure blob storage. In this task, you will export the cleansed `calendar` data back to blob storage using the [blob_put function](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-storage-extension#export-data-from-azure-database-for-postgresql-flexible-server-to-azure-blob-storage).
 
-1. In a web browser, navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/).
-
-2. From the database's left-hand navigation menu, select **Server parameters** under **Settings**, then enter `azure.extensions` into the search box. Expand the **VALUE** dropdown list, then locate and check the box next to each of the following extensions:
-
-    - PG_CRON
-    - POSTGIS
-
-    ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, azure.extensions is entered and highlighted in the search bar and the PG_CRON extension is selected.](media/postgresql-server-parameters-extensions-pg-cron-postgis.png)
-
-    If the extension you are attempting to allowlist is not present in the list, it may not be supported in the version of PostgreSQL you are using. You can review the [supported extension versions in the Microsoft docs](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Alternatively, you can run the query, `SELECT * FROM pg_available_extensions;`, against your database.
-
-3. Some extensions must also be included in the server's shared preloaded libraries. Of the extensions you use in this lab, `pg_cron` needs to be preloaded at the server start. Clear the search box on the **Server parameters** page and enter `shared_preload`. Expand the **VALUE** dropdown list, then locate the `PG_CRON` extension and ensure it is checked. This extension is preloaded by default, so you are verifying its state and should not have to make any changes.
-
-    ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, shared_preload is entered and highlighted in the search bar and the PG_CRON extension are selected and highlighted.](media/postgresql-server-parameters-shared-preloaded-libraries-pg-cron.png)
-
-4. Select **Save** on the toolbar to save the updates to the Azure extensions allowlist. This action will trigger a deployment on your database that should be completed within 20 to 30 seconds.
-
-## Exercise 3: Store geospatial data with the PostGIS extension
-
-[PostGIS](https://www.postgis.net/) is a 3rd party open-source spatial database extender for PostgreSQL object-relational databases, which adds support for geographic objects that allow location queries to be run in SQL. This extension enables complex geospatial queries and analysis within PostgreSQL, essential for mapping, location tracking, and spatial analysis. It provides a variety of spatial data types, indexing options, and functions to query and manipulate geospatial data efficiently.
-
-You will use [pgAdmin](https://www.pgadmin.org/docs/pgadmin4/latest/index.html) to connect to and execute queries against your database for this exercise. The pgAdmin tool offers a [Geometry Data Viewer](https://www.pgadmin.org/docs/pgadmin4/8.0/editgrid.html#the-data-grid), which allows you to view GIS objects on a map.
-
-### Task 1: Connect to the database using pgAdmin
-
-In Lab 1, you downloaded and installed [pgAdmin](https://www.pgadmin.org/download/) and registered a connection to your database server. In this task, you will open pgAdmin and connect to your database.
-
-> Note: you configured pgAdmin to connect to your server in Lab 1. If necessary, refer back to those steps to register your database server and establish a connection to your database.
-
-1. Open **pgAdmin** on your local or lab virtual machine.
-
-2. Expand the **Servers** node within the Object Explorer, select your database server from the list, then right-click the server and select **Connect Server** from the context menu.
-
-    ![The Azure Database for PostgreSQL Flexible Server instance is selected and highlighted in the Object Explorer in pgAdmin. In the server's context menu, Connect Server is highlighted.](media/pg-admin-server-connect.png)
-  
-3. Once connected to your server, expand the **Databases** node and select the **airbnb** database. Right-click the **airbnb** database and select **Query Tool** from the context menu.
-
-    ![Under the server databases, the airbnb database is selected and Query Tool is highlighted in the context menu.](media/pg-admin-airbnb-database-query-tool.png)
-
-### Task 2: Install the PostGIS extension
-
-To install the `postgis` extension in your database, you will use the [CREATE EXTENSION](https://www.postgresql.org/docs/current/static/sql-createextension.html) command, as you did with the `pg_azure_storage` extension. Behind the scenes, executing `CREATE EXTENSION` runs the extension's script file. The script typically creates new SQL objects such as functions, data types, operators, and index support methods. Additionally, `CREATE EXTENSION` records the identities of all the created objects so they can be dropped again if `DROP EXTENSION` is issued.
-
-1. In the query window you opened above, run the `CREATE EXTENSION` command to install the `postgis` extension in your database.
+1. Above, you fixed the data type associated with the `price` column in the `calendar` table by cleaning up unwanted characters from the `text` column and assigning a `numeric` data type to the column. You can use the following command to push the updated data back into blob storage. Make sure to replace the `{your_storage_account_name}` token with the name of your storage account before executing the query.
 
     ```sql
-    CREATE EXTENSION IF NOT EXISTS postgis;
+    SELECT azure_storage.blob_put('{your_storage_account_name}', 'seattle-airbnb-data', 'calendar.csv', cal_rec)
+    FROM (SELECT listing_id, date, available, price FROM abb.calendar) cal_rec;
     ```
 
-    If you attempt to install an extension with the same name as one already loaded in the database, you will receive an error that the extension already exists. Specifying the `IF NOT EXISTS` clause when running the `CREATE EXTENSION` command allows you to avoid this error.
+2. After the query completes, navigate to your storage account in the [Azure portal](https://portal.azure.com/), select **Containers** under **Data storage** in the left-hand menu, choose the **seattle-airbnb-data** container, and then download the `calendar.csv` file.
 
-### Task 3: Add a geospatial column to the listings table
-
-With the `PostGIS` extension now loaded, you are ready to begin working with geospatial data in the database. The `listings` table you created and populated above contains the latitude and longitude of all listed properties. To use these data for geospatial analysis, you must alter the `listings` table to add a `geometry` column that accepts the `point` data type. These new data types are included in the `postgis` extension.
-
-1. To accommodate `point` data, add a new `geometry` column to the table that accepts `point` data. Copy and paste the following query into the open pgAdmin query window:
-
-    ```sql
-    ALTER TABLE abb.listings
-    ADD COLUMN listing_location geometry(point, 4326);
-    ```
-
-2. Next, update the table with geospatial data associated with each listing by adding the longitude and latitude values into the `geometry` column.
-
-    ```sql
-    UPDATE abb.listings
-    SET listing_location = ST_SetSRID(ST_Point(longitude, latitude), 4326);
-    ```
-
-### Task 4: View geospatial query results with the geometry data viewer
-
-With `PostGIS` installed in your database, you can take advantage of the [Geometry Data Viewer](https://www.pgadmin.org/docs/pgadmin4/8.0/editgrid.html#the-data-grid) in pgAdmin to view GIS objects in a map.
-
-1. Copy and paste the following query into the open query editor, then run it to view the data stored in the `listing_location` column:
-
-    ```sql
-    SELECT name, listing_location FROM abb.listings LIMIT 50;
-    ```
-
-2. In the **Data Output** panel, select the **View all geometries in this column** button displayed in the `listing_location` column of the query results.
-
-    ![In the query Data Output panel, the View all geometries in this column button is highlighted.](media/pg-admin-data-output-view-geometries-on-map.png)
-
-    The **View all geometries in this column** button opens the **Geometry Viewer**, allowing you to view the query results on a map.
-
-3. Select one of the points displayed on the map to view details about the location. In this case, the query only provided the name of the property.
-
-    ![The Geometry Viewer tab is highlighted and a property point is highlighted on the map.](media/pg-admin-geometry-viewer-property-name.png)
-
-4. Now, run the following query to perform a geospatial proximity query, returning properties that are available for the week of January 13, 2016, are under $75.00 per night, and are within a short distance of Discovery Park in Seattle. The query uses the [ST_DWithin](https://postgis.net/docs/ST_DWithin.html) function provided by the `PostGIS` extension to identify listings within a given distance from the park, which has a longitude of `-122.410347` and a latitude of `47.655598`.
-
-    ```sql
-    SELECT name, listing_location, summary
-    FROM abb.listings l
-    INNER JOIN abb.calendar c ON l.id = c.listing_id
-    WHERE ST_DWithin(
-        listing_location,
-        ST_GeomFromText('POINT(-122.410347 47.655598)', 4326),
-        0.025
-    )
-    AND c.date = '2016-01-13'
-    AND c.available = true
-    AND c.price <= 75.00;
-    ```
-
-5. Select the **View all geometries in this column** button displayed in the `listing_location` column of the query results to open the **Geometry Viewer** and examine the results.
-
-    ![The Geometry Viewer map shows several properties close to Discovery Park. One property has been selected, and its name and summary are displayed in a pop-up dialog.](media/pg-admin-proximity-query-geometry-viewer-results.png)
-
-## Exercise 4: Set up scheduled jobs
-
-The following extension you will work with is [pg_cron](https://github.com/citusdata/pg_cron), a simple, cron-based job scheduler for PostgreSQL that runs inside the database as an extension. This powerful and simple extension can be used for many tasks, including aggregating data in near-real time, database cleanup and administrative tasks, and much more.
-
-Extending your database with the [pg_cron](https://github.com/citusdata/pg_cron) extension allows you to schedule PostgreSQL commands directly from the database using a cron-based job scheduler. Using this extension, you can schedule a job that calls a function to execute on a schedule, such as every month, hour, or minute. In this exercise, you will create a scheduled task that runs the `VACUUM` operation against the `airbnb` database.
-
-### Task 1: Install pg_cron extension
-
-The `pg_cron` extension works slightly differently than the extensions you worked with above. It can only be installed in the `postgres` database, which requires access to the background worker process to schedule jobs. To install the `pg_cron` extension, you will open a new **pgAdmin** query window from the `postgres` database.
-
-1. In your open **pgAdmin** session, locate the `postgres` databases under the **Databases** node in the Object Explore, then right-click the database and select **Query Tool** from the context menu.
-
-    ![Under the server databases, the postgres database is selected and Query Tool is highlighted in the context menu.](media/pg-admin-postgres-database-query-tool.png)
-
-2. In the new query panel, run the `CREATE EXTENSION` command to install the `pg_cron` extension in the `postgres` database.
-
-    ```sql
-    CREATE EXTENSION IF NOT EXISTS pg_cron;
-    ```
-
-### Task 2: Create a scheduled task using pg_cron
-
-In this task, you will use `pg_cron` to create a scheduled job for performing garbage collection in the `airbnb` database using the [VACUUM](https://www.postgresql.org/docs/current/sql-vacuum.html) operation.
-
-1. Copy and paste the following query into the query window for the `postgres` database, then run it to schedule a `VACUUM` operation in the `airbnb` database every five minutes.
-
-    ```sql
-    SELECT cron.schedule_in_database('VACUUM','*/5 * * * * ','VACUUM','airbnb');
-    ```
-
-2. Run the following query to view the job list, including the one you just added.
-
-    ```sql
-    SELECT * FROM cron.job;
-    ```
-
-    ![The output from the SELECT * FROM cron.job query is displayed.](media/pg-admin-pg-cron-job-list.png)
-
-    If you need to stop a job, you must retrieve the `jobid` for your job using this query.
-
-3. To unschedule the job, use the following, replacing the `{job_id}` token with the `jobid` you retrieved from the previous query.
-
-    ```sql
-    SELECT cron.unschedule({job_id});
-    ```
+3. Open the file and observe that data in the `price` column not longer contains dollar signs (`$`) or commas (`,`) and that the rows with values contain a numeric value.
 
 ## Summary
 
