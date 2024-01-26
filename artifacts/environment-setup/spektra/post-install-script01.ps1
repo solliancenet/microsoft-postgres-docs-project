@@ -104,6 +104,10 @@ InstallChrome
 
 InstallNotepadPP
 
+InstallPgAdmin
+
+InstallVisualStudioCode
+
 InstallDocker
 
 InstallGit
@@ -142,9 +146,9 @@ $deploymentId =  (Get-AzResourceGroup -Name $resourceGroupName).Tags["Deployment
 
 $resourceName = "pgdev$deploymentId";
 
-$branchName = "master";
-$workshopName = "security-defender-workshop-400";
-$repoUrl = "solliancenet/security-defender-workshop-400";
+$branchName = "main";
+$workshopName = "microsoft-postgres-docs-project";
+$repoUrl = "solliancenet/$workshopName";
 
 #download the git repo...
 Write-Host "Download Git repo." -ForegroundColor Green -Verbose

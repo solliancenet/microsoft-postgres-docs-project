@@ -3,7 +3,8 @@
 - [Hands on Lab: Working with the latest developer capabilities of Postgres 16](#hands-on-lab-working-with-the-latest-developer-capabilities-of-postgres-16)
   - [Prerequisites](#prerequisites)
   - [Exercise 1: Setup and Configuration](#exercise-1-setup-and-configuration)
-    - [Task 1: Create tables and data](#task-1-create-tables-and-data)
+    - [Task 1: Configure Server Parameters](#task-1-configure-server-parameters)
+    - [Task 2: Create tables and data](#task-2-create-tables-and-data)
   - [Exercise 2: Developer Features](#exercise-2-developer-features)
     - [Task 1: Add SQL/JSON object checks](#task-1-add-sqljson-object-checks)
     - [Task 2: Exploring JSON\_ARRAY, JSON\_ARRAYAGG and JSON\_OBJECT](#task-2-exploring-json_array-json_arrayagg-and-json_object)
@@ -21,13 +22,15 @@
     - [Task 4: Using pg\_stat\_io for enhanced IO monitoring](#task-4-using-pg_stat_io-for-enhanced-io-monitoring)
     - [Task 5: Using Query Store](#task-5-using-query-store)
   - [Exercise 5: Logical Replication](#exercise-5-logical-replication)
-  - [Exercise 6: PgBouncer](#exercise-6-pgbouncer)
+    - [Task 1 : Setup Publication](#task-1--setup-publication)
+    - [Task 2: Setup Subcsriber](#task-2-setup-subcsriber)
+    - [Task 3: Sync Data](#task-3-sync-data)
+  - [Exercise 6: PgBouncer (Optional)](#exercise-6-pgbouncer-optional)
     - [Task 1: Enable PgBouncer and PgBouncer Metrics](#task-1-enable-pgbouncer-and-pgbouncer-metrics)
     - [Task 2: Performance without PgBouncer](#task-2-performance-without-pgbouncer)
     - [Task 3: Performance with PgBouncer](#task-3-performance-with-pgbouncer)
   - [Exercise 6: Other Features (Optional)](#exercise-6-other-features-optional)
-    - [Task 1: New options for CREATE USER](#task-1-new-options-for-create-user)
-    - [Task 2: Use new VACUUM options to improve VACUUM performance](#task-2-use-new-vacuum-options-to-improve-vacuum-performance)
+    - [Task 1: Use new VACUUM options to improve VACUUM performance](#task-1-use-new-vacuum-options-to-improve-vacuum-performance)
 
 In this lab you will explore the new developer and infrastructure features of PostgreSQL 16.
 
@@ -39,7 +42,25 @@ In this lab you will explore the new developer and infrastructure features of Po
 
 In this exercise you will create some tables and use the COPY command to move data into those tables.  The data is in JSON format and not SQL format so the usage of `jsonb` data type with be required to import the data into a temporary table.  We will use this initial data to run some queries to transform the data such that we can utilize the new JSON syntax in PostgreSQL 16.
 
-### Task 1: Create tables and data
+### Task 1: Configure Server Parameters
+
+You will utilize the query store and logical replication in subsequent labs.  Here you will modify the server parameters to support these exercies. You are going to enable query store now as it takes a few minutes for the queries to start to be recorded.
+
+1. Swithc to the Azure Portal
+2. Browse to your **PREFIX-pg-flex-eastus-16** instance
+3. Under **Settings**, select **Server parameters**
+4. Browse for `pg_qs.query_capture_mode`
+5. Set the value to `TOP`
+6. Browse for the `wal_level` parameters
+7. Set the value to `logical`
+8. Browse for the `azure.extensions` parameter
+9. Select the **pglogical** checkbox
+10. Browse for the `max_worker_processes`parameter
+11. Set the value to `16`
+12. Select **Save**
+13. Repeat the same steps for the **PREFIX-pg-flex-eastus-14** instance
+
+### Task 2: Create tables and data
 
 1. In your lab virtual machine, open a command prompt, run the following command to connect to your database, be sure to replace `PREFIX` with your lab information:
 
@@ -47,7 +68,7 @@ In this exercise you will create some tables and use the COPY command to move da
     psql -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -U s2admin -d airbnb
     ```
 
-2. Run the following commands to create the tables and import the data to the server.  Notice the usage of `json` files to do the import using the `COPY` command. Once into a temporary table, we than do some massaging:
+2. Run the following commands to create some temp tables and import the JSON and CSV data to the server.  Notice the usage of `json` files to do the import using the `COPY` command. Once into a temporary table, we than do some massaging:
 
     > NOTE: These paths are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
 
@@ -63,7 +84,11 @@ In this exercise you will create some tables and use the COPY command to move da
     \COPY temp_calendar (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\calendar.json';
     \COPY temp_listings (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\listings.json';
     \COPY temp_reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';    
-    
+    ```
+
+3. Run the following command to create the main tables:
+
+    ```sql
     DROP TABLE IF EXISTS listings;
     DROP TABLE IF EXISTS calendar;
     DROP TABLE IF EXISTS reviews;
@@ -81,6 +106,7 @@ In this exercise you will create some tables and use the COPY command to move da
         latitude decimal(10,5), 
         longitude decimal(10,5), 
         summary varchar(2000),
+        description varchar(2000),
         host_id varchar(2000),
         host_url varchar(2000),
         listing_url varchar(2000),
@@ -104,7 +130,11 @@ In this exercise you will create some tables and use the COPY command to move da
         price decimal(10,2), 
         available varchar(50)
         );
+    ```
 
+4. Run the following to import the data from the temp tables to the main tables:
+
+    ```sql
     INSERT INTO listings
     SELECT 
         data['id']::int, 
@@ -118,7 +148,8 @@ In this exercise you will create some tables and use the COPY command to move da
         data['bedrooms']::int,
         data['latitude']::decimal(10,5),
         data['longitude']::decimal(10,5),
-        replace(data['summary']::varchar(50), '"', ''),        
+        replace(data['description']::varchar(2000), '"', ''),        
+        replace(data['summary']::varchar(2000), '"', ''),        
         replace(data['host_id']::varchar(50), '"', ''),
         replace(data['host_url']::varchar(50), '"', ''),
         replace(data['listing_url']::varchar(50), '"', ''),
@@ -151,13 +182,13 @@ In this exercise you will create some tables and use the COPY command to move da
 
     > NOTE: We are storing data in the tables as JSONB for lab purposes.  In the real world, you may not want to do something like this as with normal columns, PostgreSQL maintains statistics about the distributions of values in each column of the table – most common values (MCV), NULL entries, histogram of distribution. Based on this data, the PostgreSQL query planner makes smart decisions on the plan to use for the query. At this point, PostgreSQL does not store any stats for JSONB columns or keys. This can sometimes result in poor choices like using nested loop joins vs. hash joins.
 
-3. Switch to pgAdmin
-4. Navigate to **Databases->airbnb->Schemas->public->Tables**
-5. Right-click the **Tables** node, select **Query Tool**
+5. Switch to pgAdmin
+6. Navigate to **Databases->airbnb->Schemas->public->Tables**
+7. Right-click the **Tables** node, select **Query Tool**
 
     ![Alt text](media/query_tool.png)
 
-6. Run each of the following commands to see the imported data after its tranformation.  Note that we did not fully expand the JSON into all possible column so as to show the new JSON syntax later:
+8. Run each of the following commands to see the imported data after its tranformation.  Note that we did not fully expand the JSON into all possible column so as to show the new JSON syntax later:
 
     ```sql
     select top 10 * from listings;
@@ -165,7 +196,7 @@ In this exercise you will create some tables and use the COPY command to move da
     select top 10 * from calendar;
     ```
 
-7. ![Alt text](media/02_01_select_queries.png)
+9. ![Alt text](media/02_01_select_queries.png)
 
 ## Exercise 2: Developer Features
 
@@ -339,7 +370,9 @@ Indexes help increase query performance.
 
 ### Task 4: Using Full Text + GIN indexes
 
-Although indexes on JSON data is not new to PG16 (available since 8.2 with JSON support since 9.2), it is a valuable feature to be aware of when working with PostgreSQL and JSON. GIN indexes can be used to efficiently search for keys or key/value pairs occurring within a large number of jsonb documents (datums). Two GIN "operator classes" are provided, offering different performance and flexibility trade-offs.
+Although indexes on JSON data is not new to PG16 (available since 8.2 with JSON support since 9.2), it is a valuable feature to be aware of when working with PostgreSQL and JSON. GIN indexes can be used to efficiently search for keys or key/value pairs occurring within a large number of jsonb documents (datums). Two GIN "operator classes" are provided, offering different performance and flexibility trade-offs.  
+
+For information on Full Text Search, reference [Full Text Search](https://www.postgresql.org/docs/current/textsearch.html).  For information on GiST and GIN indexes, reference [GiST and GIN Index Types.](https://www.postgresql.org/docs/9.1/textsearch-indexes.html)
 
 1. Run the following query:
 
@@ -374,11 +407,9 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
     ```sql
     SELECT 
         l.city,
-        c.price
+        l.zipcode as SampleZipCode
     FROM 
-        listings l, calendar c
-    where 
-        l.listing_id = c.listing_id
+        listings l
     GROUP 
         BY l.city
     ```
@@ -390,11 +421,9 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
     ```sql
     SELECT 
         l.city,
-        ANY_VALUE(c.price)
+        ANY_VALUE(l.zipcode) as SampleZipCode
     FROM 
-        listings l, calendar c
-    where 
-        l.listing_id = c.listing_id
+        listings l
     GROUP 
         BY l.city
     ```
@@ -406,13 +435,11 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
     ```sql
     select
         l.city,
-        c.price
+        l.zipcode
     from 
-        listings l, calendar c
-    where 
-        l.listing_id = c.listing_id
+        listings l
     group 
-        by l.city, c.price
+        by l.city, l.zipcode
     ```
 
 ## Exercise 3: COPY Features
@@ -581,7 +608,7 @@ The following is an example of a query that performs aggregates with the two fun
 1. In pgAdmin, run the following:
 
     ```sql
-    drop table is exists agg_test;
+    drop table if exists agg_test;
 
     create table agg_test (x int, y int);
     
@@ -659,7 +686,7 @@ Previously, attempting to get an execution plan for a parameterized query was fa
 1. Run the following command to attempt to get an execution plan for a parameterized query using the pre-16 method:
 
     ```sql
-    EXPLAIN SELECT * FROM pg_class WHERE relname = $1;
+    EXPLAIN SELECT * FROM listings WHERE listing_id = $1;
     ```
 
 2. You should get an error.
@@ -669,7 +696,7 @@ Previously, attempting to get an execution plan for a parameterized query was fa
 3. To get an execution plan for a parametrized query, run the following:
 
     ```sql
-    EXPLAIN (GENERIC_PLAN) SELECT * FROM pg_class WHERE relname = $1;
+    EXPLAIN (GENERIC_PLAN) SELECT * FROM listings WHERE listing_id = $1;
     ```
 
     ![Alt text](media/02_04_query_02.png)
@@ -689,9 +716,11 @@ Per the [postgresql documentation](https://www.postgresql.org/docs/devel/monitor
 
 Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation I/O which bypasses shared buffers (e.g. when moving a table from one tablespace to another) is currently not tracked."
 
-1. Run the following command to see the information available:
+1. Run the following command to clear the stats and see the information available:
 
     ```sql
+    select pg_stat_reset_shared('io');
+
     select * from pg_stat_io order by writes desc;
     ```
 
@@ -704,6 +733,7 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 3. Again, run the previous command to see the newly generated IO information.
 
     ```sql
+    --see client backed / bulk write in context after pgbench
     select * from pg_stat_io order by writes desc;
     ```
 
@@ -715,15 +745,19 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 6. Run the following command to create some more test data using basic DDL `INSERT`:
 
     ```sql
-        insert into agg_test
-        select (case x % 4 when 1 then null else x end), x % 10
-        from generate_series(1,200000) x;
+    insert into agg_test
+    select (case x % 4 when 1 then null else x end), x % 10
+    from generate_series(1,200000) x;
+
+    checkpoint;
     ```
 
 7. Again, run the previous command to see the newly generated IO information.
 
     ```sql
-    select * from pg_stat_io order by writes desc;
+    select * from pg_stat_io 
+    where backend_type = 'checkpointer'
+    order by writes desc;
     ```
 
 8. Review the backendtype of `client_backend`, object of `relation`, context of `normal` and the `extends` column value.  Because you were adding data to an existing table, you are performing `extends` operations.
@@ -756,10 +790,12 @@ For more information on the query store feature, reference [Monitor performance 
 
 ## Exercise 5: Logical Replication
 
+### Task 1 : Setup Publication
+
 1. You will need to assign the `REPLICATION` permission in order to setup replication:
 
     ```sql
-    ALTER ROLE wsuser WITH REPLICATION;
+    ALTER ROLE s2admin WITH REPLICATION;
     ```
 
 2. On the Postgres 16 server for the `airbnb` database, run the following to create a publication, add a table to it and then create a slot:
@@ -772,7 +808,9 @@ For more information on the query store feature, reference [Monitor performance 
     SELECT pg_create_logical_replication_slot('my_pub_slot', 'pgoutput');
     ```
 
-3. On the PostgreSQL 14 server for the `airbnb` database, run the following.  It will created the matching table and setup the subscription. Be sure to replace the `PREFIX` value:
+### Task 2: Setup Subcsriber
+
+1. On the PostgreSQL 14 server for the `airbnb` database, run the following.  It will created the matching table and setup the subscription. Be sure to replace the `PREFIX` value:
 
     ```sql
     CREATE TABLE calendar (
@@ -782,10 +820,12 @@ For more information on the query store feature, reference [Monitor performance 
         available varchar(50)
         );
 
-    CREATE SUBSCRIPTION my_pub_subscription CONNECTION 'host=PREFIX-pg-flex-eastus-16.postgres.database.azure.com port=5432 dbname=airbnb user=wsuser password=Solliance123' PUBLICATION my_pub WITH (copy_data=true, enabled=true, create_slot=false, slot_name='my_pub_slot');
+    CREATE SUBSCRIPTION my_pub_subscription CONNECTION 'host=PREFIX-pg-flex-eastus-16.postgres.database.azure.com port=5432 dbname=airbnb user=s2admin password=Solliance123' PUBLICATION my_pub WITH (copy_data=true, enabled=true, create_slot=false, slot_name='my_pub_slot');
     ```
 
-4. On the PostgreSQL 16 server, run the following to add some rows to the `calendar` table:
+### Task 3: Sync Data
+
+1. On the PostgreSQL 16 server, run the following to add some rows to the `calendar` table:
 
     ```sql
     INSERT INTO CALENDAR values (241032, '2024-01-01', 85, 't');
@@ -797,7 +837,7 @@ For more information on the query store feature, reference [Monitor performance 
     INSERT INTO CALENDAR values (241032, '2024-01-07', 85, 't');
     ```
 
-5. On the PostgreSQL 14 server, run the following, notice that the row has replicated to from 16 to 14 instance:
+2. On the PostgreSQL 14 server, run the following, notice that the row has replicated to from 16 to 14 instance:
 
     ```sql
     SELECT * 
@@ -805,7 +845,7 @@ For more information on the query store feature, reference [Monitor performance 
     ORDER BY date desc
     ```
 
-## Exercise 6: PgBouncer
+## Exercise 6: PgBouncer (Optional)
 
 PgBouncer is a well known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
 
@@ -841,7 +881,7 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password.  Notice the use of the `-c` parameter that will create 1000 different connections, be sure to replace `PREFIX` with your lab information:
 
     ```sql
-    pgbench -c 100 -T 120 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U wsuser -d airbnb
+    pgbench -c 100 -T 120 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
 10. Switch back to the Metrics window, after a minute, you should see the active connections increase.
@@ -853,38 +893,14 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 2. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` with your lab information:
 
     ```sql
-    pgbench -c 100 -T 120 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U wsuser -d airbnb
+    pgbench -c 100 -T 120 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
 3. Switch back to the metrics window.  After a minute, you should see that the server active connections will max out and the PgBouncer active client connections will increase to handle the load on behalf of the server.
 
 ## Exercise 6: Other Features (Optional)
 
-### Task 1: New options for CREATE USER
-
-The new options for `CREATE USER` control the valid-until date, bypassing of row-level security, and role membership.
-
-1. Run the following commands:
-
-    ```sql
-    CREATE USER adminuser1 CREATEROLE REPLICATION CREATEDB;
-    
-    \connect postgres adminuser1
-    
-    CREATE USER user_repl1 REPLICATION; 
-    
-    CREATE USER user_db1 CREATEDB;
-    ```
-
-2. Additionally, you can now do `VALID UNTIL`. The VALID UNTIL clause defines an expiration time for a password only, not for the user account.  Run the following:
-
-    ```sql
-    CREATE USER john WITH PASSWORD 'Seattle123Seattle123' VALID UNTIL '2025-01-01';
-    ```
-
-    > NOTE: Although it is possible to do assign the `BYPASSRLS` for a user in PostgreSQL 16, Azure Database for PostgreSQL Flexible Server does not support this feature.
-
-### Task 2: Use new VACUUM options to improve VACUUM performance
+### Task 1: Use new VACUUM options to improve VACUUM performance
 
 The PostgreSQL `VACUUM` command is used to garbage-collect and analyze databases.  It works by removing `dead` tuples left over by large changes to a database (such as frequently updated tables). By removing the gaps between the data, you can speed up the performance of specific operations and increase your disk space.
 

@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "vmAdminUsername": {
-        "value": "wsuser"
+        "value": "s2admin"
       },
       "vmAdminPassword": {
         "value": "GET-AZUSER-PASSWORD"

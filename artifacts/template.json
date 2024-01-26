@@ -545,37 +545,6 @@
             }
         },
         {
-            "type": "Microsoft.DBforPostgreSQL/flexibleServers",
-            "apiVersion": "2020-02-14-preview",
-            "name": "[variables('pg-flex-16')]",
-            "location": "[variables('location')]",
-            "sku": {
-                "name": "Standard_D2s_v3",
-                "tier": "GeneralPurpose",
-                "capacity": 2
-            },
-            "properties": {
-                "version": "16",
-                "haEnabled": "Disabled",
-                "createMode": "Default",
-                "network": {
-                    "publicNetworkAccess": "Enabled"
-                },
-                "administratorLogin": "[parameters('adminUsername')]",
-                "administratorLoginPassword": "[parameters('adminPassword')]",
-                "storageProfile": {
-                    "storageMB": 131072,
-                    "backupRetentionDays": 7
-                },
-                "maintenanceWindow": {
-                    "customWindow": "Disabled",
-                    "dayOfWeek": 0,
-                    "startHour": 0,
-                    "startMinute": 0
-                }
-            }
-        },
-        {
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2020-11-01",
             "name": "[variables('pg-nsg-01')]",

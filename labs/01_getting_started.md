@@ -9,8 +9,11 @@
     - [Task 1: Networking Setup (Local Device) - OPTIONAL](#task-1-networking-setup-local-device---optional)
     - [Task 2: Networking Setup (Lab Environment)](#task-2-networking-setup-lab-environment)
     - [Task 2: Add Server to pgAdmin](#task-2-add-server-to-pgadmin)
-  - [Exercise 5: Modify Server Paramaeters](#exercise-5-modify-server-paramaeters)
-  - [Exercise 6: Writing your first query](#exercise-6-writing-your-first-query)
+  - [Exercise 5: Writing your first query](#exercise-5-writing-your-first-query)
+  - [Exercise 6: Read Replicas and Virtual Endpoints (Optional)](#exercise-6-read-replicas-and-virtual-endpoints-optional)
+    - [Task 1: Create a read replica](#task-1-create-a-read-replica)
+    - [Task 2: Add Virtual Endpoints (preview)](#task-2-add-virtual-endpoints-preview)
+    - [Task 3: Promote replicas](#task-3-promote-replicas)
   - [Summary](#summary)
   - [Miscellanous](#miscellanous)
 
@@ -183,25 +186,7 @@ If you are using the virtual machine from the lab environment, all the software 
 8. Select **Save password?** to toggle it on.
 9. Select **Save**
 
-## Exercise 5: Modify Server Paramaeters
-
-You are going to enable query store now as it takes a few minutes for the queries to start to be recorded.  You will utilize the query store in Lab 2.  Additionally, you will be enabling parameters to support logical replication in Lab 2.
-
-1. Swithc to the Azure Portal
-2. Browse to your **PREFIX-pg-flex-eastus-16** instance
-3. Under **Settings**, select **Server parameters**
-4. Browse for `pg_qs.query_capture_mode`
-5. Set the value to `TOP`
-6. Browse for the `wal_level` parameters
-7. Set the value to `logical`
-8. Browse for the `azure.extensions` parameter
-9. Select the **pglogical** checkbox
-10. Browse for the `max_worker_processes`parameter
-11. Set the value to `16`
-12. Select **Save**
-13. Repeat the same steps for the **PREFIX-pg-flex-eastus-14** instance
-
-## Exercise 6: Writing your first query
+## Exercise 5: Writing your first query
 
 Using pgAdmin, you will execute some basic queries
 
@@ -214,8 +199,99 @@ Using pgAdmin, you will execute some basic queries
 7. Copy the following into the query tool window:
 
     ```sql
-    TODO
+    select * 
+    from listings
     ```
+
+## Exercise 6: Read Replicas and Virtual Endpoints (Optional)
+
+### Task 1: Create a read replica
+
+To create a read replica, follow these steps:
+
+- In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server to use as the primary server.
+- On the server sidebar, under **Settings**, select **Replication**.
+- Select **Create replica**.
+
+  ![Add a replica.](../media/enable-promote/add-replica-new.png)
+
+- Enter the Basics form with the following information.
+  - Set the replica server name.
+  
+  > NOTE: It is a Cloud Adoption Framework (CAF) best practice to [use a resource naming convention](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming) that will allow you to easily determine what instance you are connecting too or managing and where it resides.
+
+  - Select a location that is different from your primary but note that you can select the same region.
+
+  > NOTE:  To learn more about which regions you can create a replica in, visit the [read replica concepts article](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas).
+
+  - Set the compute and storage to what you recorded from your primary. If the displayed compute does not match, select **Configure server** and select the appropriate one.
+  
+  > NOTE:  If you select a compute size smaller than the primary, the deployment will fail. Also be aware that the compute size may not be available in a different region.
+
+    ![Compute size of the replica is highlighted.](../media/enable-promote/replica-compute.png)
+
+  - Select an availability zone setting.
+  - Notice that the Authentication settings are auto selected for you.
+
+  ![Review the availability zone and authentication settings.](../media/enable-promote/replica-zone-auth.png)
+
+- Select **Review + create** to confirm the creation of the replica or **Next: Networking** if you want to add, delete or modify any firewall rules.
+- Verify the firewall settings. Notice how the primary settings have been copied automatically.
+
+  ![Modify firewall rules.](../media/enable-promote/networking.png)
+
+- Leave the remaining defaults and then select the **Review + create** button at the bottom of the page or proceed to the next forms to configure security or add tags.
+- Review the information in the final confirmation window. When you're ready, select **Create**. A new deployment will be created and executed.
+
+  ![Review the information in the final confirmation window.](../media/enable-promote/replica-review.png)
+
+- During the deployment, you will see the primary in `Updating` status:
+
+  ![Primary enters into updating status.](../media/enable-promote/primary-updating.png)
+
+- After the read replica is created, it can be viewed from the Replication window.
+
+  ![View the new replica in the Replication window.](../media/enable-promote/list-replica.png)
+
+### Task 2: Add Virtual Endpoints (preview)
+
+- In the Azure portal, select the primary server.
+- On the server sidebar, under **Settings**, select **Replication**.
+- Select **Create endpoint**
+- In the dialog, type a meaningful name for your endpoint.  Notice the DNS endpoint that is being generated.
+
+  ![Add a new virtual endpoint with custom name.](../media/enable-promote/add-virtual-endpoint.png)
+
+- Select **Create**
+
+  > NOTE:  If you do not create a virtual endpoint you will receive an error on the promote replica attempt.
+
+  ![Promotion error when missing virtual endpoint.](../media/enable-promote/replica-promote-attempt.png)
+
+### Task 3: Promote replicas
+
+With all the necessary components in place, you are now ready to perform a promote replica to primary operation.  
+
+> Important: Promotion of replicas cannot be undone. The read replica becomes a standalone server that supports both reads and writes. The standalone server can't be made into a replica again.
+
+To promote replica from the Azure portal, follow these steps:
+
+- In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server primary server.
+- On the server sidebar, on the server menu, under **Settings**, select **Replication**
+- Under **Servers**, select the **Promote** icon for the replica.
+
+  ![Select promote for a replica.](../media/enable-promote/replica-promote.png)
+
+- In the dialog, ensure the action is **Promote to primary server**.
+- For **Data sync**, ensure **Planned - sync data before promoting** is selected.
+
+  ![Promote the replica.](../media/enable-promote/replica-promote-final.png)
+
+- Select **Promote**, the process will begin.  Once completed, the roles will be swapped with the replica now the primary and the primary the replica.
+
+  > NOTE:  The replica you are promoting must have the reader virtual endpoint assigned or you will receive an error on promotion:
+
+  ![Promote error when promtoing the wrong replica.](../media/enable-promote/promote-error.png)
 
 ## Summary
 
