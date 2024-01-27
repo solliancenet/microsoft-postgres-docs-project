@@ -116,8 +116,6 @@ InstallVisualStudioCode $extensions;
 
 InstallVisualStudio "community" "2022";
 
-InstallDocker
-
 InstallGit
         
 InstallAzureCli
