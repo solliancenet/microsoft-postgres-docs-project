@@ -12,9 +12,7 @@
     - [Task 4: Using Full Text + GIN indexes](#task-4-using-full-text--gin-indexes)
     - [Task 5: Aggregate function ANY\_VALUE()](#task-5-aggregate-function-any_value)
   - [Exercise 3: COPY Features](#exercise-3-copy-features)
-    - [Task 1: Configuring server parameters](#task-1-configuring-server-parameters)
-    - [Task 2: COPY batch\_size support](#task-2-copy-batch_size-support)
-    - [Task 3: Allow a COPY FROM value to map to a column's DEFAULT](#task-3-allow-a-copy-from-value-to-map-to-a-columns-default)
+    - [Task 1: Allow a COPY FROM value to map to a column's DEFAULT](#task-1-allow-a-copy-from-value-to-map-to-a-columns-default)
   - [Exercise 4: Performance Features](#exercise-4-performance-features)
     - [Task 1: Allow parallelization of FULL and internal RIGHT OUTER hash joins](#task-1-allow-parallelization-of-full-and-internal-right-outer-hash-joins)
     - [Task 2: Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task-2-allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
@@ -46,26 +44,22 @@ In this exercise you will create some tables and use the COPY command to move da
 
 You will utilize the query store and logical replication in subsequent labs.  Here you will modify the server parameters to support these exercies. You are going to enable query store now as it takes a few minutes for the queries to start to be recorded.
 
-1. Swithc to the Azure Portal
-2. Browse to your **PREFIX-pg-flex-eastus-16** instance
+1. Switch to the Azure Portal
+2. Browse to your primary **PREFIX-pg-flex-REGION-16** instance or writer endpoint
 3. Under **Settings**, select **Server parameters**
 4. Browse for `pg_qs.query_capture_mode`
 5. Set the value to `TOP`
 6. Browse for the `wal_level` parameters
 7. Set the value to `logical`
-8. Browse for the `azure.extensions` parameter
-9. Select the **pglogical** checkbox
-10. Browse for the `max_worker_processes`parameter
-11. Set the value to `16`
-12. Select **Save**
-13. Repeat the same steps for the **PREFIX-pg-flex-eastus-14** instance
+8. Select **Save**
+9. Repeat the same steps for any replicas and for the **PREFIX-pg-flex-REGION-14** instance
 
 ### Task 2: Create tables and data
 
-1. In your lab virtual machine, open a command prompt, run the following command to connect to your database, be sure to replace `PREFIX` with your lab information:
+1. In your lab virtual machine, open a command prompt, run the following command to connect to your database, be sure to replace `PREFIX` with your lab information (optionally you can use pgAdmin to open a psql window):
 
     ```cmd
-    psql -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -U s2admin -d airbnb
+    psql -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -U s2admin -d airbnb
     ```
 
 2. Run the following commands to create some temp tables and import the JSON and CSV data to the server.  Notice the usage of `json` files to do the import using the `COPY` command. Once into a temporary table, we than do some massaging:
@@ -81,10 +75,12 @@ You will utilize the query store and logical replication in subsequent labs.  He
     CREATE TABLE temp_listings (data jsonb);
     CREATE TABLE temp_reviews (data jsonb);
 
-    \COPY temp_calendar (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\calendar.json';
-    \COPY temp_listings (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\listings.json';
-    \COPY temp_reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';    
+    \COPY temp_calendar (data) FROM 'C:\labfiles\microsoft-postgres-docs-project\artifacts\data\calendar.json';
+    \COPY temp_listings (data) FROM 'C:\labfiles\microsoft-postgres-docs-project\artifacts\data\listings.json';
+    \COPY temp_reviews (data) FROM 'C:\labfiles\microsoft-postgres-docs-project\artifacts\data\reviews.json';    
     ```
+
+    ![Alt text](media/02_01_02_copy.png)
 
 3. Run the following command to create the main tables:
 
@@ -131,6 +127,8 @@ You will utilize the query store and logical replication in subsequent labs.  He
         available varchar(50)
         );
     ```
+
+
 
 4. Run the following to import the data from the temp tables to the main tables:
 
@@ -188,15 +186,19 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
     ![Alt text](media/query_tool.png)
 
-8. Run each of the following commands to see the imported data after its tranformation.  Note that we did not fully expand the JSON into all possible column so as to show the new JSON syntax later:
+8. Run each of the following commands to see the imported data after its tranformation.  Note that we did not fully expand the JSON into all possible columns so as to show the new JSON syntax later:
 
     ```sql
-    select top 10 * from listings;
-    select top 10 * from reviews;
-    select top 10 * from calendar;
+    select * from listings limit 10;
+    select * from reviews limit 10;
+    select * from calendar limit 10;
     ```
 
-9. ![Alt text](media/02_01_select_queries.png)
+    ![Alt text](media/02_01_top_listings.png)
+
+    ![Alt text](media/02_01_top_calendar.png)
+
+    ![Alt text](media/02_01_top_reviews.png)
 
 ## Exercise 2: Developer Features
 
@@ -219,7 +221,7 @@ There are several developer based changes in PostgreSQL 16 as related to SQL syn
 
     ![Alt text](media/02_02_json_01.png)
 
-2. The same query can also be written in Postgres 14 and higher, note the usage of the bracket notation `[]`:
+2. The same query can also be written in Postgres 14 and higher, note the usage of the bracket notation `[]` and the result is slightly different:
 
     ```sql
     SELECT
@@ -249,16 +251,17 @@ There are several developer based changes in PostgreSQL 16 as related to SQL syn
 
     ```sql
     SELECT
-       listing_id,
-       data IS JSON ARRAY,
-       data['id'] IS JSON OBJECT
+    	data -> 'amenities' IS JSON ARRAY as amenities,
+    	data -> 'host_verifications' IS JSON OBJECT as host_verifications,
+    	data IS JSON as datacolumn,
+    	data -> 'id' IS JSON SCALAR as id
     FROM
-       listings LIMIT 1;
+    	listings;
     ```
 
     ![Alt text](media/02_02_json_04.png)
 
-5. When combining the above, you can create intricate `CASE` statements based on the target type:
+5. When combining the above, you can create intricate `CASE` statements based on the target type (in the event that it could be mutiple types):
 
     ```sql
     SELECT
@@ -283,14 +286,19 @@ There are several developer based changes in PostgreSQL 16 as related to SQL syn
        listings;
     ```
 
-6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, you are using the containment operator (where one json document is contained inside another) to select data:
+    ![Alt text](media/02_primary_address.png)
+
+6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, you are using the containment operator (where one json document is contained inside another) to select data in addition to using the backwards compatable JSON syntax:
 
     ```sql
-    SELECT *
-    from listings
-    where
-    host_verifications @> '["email"]'::jsonb;
+    SELECT listing_id, name as listing_name, city, listings.amenities
+    FROM listings
+    WHERE
+    listings.amenities @> '["Washer","Pets Allowed"]'
+    and data -> 'host_is_superhost' ? 't'
     ```
+
+    ![Alt text](media/02_01_query_02.png)
 
 ### Task 2: Exploring JSON_ARRAY, JSON_ARRAYAGG and JSON_OBJECT
 
@@ -336,13 +344,15 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
         bedrooms
     ```
 
+    ![Alt text](media/02_bedrooms_json_query.png)
+
 There are many other types of funtions and operators in PostgreSQL that you can utilize when working with JSON data.  You can reference the latest information for PG16 in the [9.16. JSON Functions and Operators](https://www.postgresql.org/docs/16/functions-json.html) documentation.
 
 ### Task 3: Creating Indexes
 
 Indexes help increase query performance.  
 
-1. Run the following query, notice the usage of a `Seq Scan` on the table, also record the costs:
+1. Run the following query, notice the usage of a `Seq Scan` on the table, also record the costs and execution time:
 
     ```sql
         EXPLAIN ANALYZE select *
@@ -351,6 +361,8 @@ Indexes help increase query performance.
         and l.listing_id = c.listing_id
         and l.listing_id = 241032
     ```
+
+    ![Alt text](media/02_03_pre_index.png)
 
 2. Create an index on the `listing_id`` column:
 
@@ -358,7 +370,7 @@ Indexes help increase query performance.
     CREATE INDEX listings_listing_id ON listings (listing_id);
     ```
 
-3. Re-run the query to see the Sequential Scan is now removed and a Index Scan is now used improving the costs:
+3. Re-run the query to see the Sequential Scan is now removed and a Index Scan is now used improving the cost and execution times:
 
     ```sql
         EXPLAIN ANALYZE select *
@@ -367,6 +379,8 @@ Indexes help increase query performance.
         and l.listing_id = c.listing_id
         and l.listing_id = 241032
     ```
+
+    ![Alt text](media/02_03_after_index.png)
 
 ### Task 4: Using Full Text + GIN indexes
 
@@ -382,19 +396,31 @@ For information on Full Text Search, reference [Full Text Search](https://www.po
     GENERATED ALWAYS AS (to_tsvector('english', summary)) STORED;
     ```
 
-2. In pgAdmin, run the following command:
-
-    ```sql
-    CREATE INDEX ts_idx ON listings USING GIN (ts_summary);
-    ```
-
-3. Again, re-run the query, you should see a performance increase in the query:
+2. Do a text search, note the use of a `Seq Scan`:
 
     ```sql
     SELECT *
     FROM listings
     WHERE ts_summary @@ to_tsquery('amazing');
     ```
+
+    ![Alt text](media/02_03_tsquery.png)
+
+3. In pgAdmin, run the following command:
+
+    ```sql
+    CREATE INDEX ts_idx ON listings USING GIN (ts_summary);
+    ```
+
+4. Again, re-run the query, you should see the usage of a `Bitmap Heap Scan` instead of a `Seq Scan`:
+
+    ```sql
+    SELECT *
+    FROM listings
+    WHERE ts_summary @@ to_tsquery('amazing');
+    ```
+
+    ![Alt text](media/02_03_tsquery_2.png)
 
 ### Task 5: Aggregate function ANY_VALUE()
 
@@ -442,85 +468,28 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
         by l.city, l.zipcode
     ```
 
+    ![Alt text](media/02_group_by.png)
+
 ## Exercise 3: COPY Features
 
-### Task 1: Configuring server parameters
-
-In order to demonstrate some of the existing and new features of Azure Databse for PostgreSQL, we will have you modify some server parameters to support this lab.  Note that you may or may not need to do this when running your own environments and appications.
-
-1. Under **Settings**, select **Server parameters**.
-2. In the tabs, select **All**
-3. Search for **azure.extensions**
-4. Enable the **POSTGRES_FDW** extension.
-
-    ![Alt text](media/01_13_server_params_fdw.png)
-
-5. Select **Save**.
-6. In the dialog, select **Save and Restart**
-
-### Task 2: COPY batch_size support
-
-It is now possible to batch insert multiple records with the COPY statement for a foreign table using the `postgres_fdw` module.  Previously, this would insert a single record at a time from the foreign table which is much less efficient then doing multiple records.
-
-1. Setup the foreign table (windows), be sure to replace the `PREFIX` value:
-
-    ```sql
-    SET PGPASSWORD=Seattle123Seattle123
-    psql -h PREFIX-pg-flex-eastus-14.postgres.database.azure.com -d airbnb -U s2admin -p 5432 -a -w -f C:\microsoft-postgres-docs-project\artifacts\sql\createdb.sql
-    ```
-
-2. Configure a new foriegn table (be sure to replace `PREFIX`):
-
-    ```sql
-    CREATE EXTENSION IF NOT EXISTS postgres_fdw;
-    
-    CREATE SERVER postgres14
-    FOREIGN DATA WRAPPER postgres_fdw
-    OPTIONS (host 'PREFIX-pg-flex-eastus-14.postgres.database.azure.com', dbname 'airbnb');
-    
-    CREATE USER MAPPING FOR s2admin
-    SERVER postgres14
-    OPTIONS (user 's2admin', password 'Seattle123Seattle123');
-    
-    create schema postgres14;
-    ```
-
-3. Now import the schema from the remote Azure Database for PostgreSQL Flexible Server:
-
-    ```sql
-    IMPORT FOREIGN SCHEMA public LIMIT TO (reviews)
-    FROM SERVER postgres14 INTO postgres14;
-    ```
-
-    > NOTE: You must have the **Allow public access from any Azure service within Azure to this server** enabled on the Postgres 14 server for the command to successfully execute.
-
-4. Use the new batch feature to use `COPY` to copy values from the foreign table:
-
-    ```sql
-    ALTER SERVER postgres14 options (add batch_size '10');
-    
-    \COPY postgres14.reviews (data) FROM 'C:\microsoft-postgres-docs-project\artifacts\data\reviews.json';
-    ```
-
-For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=97da48246d34807196b404626f019c767b7af0df).
-
-### Task 3: Allow a COPY FROM value to map to a column's DEFAULT
+### Task 1: Allow a COPY FROM value to map to a column's DEFAULT
 
 The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data into a table using a common token in the source data.
 
-1. Review the `C:\microsoft-postgres-docs-project\artifacts\data\default.csv` file, notice the usage of the `\D` in the source data:
+1. Review the `C:\labfiles\microsoft-postgres-docs-project\artifacts\data\default.csv` file, notice the usage of the `\D` in the source data:
 
     ![Alt text](media/02_02_copy_from_default.png)
 
-2. Run the following command to import the data:
+2. In pgAdmin, right-click the `airbnb` database, select **PSQL Tool**
+3. In the psql window, run the following command to import the data:
 
     ```sql
     CREATE TABLE default_test(c1 INT PRIMARY KEY, c2 TEXT DEFAULT 'the_default_value') ;
     
-    COPY default_test FROM 'C:\microsoft-postgres-docs-project\artifacts\data\default.csv'; WITH (format csv, default '\D', header);
+    \COPY default_test FROM 'C:\labfiles\microsoft-postgres-docs-project\artifacts\data\default.csv' WITH (format csv, default '\D', header);
     ```
 
-3. Run the following command to review the results of the `COPY FROM` command:
+4. Run the following command to review the results of the `COPY FROM` command:
 
     ```cmd
     SELECT
@@ -528,6 +497,8 @@ The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data int
     FROM
         default_test
     ```
+
+    ![Alt text](media/02_default_values.png)
 
 Notice every entry from the source file with the default of '\D' was converted to the `DEFAULT` value from the column definition.
 
@@ -551,11 +522,11 @@ With this change, many queries you were performing using these joins will now ru
     
     insert into left_table
     select (case x % 4 when 1 then null else x end), x % 10
-    from generate_series(1,5000) x;
+    from generate_series(1,3000000) x;
     
     insert into right_table
     select (case x % 4 when 1 then null else x end), x % 10
-    from generate_series(1,5000) x;
+    from generate_series(1,3000000) x;
     ```
 
 3. Ensure that your instance is enabled and configured for parallel hash joins, this is the default for instances, but depending is always worth verifying.  You should see the following values.
@@ -614,7 +585,7 @@ The following is an example of a query that performs aggregates with the two fun
     
     insert into agg_test
     select (case x % 4 when 1 then null else x end), x % 10
-    from generate_series(1,5000) x;
+    from generate_series(1,500000) x;
     ```
 
 2. Run a select statement against it to review the data generated:
@@ -649,31 +620,11 @@ The following is an example of a query that performs aggregates with the two fun
         y;
     ```
 
+4. In pre-16 instances, you would see a `HashAggregate`:
+
     ![Alt text](media/02_03_query_02.png)
 
-4. In order to show how this works, you will need to set the parallel setup costs parameters to the following.  **Note that this is only for this lab and not a suggestion for performing in your development or production environments**:
-
-    ```sql
-    set parallel_setup_cost TO 0;
-    set parallel_tuple_cost TO 0;
-    set parallel_leader_participation TO 0;
-    set min_parallel_table_scan_size = 0;
-    ```
-
-5. Again, review the `EXPLAIN` plan details, notice the new `Finalize GroupAggregate` plan and the significantly reduced costs:
-
-    ```sql
-    EXPLAIN SELECT
-        y,
-        string_agg(x::text, ',') AS t,
-        string_agg(x::text::bytea, ',') AS b,
-        array_agg(x) AS a,
-        array_agg(ARRAY[x]) AS aa
-    FROM
-        agg_test
-    GROUP BY
-        y;
-    ```
+5. In 16+, you will see a `Finalize GroupAggregate`:
 
     ![Alt text](media/02_03_query_03.png)
 
@@ -716,7 +667,7 @@ Per the [postgresql documentation](https://www.postgresql.org/docs/devel/monitor
 
 Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation I/O which bypasses shared buffers (e.g. when moving a table from one tablespace to another) is currently not tracked."
 
-1. Run the following command to clear the stats and see the information available:
+1. Run the following command to clear the stats and see the information available, you should see all zeros:
 
     ```sql
     select pg_stat_reset_shared('io');
@@ -724,10 +675,12 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
     select * from pg_stat_io order by writes desc;
     ```
 
-2. Using `pgbench` you can generate some IO data (~750MB of data):
+    ![Alt text](media/02_pg_stat_01.png)
+
+2. Using `pgbench` you can generate some IO data (~750MB of data), be sure to replace the `PREFIX` and `REGION` tokens:
 
     ```sql
-    pgbench -i -s 50 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
+    pgbench -i -s 50 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
 3. Again, run the previous command to see the newly generated IO information.
@@ -742,6 +695,7 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
     ![Alt text](media/pg_stat_io.png)
 
 5. `pg_stat_io` will also break apart the operations into more granular statistics via the `context` column.  The `pgbench` test above generated context values in the `vacuum` and `bulkwrite` context categories.  When using basic DDL commands, the values will go into different context categories.
+
 6. Run the following command to create some more test data using basic DDL `INSERT`:
 
     ```sql
@@ -784,7 +738,7 @@ In lab 1 you enabled the Query Store via server parameters.  As you were working
 
 3. You should see a series of queries sorted by their total time, you can also sort by `max_time`, `mean_time` or `stddev_time`:
 
-    TODO
+    ![Alt text](media/02_05_query_store.png)
 
 For more information on the query store feature, reference [Monitor performance with the Query Store](https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-query-store)
 
@@ -798,34 +752,35 @@ For more information on the query store feature, reference [Monitor performance 
     ALTER ROLE s2admin WITH REPLICATION;
     ```
 
-2. On the Postgres 16 server for the `airbnb` database, run the following to create a publication, add a table to it and then create a slot:
+    
+
+2. On the **Postgres 16** server for the `airbnb` database, run the following to create a publication, add a table to it and then create a slot:
 
     ```sql
     create publication my_pub;
     
+    alter publication my_pub add table listings;
     alter publication my_pub add table calendar;
-    
+    alter publication my_pub add table reviews;
+    ```
+
+3. Create a replication slot:
+
+    ```sql
     SELECT pg_create_logical_replication_slot('my_pub_slot', 'pgoutput');
     ```
 
 ### Task 2: Setup Subcsriber
 
-1. On the PostgreSQL 14 server for the `airbnb` database, run the following.  It will created the matching table and setup the subscription. Be sure to replace the `PREFIX` value:
+1. On the **PostgreSQL 14** server for the `airbnb` database, run the following.  It will setup the subscription (you should already have the tables from the lab setup). Be sure to replace the `PREFIX` and `REGION` values:
 
     ```sql
-    CREATE TABLE calendar (
-        listing_id int, 
-        date date,
-        price decimal(10,2), 
-        available varchar(50)
-        );
-
-    CREATE SUBSCRIPTION my_pub_subscription CONNECTION 'host=PREFIX-pg-flex-eastus-16.postgres.database.azure.com port=5432 dbname=airbnb user=s2admin password=Solliance123' PUBLICATION my_pub WITH (copy_data=true, enabled=true, create_slot=false, slot_name='my_pub_slot');
+    CREATE SUBSCRIPTION my_pub_subscription CONNECTION 'host=PREFIX-pg-flex-REGION-16.postgres.database.azure.com port=5432 dbname=airbnb user=s2admin password=Seattle123Seattle123' PUBLICATION my_pub WITH (copy_data=true, enabled=true, create_slot=false, slot_name='my_pub_slot');
     ```
 
 ### Task 3: Sync Data
 
-1. On the PostgreSQL 16 server, run the following to add some rows to the `calendar` table:
+1. On the **PostgreSQL 16** server, run the following to add some rows to the `calendar` table:
 
     ```sql
     INSERT INTO CALENDAR values (241032, '2024-01-01', 85, 't');
@@ -837,13 +792,16 @@ For more information on the query store feature, reference [Monitor performance 
     INSERT INTO CALENDAR values (241032, '2024-01-07', 85, 't');
     ```
 
-2. On the PostgreSQL 14 server, run the following, notice that the row has replicated to from 16 to 14 instance:
+2. On the **PostgreSQL 14** server, run the following, notice that the row has replicated to from 16 to 14 instance:
 
     ```sql
     SELECT * 
     FROM calendar
     ORDER BY date desc
+    limit 50
     ```
+
+    ![Alt text](media/02_05_replication.png)
 
 ## Exercise 6: PgBouncer (Optional)
 
@@ -857,7 +815,7 @@ References:
 
 You can use PgBouncer metrics to monitor the performance of the PgBouncer process, including details for active connections, idle connections, total pooled connections, and the number of connection pools. Each metric is emitted at a 1-minute interval and has up to 93 days of history. Customers can configure alerts on the metrics and also access the new metrics dimensions to split and filter metrics data by database name. PgBouncer metrics are disabled by default. For PgBouncer metrics to work, both the server parameters pgbouncer.enabled and metrics.pgbouncer_diagnostics must be enabled. These parameters are dynamic and don't require an instance restart.
 
-- Browse to the Azure Portal and your **PREFIX-pg-flex-eastus-16** resource
+- Browse to the Azure Portal and your **PREFIX-pg-flex-REGION-16** resource
 - Under **Settings**, select **Server parameters**
 - Search for the `pgbouncer.enabled` dynamic parameters
 - Toggle the setting to `TRUE`
@@ -871,32 +829,32 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 ### Task 2: Performance without PgBouncer
 
 1. Switch to the Azure Portal
-2. Browse to the `PREFIX-pg-flex-eastus-16.postgres.database.azure.com` instance
+2. Browse to the `PREFIX-pg-flex-REGION-16.postgres.database.azure.com` instance
 3. Under **Monitoring** select **Metrics**
-4. For the **Metric**, under the **TRAFFIC** category, select **Active client connections**
+4. For the **Metric**, under the **TRAFFIC** category, select **Active connections**
 5. Select **Add metric**
 6. Under the **PGBOUNCER** category, select **Active client connections**
 7. In the top right, select the time to be **Last 30 minutes** then select **Apply**
 8. Switch to a command prompt
-9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password.  Notice the use of the `-c` parameter that will create 1000 different connections, be sure to replace `PREFIX` with your lab information:
+9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password `Seattle123Seattle123`.  Notice the use of the `-c` parameter that will create 100 different connections, be sure to replace `PREFIX` with your lab information:
 
     ```sql
-    pgbench -c 100 -T 120 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
+    pgbench -c 100 -T 120 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
-10. Switch back to the Metrics window, after a minute, you should see the active connections increase.
+10. Switch back to the Metrics window, after a minute, you should see the `active connections` increase.
 11. Stop the test or wait for it to finish.
 
 ### Task 3: Performance with PgBouncer
 
 1. Switch back to the command prompt.
-2. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` with your lab information:
+2. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password `Seattle123Seattle123`. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` and `REGION` with your lab information:
 
     ```sql
-    pgbench -c 100 -T 120 -h PREFIX-pg-flex-eastus-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
+    pgbench -c 100 -T 120 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
-3. Switch back to the metrics window.  After a minute, you should see that the server active connections will max out and the PgBouncer active client connections will increase to handle the load on behalf of the server.
+3. Switch back to the metrics window.  After a minute, you should see that the server `active connections` will max out and the PgBouncer `active client connections` will increase to handle the load on behalf of the server.
 
 ## Exercise 6: Other Features (Optional)
 

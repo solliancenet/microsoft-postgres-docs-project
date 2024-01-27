@@ -38,7 +38,7 @@ The following steps will configure an environment to perform the guide's migrati
 - Toggle the **Allow access to Azure services** to **On**
 - Select **Save**
 - Browse to your resource group
-- Select the **PREFIX-pg-flex-01** instance.
+- Select the **PREFIX-pg-flex-REGION-01** instance.
 - Under **Settings**, select **Networking**
 - Toggle the **Allow public access from any Azure service within Azure to this server** to **On**
 - Select **Save**
@@ -130,7 +130,7 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
 - Open the PostgreSQL pgAdmin tool
   - If opening for the first time, set the admin password to `Seattle123`
 - Right-click the **Servers** node, select **Register->Server**
-- Connect to the Azure Database for PostgreSQL instance (ex `PREFIX-pg-flex-01.postgres.database.azure.com`)
+- Connect to the Azure Database for PostgreSQL instance (ex `PREFIX-pg-flex-REGION-01.postgres.database.azure.com`)
   - Enter `Seattle123Seattle123` for the password
 - Expand the **Databases** node
 - Right-click the **Databases** node, select **Create->Database**
@@ -228,7 +228,7 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
                 "request": "launch",
                 "mainClass": "com.yourcompany.conferencedemo.ConferencedemoApplication",
                 "env" :{
-                    "DB_CONNECTION_URL" : "jdbc:postgresql://PREFIX-pg-flex-01.postgres.database.azure.com:5432/reg_app?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&noAccessToProcedureBodies=true",
+                    "DB_CONNECTION_URL" : "jdbc:postgresql://PREFIX-pg-flex-REGION-01.postgres.database.azure.com:5432/reg_app?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&noAccessToProcedureBodies=true",
                     "DB_USER_NAME" : "conferenceuser",
                     "DB_PASSWORD" : "Seattle123",
                     "ALLOWED_ORIGINS" : "*",
@@ -238,7 +238,7 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
     }
     ```
 
-  - Update the **{DB_CONNECTION_URL}** environment variable to the PostgreSQL Connections string `jdbc:postgresql://PREFIX-pg-flex-01.postgres.database.azure.com:5432/reg_app?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&noAccessToProcedureBodies=true`
+  - Update the **{DB_CONNECTION_URL}** environment variable to the PostgreSQL Connections string `jdbc:postgresql://PREFIX-pg-flex-REGION-01.postgres.database.azure.com:5432/reg_app?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&noAccessToProcedureBodies=true`
   - Update the **{DB_USER_NAME}** environment variable to the PostgreSQL Connections string `conferenceuser`
   - Update the **{DB_PASSWORD}** environment variable to the PostgreSQL Connections string `Seattle123`
   - Update the **{ALLOWED_ORIGINS}** environment variable to `*`

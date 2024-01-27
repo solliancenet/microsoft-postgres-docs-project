@@ -106,7 +106,15 @@ InstallNotepadPP
 
 InstallPgAdmin
 
-InstallVisualStudioCode
+$extensions = @("ms-vscode-deploy-azure.azure-deploy", 
+  "ms-azuretools.vscode-docker", 
+  "ms-python.python", 
+  "ms-azuretools.vscode-azurefunctions",
+  "ms-vscode-remote.remote-wsl");
+
+InstallVisualStudioCode $extensions;
+
+InstallVisualStudio "community" "2022";
 
 InstallDocker
 
@@ -114,7 +122,13 @@ InstallGit
         
 InstallAzureCli
 
-InstallOffice
+#will get port 5432
+InstallPostgres16
+
+#will get port 5433
+InstallPostgres14
+
+InstallPython "3.11";
 
 Uninstall-AzureRm -ea SilentlyContinue
 
@@ -136,15 +150,20 @@ $global:sqlPassword = $AzureSQLPassword          # READ FROM FILE
 $securePassword = $password | ConvertTo-SecureString -AsPlainText -Force
 $cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $userName, $SecurePassword
 
-Connect-AzAccount -Credential $cred | Out-Null
- 
-# Template deployment
-$rg = (Get-AzResourceGroup | Where-Object { $_.ResourceGroupName -like "*PG-DEV-*" });
-$resourceGroupName = $rg.ResourceGroupName
-$region = $rg.Location;
-$deploymentId =  (Get-AzResourceGroup -Name $resourceGroupName).Tags["DeploymentId"]
+Connect-AzAccount -Identity
 
-$resourceName = "pgdev$deploymentId";
+$resourceGroups = Get-AzResourceGroup
+$resourceGroup = $resourceGroups[0]
+
+$servers = Get-AzPostgreSqlFlexibleServer
+$serverName = $servers[0].name
+
+$databaseName = "airbnb"
+
+New-AzPostgreSqlFlexibleServerDatabase -Name $databaseName -ResourceGroupName $resourceGroup.ResourceGroupName -ServerName $serverName
+
+# Template deployment
+$deploymentId =  (Get-AzResourceGroup -Name $resourceGroupName).Tags["DeploymentId"]
 
 $branchName = "main";
 $workshopName = "microsoft-postgres-docs-project";
@@ -152,21 +171,12 @@ $repoUrl = "solliancenet/$workshopName";
 
 #download the git repo...
 Write-Host "Download Git repo." -ForegroundColor Green -Verbose
-git clone https://github.com/solliancenet/$workshopName.git $workshopName
+git clone https://github.com/$repoUrl.git $workshopName
 
-$parametersFile = "c:\labfiles\$workshopName\artifacts\environment-setup\spektra\deploy.parameters.post.json"
-$content = Get-Content -Path $parametersFile -raw;
+$filePath = "c:\labfiles\$workshopName\artifacts\data\airbnb.sql"
 
-$content = $content.Replace("GET-AZUSER-PASSWORD",$azurepassword);
-$content = $content | ForEach-Object {$_ -Replace "GET-AZUSER-UPN", "$AzureUsername"};
-$content = $content | ForEach-Object {$_ -Replace "GET-AZUSER-PASSWORD", "$AzurePassword"};
-$content = $content | ForEach-Object {$_ -Replace "GET-ODL-ID", "$deploymentId"};
-$content = $content | ForEach-Object {$_ -Replace "GET-DEPLOYMENT-ID", "$deploymentId"};
-$content = $content | ForEach-Object {$_ -Replace "GET-REGION", $region};
-$content = $content | ForEach-Object {$_ -Replace "ARTIFACTS-LOCATION", "https://raw.githubusercontent.com/$repoUrl/$branchName/artifacts/environment-setup/automation/"};
-$content | Set-Content -Path "$($parametersFile).json";
-
-Write-Host "Starting main deployment." -ForegroundColor Green -Verbose
-New-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateUri "https://raw.githubusercontent.com/solliancenet/$workshopName/$branchName/artifacts/environment-setup/automation/00-template.json" -TemplateParameterFile "$($parametersFile).json"
+#set the password
+$env:PGPASSWORD="Seattle123Seattle123"
+psql -h "$($serverName).postgres.database.azure.com" -d $databaseName -U s2admin -p 5432 -a -w -f $filePath
 
 Stop-Transcript

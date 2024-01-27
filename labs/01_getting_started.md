@@ -10,12 +10,8 @@
     - [Task 2: Networking Setup (Lab Environment)](#task-2-networking-setup-lab-environment)
     - [Task 2: Add Server to pgAdmin](#task-2-add-server-to-pgadmin)
   - [Exercise 5: Writing your first query](#exercise-5-writing-your-first-query)
-  - [Exercise 6: Read Replicas and Virtual Endpoints (Optional)](#exercise-6-read-replicas-and-virtual-endpoints-optional)
-    - [Task 1: Create a read replica](#task-1-create-a-read-replica)
-    - [Task 2: Add Virtual Endpoints (preview)](#task-2-add-virtual-endpoints-preview)
-    - [Task 3: Promote replicas](#task-3-promote-replicas)
   - [Summary](#summary)
-  - [Miscellanous](#miscellanous)
+  - [Miscellanous (Optional)](#miscellanous-optional)
 
 In this lab you will create an [Azure Database for PostgreSQL Flexible Server](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/overview) and then configure various properties using the Azure Portal. Once created and configured, you will then connect to it using [pgAdmin](https://www.pgadmin.org/) to run some basic queries on pre-loaded data.
 
@@ -38,11 +34,11 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
 
     ![Alt text](media/01_00_databases.png)
 
-5. Fill out the Basics tab with the following information, be sure to replace `PREFIX` with your lab information:
+5. Fill out the Basics tab with the following information, be sure to replace `PREFIX` with your lab information or a unique prefix such as your initials (ex `ABC`), also replace the `REGION`:
 
    - Resource Group: Name of your lab resource group
-   - Server name:  `PREFIX-pg-flex-eastus-16`
-   - Region: `East US`
+   - Server name:  `PREFIX-pg-flex-REGION-16`
+   - Region: `REGION`
    - PostgreSQL Version: `16`
    - Workload Type: `Production (Small/Medium-size)`
   
@@ -55,7 +51,7 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
     ![Alt text](media/01_03_create_server_basics_02.png)
   
 9. Select **Save**
-10. Authentication method: `PostgreSQL`
+10. Authentication method: `PostgreSQL authentication only`
 11. Admin username: `s2admin`
 12. Password and confirm password: `Seattle123Seattle123`
 
@@ -87,7 +83,7 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
 
 18. Select **Deployment in progress** link.  You can now monitor the deployment process:
 
-  ![Alt text](media/01_08_deployment.png)
+      ![Alt text](media/01_08_deployment.png)
 
 - Once deployed, select the link to navigate to your server's **Overview** page.
   - Make a note of the Server name and the Server admin login name.
@@ -121,13 +117,13 @@ In this exercise you will modify the [maintennce schedule](https://learn.microso
 3. For the **Day of week**, select **Saturday**
 4. For the **Start time (UTC)**, select **23**
   
-  ![Alt text](media/01_12_pg_maintenance.png)
+      ![Alt text](media/01_12_pg_maintenance.png)
 
 5. Select **Save**
 
 ## Exercise 4: Connecting with pgAdmin
 
-If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you can perform these steps on that machine.  If you do not, you can utilize the virtual machine that was deployed to your lab environment.
+If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you can perform these steps on that device. If you do not have a local device capable of running pgAdmin or PostgreSQL, you can utilize the virtual machine that was deployed to your lab environment.
 
 ### Task 1: Networking Setup (Local Device) - OPTIONAL
 
@@ -136,7 +132,7 @@ If you are using your own device, ensure the following has been completed:
 1. Download and Install [pgAdmin](https://www.pgadmin.org/download/)
 2. Download and Install [PostgreSQL 16](https://www.postgresql.org/download/)
 3. Switch back to the Azure Portal
-4. Browse to the `PREFIX-pg-flex-eastus-16` instance
+4. Browse to the `PREFIX-pg-flex-REGION-16` instance
 5. Under **Settings**, select **Networking**
 6. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
 7. Under **Firewall rules**, add an entry for the IP address of your device.
@@ -144,7 +140,7 @@ If you are using your own device, ensure the following has been completed:
     > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
 
 8. Select **Save**
-9. Repeat for the `PREFIX-pg-flex-eastus-14` instance
+9. Repeat for the `PREFIX-pg-flex-REGION-14` instance
 
 ### Task 2: Networking Setup (Lab Environment)
 
@@ -152,7 +148,7 @@ If you are using the virtual machine from the lab environment, all the software 
 
 1. Switch to the Azure Portal
 2. Browse to your resource group
-3. Select the **PREFIX-paw-1** virtual machine
+3. Select the **PREFIX-vm-pgdb01** virtual machine
 4. In the tabs, select **Connect->Connect**
 5. Copy and save the IP address
 6. Select **Download RDP file**
@@ -161,7 +157,7 @@ If you are using the virtual machine from the lab environment, all the software 
 9. Login with `s2admin` and password `Seattle123Seattle123`
 10. When prompted, select **Next**, then **Accept**
 11. Switch back to the Azure Portal
-12. Browse to the `PREFIX-pg-flex-eastus-16` instance
+12. Browse to the `PREFIX-pg-flex-REGION-16` instance
 13. Under **Settings**, select **Networking**
 14. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
 15. Under **Firewall rules**, add an entry using the IP address you copied above
@@ -169,7 +165,7 @@ If you are using the virtual machine from the lab environment, all the software 
     > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
 
 16. Select **Save**
-17. Repeat for the `PREFIX-pg-flex-eastus-14` instance
+17. Repeat the networking steps for the `PREFIX-pg-flex-REGION-14` instance
 
 ### Task 2: Add Server to pgAdmin
 
@@ -178,130 +174,46 @@ If you are using the virtual machine from the lab environment, all the software 
   
     ![Alt text](media/01_14_pg_admin_register.png)
 
-3. For name, type **PREFIX-pg-flex-eastus-16**, be sure to replace `PREFIX` with your lab information
+3. For name, type **PREFIX-pg-flex-REGION-16**, be sure to replace `PREFIX` with your lab information
 4. Select the **Connection** tab
 5. For the **host name/address**, paste the server name you copied from above
 6. For the username, type **s2admin**
 7. For the password, type **Seattle123Seattle123**
 8. Select **Save password?** to toggle it on.
 9. Select **Save**
+10. Again, repeat for the **PREFIX-pg-flex-REGION-14** instance
 
 ## Exercise 5: Writing your first query
 
 Using pgAdmin, you will execute some basic queries
 
 1. Switch to pgAdmin
-2. Expand the **PREFIX-pg-flex-eastus-14** node
+2. Expand the **PREFIX-pg-flex-REGION-14** node
 3. Expand the **Databases** node
 4. Expand the **airbnb->Schemas->public** nodes
+
+    > NOTE:  If for some reason you do not see the **airbnb** table, use psql to run the script in the `"c:\labfiles\microsoft-postgres-docs-project\artifacts\data\airbnb.sql"`
+
 5. Expand the **Tables** node
 6. Right-click the new `airbnb` table, select **Query Tool**
-7. Copy the following into the query tool window:
+7. Copy the following into the query tool window and execute it:
 
     ```sql
     select * 
     from listings
     ```
 
-## Exercise 6: Read Replicas and Virtual Endpoints (Optional)
-
-### Task 1: Create a read replica
-
-To create a read replica, follow these steps:
-
-- In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server to use as the primary server.
-- On the server sidebar, under **Settings**, select **Replication**.
-- Select **Create replica**.
-
-  ![Add a replica.](../media/enable-promote/add-replica-new.png)
-
-- Enter the Basics form with the following information.
-  - Set the replica server name.
-  
-  > NOTE: It is a Cloud Adoption Framework (CAF) best practice to [use a resource naming convention](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming) that will allow you to easily determine what instance you are connecting too or managing and where it resides.
-
-  - Select a location that is different from your primary but note that you can select the same region.
-
-  > NOTE:  To learn more about which regions you can create a replica in, visit the [read replica concepts article](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-read-replicas).
-
-  - Set the compute and storage to what you recorded from your primary. If the displayed compute does not match, select **Configure server** and select the appropriate one.
-  
-  > NOTE:  If you select a compute size smaller than the primary, the deployment will fail. Also be aware that the compute size may not be available in a different region.
-
-    ![Compute size of the replica is highlighted.](../media/enable-promote/replica-compute.png)
-
-  - Select an availability zone setting.
-  - Notice that the Authentication settings are auto selected for you.
-
-  ![Review the availability zone and authentication settings.](../media/enable-promote/replica-zone-auth.png)
-
-- Select **Review + create** to confirm the creation of the replica or **Next: Networking** if you want to add, delete or modify any firewall rules.
-- Verify the firewall settings. Notice how the primary settings have been copied automatically.
-
-  ![Modify firewall rules.](../media/enable-promote/networking.png)
-
-- Leave the remaining defaults and then select the **Review + create** button at the bottom of the page or proceed to the next forms to configure security or add tags.
-- Review the information in the final confirmation window. When you're ready, select **Create**. A new deployment will be created and executed.
-
-  ![Review the information in the final confirmation window.](../media/enable-promote/replica-review.png)
-
-- During the deployment, you will see the primary in `Updating` status:
-
-  ![Primary enters into updating status.](../media/enable-promote/primary-updating.png)
-
-- After the read replica is created, it can be viewed from the Replication window.
-
-  ![View the new replica in the Replication window.](../media/enable-promote/list-replica.png)
-
-### Task 2: Add Virtual Endpoints (preview)
-
-- In the Azure portal, select the primary server.
-- On the server sidebar, under **Settings**, select **Replication**.
-- Select **Create endpoint**
-- In the dialog, type a meaningful name for your endpoint.  Notice the DNS endpoint that is being generated.
-
-  ![Add a new virtual endpoint with custom name.](../media/enable-promote/add-virtual-endpoint.png)
-
-- Select **Create**
-
-  > NOTE:  If you do not create a virtual endpoint you will receive an error on the promote replica attempt.
-
-  ![Promotion error when missing virtual endpoint.](../media/enable-promote/replica-promote-attempt.png)
-
-### Task 3: Promote replicas
-
-With all the necessary components in place, you are now ready to perform a promote replica to primary operation.  
-
-> Important: Promotion of replicas cannot be undone. The read replica becomes a standalone server that supports both reads and writes. The standalone server can't be made into a replica again.
-
-To promote replica from the Azure portal, follow these steps:
-
-- In the [Azure portal](https://portal.azure.com/), choose the Azure Database for PostgreSQL Flexible Server primary server.
-- On the server sidebar, on the server menu, under **Settings**, select **Replication**
-- Under **Servers**, select the **Promote** icon for the replica.
-
-  ![Select promote for a replica.](../media/enable-promote/replica-promote.png)
-
-- In the dialog, ensure the action is **Promote to primary server**.
-- For **Data sync**, ensure **Planned - sync data before promoting** is selected.
-
-  ![Promote the replica.](../media/enable-promote/replica-promote-final.png)
-
-- Select **Promote**, the process will begin.  Once completed, the roles will be swapped with the replica now the primary and the primary the replica.
-
-  > NOTE:  The replica you are promoting must have the reader virtual endpoint assigned or you will receive an error on promotion:
-
-  ![Promote error when promtoing the wrong replica.](../media/enable-promote/promote-error.png)
+    ![Alt text](media/01_listings_query.png)
 
 ## Summary
 
-In this lab, you created a new Azure Database for PostgreSQL Flexible Server instance, configured some various ascpects of it, added a database called `airbnb` and then explored its data using pgAdmin.  
+In this lab, you created a new Azure Database for PostgreSQL Flexible Server instance, configured some various ascpects of it, added a database called `airbnb`, configured a custom maintence schedule then explored some data using on a secondary PG14 instance using pgAdmin.
 
-In the next set of labs, you will explore the new developer and infrastructure features of PostgreSQL 16.
+In the next set of labs, you will explore several developer and performance features of PostgreSQL.
 
-## Miscellanous
+## Miscellanous (Optional)
 
-If you would like to run these labs in your own Azure subscription, you will need to execute the following ARM template:
+If you would like to run these labs in your own Azure subscription, you will need to execute the following steps using the provided ARM template:
 
 1. Switch to the Azure Portal
 2. Select the **+** in the top left
@@ -310,9 +222,9 @@ If you would like to run these labs in your own Azure subscription, you will nee
 5. Select **Build your own template in the editor**
 6. Copy and paste the `/artifacts/template.json` file into the window
 7. Select **Save**
-8. Set the **prefix** parameter.
+8. Set the **prefix** parameter to match your lab environment or your initials (ex `ABC`).
 9. Select **Review + create**
 10. Select **Create**, the deployment will take a few minutes.  Once deployed, you will have:
-    - Two PostgreSQL servers (14 and 16).
-    - Windows 10 Virtual Machine with necessary software installed.
+    - A PostgreSQL 14 instance.
+    - Windows 11 Virtual Machine with necessary software installed.
     - Various Azure supporting services

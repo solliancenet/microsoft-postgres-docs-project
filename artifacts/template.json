@@ -29,6 +29,9 @@
         }
     },
     "variables": {
+        "Owner":  "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
+        "Contributor":  "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "Reader":  "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
         "azureSubscriptionID": "[subscription().subscriptionId]",
         "azureTenantID": "[subscription().tenantId]",
         "odlId" : "postgres",
@@ -59,6 +62,18 @@
         "finalVnetData": "[json(concat('{ \"SubnetArmResourceId\": \"', variables('vnetDataSet').subnetArmResourceId, '\"}'))]"
     },
     "resources": [
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(concat(parameters('prefix'),'-vm-pgdb01'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('prefix'),'-vm-pgdb01'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('Owner')]",
+                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(parameters('prefix'),'-vm-pgdb01')), '2023-09-01', 'Full').identity.principalId]"
+            }
+        },
         {
             "type": "microsoft.insights/components",
             "apiVersion": "2018-05-01-preview",
@@ -622,6 +637,9 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('pg-nic-01'))]"
             ],
+            "identity": {
+            "type": "SystemAssigned"
+            },
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "Standard_D4s_v3"
