@@ -546,12 +546,11 @@ With this change, many queries you were performing using these joins will now ru
 4. Run the following command to see the execution plan of the the select statement:
 
     ```sql
-    EXPLAIN analyze SELECT
-    	*
-    FROM
-    	left_table lt
+    EXPLAIN (costs off)
+    SELECT count(*)
+    FROM left_table lt
     FULL OUTER JOIN right_table rt
-            ON lt.x = rt.x
+    ON lt.x = rt.x
     ```
 
 5. In the execution plan, you should notice the use of a `Parallel Hash Full Join`.  
@@ -559,6 +558,8 @@ With this change, many queries you were performing using these joins will now ru
     ![Alt text](media/parallel_full_outer_join.png)
 
 6. In previous versions of PostgreSQL, you would see a regular `Hash Full Join`.
+
+    ![Alt text](media/02_parallel_hash_full_join_14.png)
 
 Full JOINs are commonly used to find the differences between 2 tables. Prior to Postgres 16, parallelism was not implemented for full hash JOINs, which made them slower to execute. [(link to commit)](https://github.com/postgres/postgres/commit/11c2d6fdf)
 
