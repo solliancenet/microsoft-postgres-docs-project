@@ -52,11 +52,12 @@ You will utilize the query store and logical replication in subsequent labs.  He
 6. Browse for the `wal_level` parameters
 7. Set the value to `logical`
 8. Select **Save**
-9. Repeat the same steps for any replicas and for the **PREFIX-pg-flex-REGION-14** instance
+9. Select **Save & Restart**
+10. Repeat the same steps for any replicas and for the **PREFIX-pg-flex-REGION-14** instance
 
 ### Task 2: Create tables and data
 
-1. In your lab virtual machine, open a command prompt, run the following command to connect to your database, be sure to replace `PREFIX` with your lab information (optionally you can use pgAdmin to open a psql window):
+1. In your lab virtual machine, open a command prompt, run the following command to connect to your database, be sure to replace `PREFIX` and `REGION` with your lab information (optionally you can use pgAdmin to open a psql window):
 
     ```cmd
     psql -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -U s2admin -d airbnb
@@ -127,8 +128,6 @@ You will utilize the query store and logical replication in subsequent labs.  He
         available varchar(50)
         );
     ```
-
-
 
 4. Run the following to import the data from the temp tables to the main tables:
 
@@ -399,7 +398,7 @@ For information on Full Text Search, reference [Full Text Search](https://www.po
 2. Do a text search, note the use of a `Seq Scan`:
 
     ```sql
-    SELECT *
+    EXPLAIN SELECT *
     FROM listings
     WHERE ts_summary @@ to_tsquery('amazing');
     ```
@@ -415,7 +414,7 @@ For information on Full Text Search, reference [Full Text Search](https://www.po
 4. Again, re-run the query, you should see the usage of a `Bitmap Heap Scan` instead of a `Seq Scan`:
 
     ```sql
-    SELECT *
+    EXPLAIN SELECT *
     FROM listings
     WHERE ts_summary @@ to_tsquery('amazing');
     ```
@@ -620,7 +619,7 @@ The following is an example of a query that performs aggregates with the two fun
         y;
     ```
 
-4. In pre-16 instances, you would see a `HashAggregate`:
+4. In pre-16 instances, you would see a `HashAggregate` (feel free to test on the PG14 instance):
 
     ![Alt text](media/02_03_query_02.png)
 
@@ -677,9 +676,11 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 
     ![Alt text](media/02_pg_stat_01.png)
 
-2. Using `pgbench` you can generate some IO data (~750MB of data), be sure to replace the `PREFIX` and `REGION` tokens:
+2. Using `pgbench` you can generate some IO data (~750MB of data). Open a command prompt, type the following. Be sure to replace the `PREFIX` and `REGION` tokens:
 
     ```sql
+    cd "C:\Program Files\PostgreSQL\16\bin"
+
     pgbench -i -s 50 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
@@ -687,7 +688,9 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 
     ```sql
     --see client backed / bulk write in context after pgbench
-    select * from pg_stat_io order by writes desc;
+    select * 
+    from pg_stat_io 
+    order by writes desc;
     ```
 
 4. You should see the backend_type `client_backend` values change to be much higher:
@@ -710,7 +713,6 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 
     ```sql
     select * from pg_stat_io 
-    where backend_type = 'checkpointer'
     order by writes desc;
     ```
 
@@ -746,15 +748,13 @@ For more information on the query store feature, reference [Monitor performance 
 
 ### Task 1 : Setup Publication
 
-1. You will need to assign the `REPLICATION` permission in order to setup replication:
+1. You will need to assign the `REPLICATION` permission in order to setup replication.  Run the following on the **PREFIX-pg-flex-REGION-16** server:
 
     ```sql
     ALTER ROLE s2admin WITH REPLICATION;
     ```
 
-    
-
-2. On the **Postgres 16** server for the `airbnb` database, run the following to create a publication, add a table to it and then create a slot:
+2. On the **PREFIX-pg-flex-REGION-16** server for the `airbnb` database, run the following to create a publication, add a table to it and then create a slot:
 
     ```sql
     create publication my_pub;
@@ -772,7 +772,7 @@ For more information on the query store feature, reference [Monitor performance 
 
 ### Task 2: Setup Subcsriber
 
-1. On the **PostgreSQL 14** server for the `airbnb` database, run the following.  It will setup the subscription (you should already have the tables from the lab setup). Be sure to replace the `PREFIX` and `REGION` values:
+1. On the **PREFIX-pg-flex-REGION-14** server for the `airbnb` database, run the following.  It will setup the subscription (you should already have the tables from the lab setup). Be sure to replace the `PREFIX` and `REGION` values:
 
     ```sql
     CREATE SUBSCRIPTION my_pub_subscription CONNECTION 'host=PREFIX-pg-flex-REGION-16.postgres.database.azure.com port=5432 dbname=airbnb user=s2admin password=Seattle123Seattle123' PUBLICATION my_pub WITH (copy_data=true, enabled=true, create_slot=false, slot_name='my_pub_slot');
@@ -780,7 +780,7 @@ For more information on the query store feature, reference [Monitor performance 
 
 ### Task 3: Sync Data
 
-1. On the **PostgreSQL 16** server, run the following to add some rows to the `calendar` table:
+1. On the **PREFIX-pg-flex-REGION-16** server, run the following to add some rows to the `calendar` table:
 
     ```sql
     INSERT INTO CALENDAR values (241032, '2024-01-01', 85, 't');
@@ -792,7 +792,7 @@ For more information on the query store feature, reference [Monitor performance 
     INSERT INTO CALENDAR values (241032, '2024-01-07', 85, 't');
     ```
 
-2. On the **PostgreSQL 14** server, run the following, notice that the row has replicated to from 16 to 14 instance:
+2. On the **PREFIX-pg-flex-REGION-14** server, run the following, notice that the row has replicated to from 16 to 14 instance:
 
     ```sql
     SELECT * 
@@ -839,10 +839,15 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password `Seattle123Seattle123`.  Notice the use of the `-c` parameter that will create 100 different connections, be sure to replace `PREFIX` with your lab information:
 
     ```sql
-    pgbench -c 100 -T 120 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
+    cd "C:\Program Files\PostgreSQL\16\bin"
+
+    pgbench -c 100 -T 180 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
 10. Switch back to the Metrics window, after a minute, you should see the `active connections` increase.
+
+    ![Alt text](media/02_pgbouncer_01.png)
+
 11. Stop the test or wait for it to finish.
 
 ### Task 3: Performance with PgBouncer
@@ -851,10 +856,12 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 2. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password `Seattle123Seattle123`. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` and `REGION` with your lab information:
 
     ```sql
-    pgbench -c 100 -T 120 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
+    pgbench -c 100 -T 180 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
 3. Switch back to the metrics window.  After a minute, you should see that the server `active connections` will max out and the PgBouncer `active client connections` will increase to handle the load on behalf of the server.
+
+    ![Alt text](media/02_pgbouncer_02.png)
 
 ## Exercise 6: Other Features (Optional)
 

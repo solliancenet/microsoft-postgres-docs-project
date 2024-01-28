@@ -100,26 +100,28 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
 
 In this exercise you will use the Azure Portal to add a new database to your newly created Azure Database for PostgreSQL Flexible Server.
 
-1. Under **Settings**, select **Databases**
-2. In the menu, select **+Add**
-3. For the name, type **airbnb**
+1. Browse to the new **PREFIX-pg-flex-REGION-16** instance
+2. Under **Settings**, select **Databases**
+3. In the menu, select **+Add**
+4. For the name, type **airbnb**
 
     ![Alt text](media/01_11_pg_database_create.png)
 
-4. Select **Save**
+5. Select **Save**
 
 ## Exercise 3: Configuring maintenance
 
 In this exercise you will modify the [maintennce schedule](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-maintenance) of your Azure Database for PostgreSQL Flexible Server. By changing the scheulde you can match the Azure update schedule to your own internal update schedule.
 
-1. Under **Settings**, select **Maintenance**
-2. Select **Custom schedule**
-3. For the **Day of week**, select **Saturday**
-4. For the **Start time (UTC)**, select **23**
+1. Browse to the **PREFIX-pg-flex-REGION-16** instance
+2. Under **Settings**, select **Maintenance**
+3. Select **Custom schedule**
+4. For the **Day of week**, select **Saturday**
+5. For the **Start time (UTC)**, select **23**
   
       ![Alt text](media/01_12_pg_maintenance.png)
 
-5. Select **Save**
+6. Select **Save**
 
 ## Exercise 4: Connecting with pgAdmin
 
