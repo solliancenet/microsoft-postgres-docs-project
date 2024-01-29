@@ -433,6 +433,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
     SELECT 
         l.city,
         l.zipcode as SampleZipCode
+        count(*) as ListingCount
     FROM 
         listings l
     GROUP 
@@ -446,7 +447,8 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
     ```sql
     SELECT 
         l.city,
-        ANY_VALUE(l.zipcode) as SampleZipCode
+        ANY_VALUE(l.zipcode) as SampleZipCode,
+        count(*) as ListingCount
     FROM 
         listings l
     GROUP 
