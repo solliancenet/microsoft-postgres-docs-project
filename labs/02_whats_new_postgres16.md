@@ -95,8 +95,8 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
     ```sql
     DROP TABLE IF EXISTS listings;
-    DROP TABLE IF EXISTS calendar;
     DROP TABLE IF EXISTS reviews;
+    DROP TABLE IF EXISTS calendar;
 
     CREATE TABLE listings (
         listing_id int,
@@ -134,7 +134,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
         listing_id int, 
         date date,
         price decimal(10,2), 
-        available varchar(50)
+        available boolean
     );
     ```
 
@@ -180,7 +180,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
         data['listing_id']::int,
         to_date(replace(data['date']::varchar(50), '"', ''), 'YYYY-MM-DD'),
         data['price']::decimal(10,2),
-        replace(data['available']::varchar(50), '"', '')
+        replace(data['available']::varchar(50), '"', '')::boolean
     FROM temp_calendar;
     ```
 
