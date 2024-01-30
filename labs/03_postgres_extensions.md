@@ -117,7 +117,7 @@ With `PostGIS` installed in your database, you can take advantage of the [Geomet
 1. Copy and paste the following query into the open query editor, then run it to view the data stored in the `listing_location` column:
 
     ```sql
-    SELECT name, listing_location FROM listings LIMIT 50;
+    SELECT listing_id, name, listing_location FROM listings LIMIT 50;
     ```
 
 2. In the **Data Output** panel, select the **View all geometries in this column** button displayed in the `listing_location` column of the query results.
@@ -135,7 +135,7 @@ With `PostGIS` installed in your database, you can take advantage of the [Geomet
     ```sql
     SELECT name, listing_location, summary
     FROM listings l
-    INNER JOIN calendar c ON l.id = c.listing_id
+    INNER JOIN calendar c ON l.listing_id = c.listing_id
     WHERE ST_DWithin(
         listing_location,
         ST_GeomFromText('POINT(-122.410347 47.655598)', 4326),

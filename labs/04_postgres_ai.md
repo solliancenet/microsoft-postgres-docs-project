@@ -273,16 +273,27 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
 
     ```sql
     WITH empty_vectors AS (
-        SELECT id FROM listings
+        SELECT listing_id FROM listings
         WHERE description_vector IS NULL
+        AND description <> ''
         LIMIT 100
     )
     UPDATE listings l
-    SET description_vector = azure_openai.create_embeddings('{your-deployment-name}', l.description, throw_on_error => false)
-    WHERE id IN (SELECT id FROM empty_vectors);
+    SET description_vector = azure_openai.create_embeddings('{your-deployment-name}', description, throw_on_error => false)
+    WHERE listing_id IN (SELECT listing_id FROM empty_vectors);
+
+    WITH empty_vectors AS (
+        SELECT listing_id FROM listings
+        WHERE description_vector IS NULL
+        AND description <> ''
+        LIMIT 100
+    )
+    UPDATE listings l
+    SET description_vector = azure_openai.create_embeddings('embeddings', description, throw_on_error => false)
+    WHERE listing_id IN (SELECT listing_id FROM empty_vectors);
     ```
 
-    The above query uses a common table expression (CTE) to retrieve records from the `listings` table where the `description_vector` field is null. This CTE also includes `LIMIT 100` to reduce the number of records returns to only the first 100. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. The limited number of records when performing this update is to prevent the calls from exceeding the call rate limit of the Azure OpenAI service. The `throw_on_error` parameter is false, allowing the query to proceed if the rate limit is exceeded. If you exceed the limit, you will see a warning similar to the following:
+    The above query uses a common table expression (CTE) to retrieve records from the `listings` table where the `description_vector` field is null and the `description` field is not an empty string. This CTE also includes `LIMIT 100` to reduce the number of records returns to only the first 100. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. The limited number of records when performing this update is to prevent the calls from exceeding the call rate limit of the Azure OpenAI service. The `throw_on_error` parameter is false, allowing the query to proceed if the rate limit is exceeded. If you exceed the limit, you will see a warning similar to the following:
 
     ```sql
     WARNING:  azure_ai::azure_ai: 429: Requests to the Get a vector representation of a given input that can be easily consumed by machine learning models and algorithms. Operation under Azure OpenAI API version 2023-05-15 have exceeded call rate limit of your current OpenAI S0 pricing tier. Please retry after 1 second. Please go here: https://aka.ms/oai/quotaincrease if you would like to further increase the default rate limit.
@@ -291,22 +302,14 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
 4. You can verify that the `description_vector` column has been populated for all `listings` records by running the following query:
 
     ```sql
-    SELECT COUNT(*) FROM listings WHERE description_vector IS NULL;
+    SELECT COUNT(*) FROM listings WHERE description_vector IS NULL AND description <> '';
     ```
 
     The result of the query should be a count of 0.
 
-5. Once you have successfully updated the `description_vector` column for all records in the `listings` table, execute the following query to view the embeddings generated for the first record in the table.
-
-    ```sql
-    SELECT description_vector FROM listings LIMIT 1;
-    ```
-
-    Each embedding is a vector of floating point numbers, so the distance between two embeddings in the vector space correlates with the semantic similarity between two inputs in the original format.
-
 ### Task 3: Perform a vector similarity search
 
-Vector similarity is a method used to measure two items' similarity by representing them as vectors, which are series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors.
+Vector similarity is a method used to measure two items' similarity by representing them as vectors, which are series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors. Each embedding is a vector of floating point numbers, so the distance between two embeddings in the vector space correlates with the semantic similarity between two inputs in the original format.
 
 1. To enable more efficient searching over the `vector` field by creating an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to utilize the latest graph-based algorithms to approximate nearest-neighbor queries.
 
@@ -317,7 +320,7 @@ Vector similarity is a method used to measure two items' similarity by represent
 2. With everything now in place, you are now ready to execute a [cosine similarity](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings#cosine-similarity) search query against the database. Run the query below to do a vector similarity search against listing descriptions. The embeddings are generated for an input question and then cast to a vector array (`::vector`), which allows it to be compared against the vectors stored in the `listings` table.
 
     ```sql
-    SELECT id, name, description FROM listings
+    SELECT listing_id, name, description FROM listings
     ORDER BY description_vector <=> azure_openai.create_embeddings('embeddings', 'Properties with a private room near Discovery Park')::vector
     LIMIT 3;
     ```
@@ -469,8 +472,8 @@ In this task, you run a final query that ties together your work across labs 3 a
 
     ```sql
     WITH listings_cte AS (
-        SELECT id, name, listing_location, summary FROM listings l
-        INNER JOIN calendar c ON l.id = c.listing_id
+        SELECT l.listing_id, name, listing_location, summary FROM listings l
+        INNER JOIN calendar c ON l.listing_id = c.listing_id
         WHERE ST_DWithin(
             listing_location,
             ST_GeomFromText('POINT(-122.410347 47.655598)', 4326),
@@ -479,17 +482,17 @@ In this task, you run a final query that ties together your work across labs 3 a
         AND c.date = '2016-01-13'
         AND c.available = true
         AND c.price <= 75.00
-        AND id IN (SELECT listing_id FROM reviews)
+        AND l.listing_id IN (SELECT listing_id FROM reviews)
         ORDER BY description_vector <=> azure_openai.create_embeddings('embeddings', 'Properties with a private room near Discovery Park')::vector
         LIMIT 3
     ),
     sentiment_cte AS (
-        SELECT listing_id, comments, azure_cognitive.analyze_sentiment(comments, 'en') AS sentiment
+        SELECT r.listing_id, comments, azure_cognitive.analyze_sentiment(comments, 'en') AS sentiment
         FROM reviews r
-        INNER JOIN listings_cte l ON r.listing_id = l.id
+        INNER JOIN listings_cte l ON r.listing_id = l.listing_id
     )
     SELECT
-        id,
+        l.listing_id,
         name,
         listing_location,
         summary,
@@ -497,8 +500,8 @@ In this task, you run a final query that ties together your work across labs 3 a
         avg((sentiment).neutral_score) as avg_neutral_score,
         avg((sentiment).negative_score) as avg_negative_score
     FROM sentiment_cte s
-    INNER JOIN listings_cte l on s.listing_id = l.id
-    GROUP BY id, name, listing_location, summary;
+    INNER JOIN listings_cte l on s.listing_id = l.listing_id
+    GROUP BY l.listing_id, name, listing_location, summary;
     ```
 
 2. In the **Data Output** panel, select the **View all geometries in this column** button displayed in the `listing_location` column of the query results.
