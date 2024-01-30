@@ -181,6 +181,9 @@ Reviewing the objects within the `azure_ai` extension can provide a better under
 
     ```sql
     \x auto
+    ```
+
+    ```sql
     \df+ azure_ai.*
     ```
 
