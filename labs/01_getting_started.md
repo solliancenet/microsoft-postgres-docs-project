@@ -11,9 +11,9 @@
     - [Task 2: Add Server to pgAdmin](#task-2-add-server-to-pgadmin)
   - [Exercise 5: Writing your first query](#exercise-5-writing-your-first-query)
   - [Summary](#summary)
-  - [Miscellanous (Optional)](#miscellanous-optional)
+  - [Miscellaneous (Optional)](#miscellaneous-optional)
 
-In this lab you will create an [Azure Database for PostgreSQL Flexible Server](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/overview) and then configure various properties using the Azure Portal. Once created and configured, you will then connect to it using [pgAdmin](https://www.pgadmin.org/) to run some basic queries on pre-loaded data.
+In this lab you will create an [Azure Database for PostgreSQL Flexible Server](https://learn.microsoft.com/azure/postgresql/flexible-server/overview) and then configure various properties using the Azure Portal. Once created and configured, you will then connect to it using [pgAdmin](https://www.pgadmin.org/) to run some basic queries on pre-loaded data.
 
 ## Prerequisites
 
@@ -68,7 +68,7 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
 
         > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
 
-    - Additonally, select the **Allow public access from any Azure service with Azure to the server**
+    - Additionally, select the **Allow public access from any Azure service with Azure to the server**
 
     ![Alt text](media/01_04_networking_02.png)
 
@@ -111,7 +111,7 @@ In this exercise you will use the Azure Portal to add a new database to your new
 
 ## Exercise 3: Configuring maintenance
 
-In this exercise you will modify the [maintennce schedule](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-maintenance) of your Azure Database for PostgreSQL Flexible Server. By changing the scheulde you can match the Azure update schedule to your own internal update schedule.
+In this exercise you will modify the [maintenance schedule](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-maintenance) of your Azure Database for PostgreSQL Flexible Server. By changing the schedule you can match the Azure update schedule to your own internal update schedule.
 
 1. Browse to the **PREFIX-pg-flex-REGION-16** instance
 2. Under **Settings**, select **Maintenance**
@@ -194,7 +194,7 @@ Using pgAdmin, you will execute some basic queries
 3. Expand the **Databases** node
 4. Expand the **airbnb->Schemas->public** nodes
 
-    > NOTE:  If for some reason you do not see the **airbnb** table, use psql to run the script in the `"c:\labfiles\microsoft-postgres-docs-project\artifacts\data\airbnb.sql"`
+    > NOTE:  If for some reason you do not see the **airbnb** table, use `psql` to run the script in the `"c:\labfiles\microsoft-postgres-docs-project\artifacts\data\airbnb.sql"`
 
 5. Expand the **Tables** node
 6. Right-click the new `airbnb` table, select **Query Tool**
@@ -209,11 +209,11 @@ Using pgAdmin, you will execute some basic queries
 
 ## Summary
 
-In this lab, you created a new Azure Database for PostgreSQL Flexible Server instance, configured some various ascpects of it, added a database called `airbnb`, configured a custom maintence schedule then explored some data using on a secondary PG14 instance using pgAdmin.
+In this lab, you created a new Azure Database for PostgreSQL Flexible Server instance, configured some various aspects of it, added a database called `airbnb`, configured a custom maintenance schedule then explored some data using on a secondary PG14 instance using pgAdmin.
 
 In the next set of labs, you will explore several developer and performance features of PostgreSQL.
 
-## Miscellanous (Optional)
+## Miscellaneous (Optional)
 
 If you would like to run these labs in your own Azure subscription, you will need to execute the following steps using the provided ARM template:
 

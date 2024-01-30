@@ -21,7 +21,7 @@
     - [Task 5: Using Query Store](#task-5-using-query-store)
   - [Exercise 5: Logical Replication](#exercise-5-logical-replication)
     - [Task 1 : Setup Publication](#task-1--setup-publication)
-    - [Task 2: Setup Subcsriber](#task-2-setup-subcsriber)
+    - [Task 2: Setup Subscriber](#task-2-setup-subscriber)
     - [Task 3: Sync Data](#task-3-sync-data)
   - [Exercise 6: PgBouncer (Optional)](#exercise-6-pgbouncer-optional)
     - [Task 1: Enable PgBouncer and PgBouncer Metrics](#task-1-enable-pgbouncer-and-pgbouncer-metrics)
@@ -42,7 +42,7 @@ In this exercise you will create some tables and use the COPY command to move da
 
 ### Task 1: Configure Server Parameters
 
-You will utilize the query store and logical replication in subsequent labs.  Here you will modify the server parameters to support these exercies. You are going to enable query store now as it takes a few minutes for the queries to start to be recorded.
+You will utilize the query store and logical replication in subsequent labs.  Here you will modify the server parameters to support these exercises. You are going to enable query store now as it takes a few minutes for the queries to start to be recorded.
 
 1. Switch to the Azure Portal
 2. Browse to your primary **PREFIX-pg-flex-REGION-16** instance or writer endpoint
@@ -65,8 +65,6 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
 2. Run the following commands to create some temp tables and import the JSON and CSV data to the server.  Notice the usage of `json` files to do the import using the `COPY` command. Once into a temporary table, we than do some massaging:
 
-    > NOTE: These paths are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
-
     ```sql
     DROP TABLE IF EXISTS temp_calendar;
     DROP TABLE IF EXISTS temp_listings;
@@ -75,15 +73,25 @@ You will utilize the query store and logical replication in subsequent labs.  He
     CREATE TABLE temp_calendar (data jsonb);
     CREATE TABLE temp_listings (data jsonb);
     CREATE TABLE temp_reviews (data jsonb);
+    ```
 
-    \COPY temp_calendar (data) FROM 'C:\labfiles\microsoft-postgres-docs-project\artifacts\data\calendar.json';
-    \COPY temp_listings (data) FROM 'C:\labfiles\microsoft-postgres-docs-project\artifacts\data\listings.json';
-    \COPY temp_reviews (data) FROM 'C:\labfiles\microsoft-postgres-docs-project\artifacts\data\reviews.json';    
+3. Now, use the `COPY` command to populate the tables with data from JSON files in a public storage account.
+
+    ```sql
+    \COPY temp_calendar (data) FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/calendar.json'
+    ```
+
+    ```sql
+    \COPY temp_listings (data) FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/listings.json'
+    ```
+
+    ```sql
+    \COPY temp_reviews (data) FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/reviews.json'
     ```
 
     ![Alt text](media/02_01_02_copy.png)
 
-3. Run the following command to create the main tables:
+4. Run the following command to create the main tables:
 
     ```sql
     DROP TABLE IF EXISTS listings;
@@ -92,9 +100,9 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
     CREATE TABLE listings (
         listing_id int,
-       	name varchar(50),
-       	street varchar(50),
-       	city varchar(50),
+        name varchar(50),
+        street varchar(50),
+        city varchar(50),
         state varchar(50),
         country varchar(50),
         zipcode varchar(50),
@@ -109,8 +117,9 @@ You will utilize the query store and logical replication in subsequent labs.  He
         listing_url varchar(2000),
         room_type varchar(2000),
         amenities jsonb,
-       	host_verifications jsonb,
-        data jsonb);
+        host_verifications jsonb,
+        data jsonb
+    );
 
     CREATE TABLE reviews (
         id int, 
@@ -119,17 +128,17 @@ You will utilize the query store and logical replication in subsequent labs.  He
         reviewer_name varchar(50), 
         date date,
         comments varchar(2000)
-        );
+    );
 
     CREATE TABLE calendar (
         listing_id int, 
         date date,
         price decimal(10,2), 
         available varchar(50)
-        );
+    );
     ```
 
-4. Run the following to import the data from the temp tables to the main tables:
+5. Run the following to import the data from the temp tables to the main tables:
 
     ```sql
     INSERT INTO listings
@@ -154,7 +163,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
         data['amenities']::jsonb,
         data['host_verifications']::jsonb,
         data::jsonb
-    FROM temp_listings;    
+    FROM temp_listings;
     
     INSERT INTO reviews
     SELECT 
@@ -179,13 +188,13 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
     > NOTE: We are storing data in the tables as JSONB for lab purposes.  In the real world, you may not want to do something like this as with normal columns, PostgreSQL maintains statistics about the distributions of values in each column of the table – most common values (MCV), NULL entries, histogram of distribution. Based on this data, the PostgreSQL query planner makes smart decisions on the plan to use for the query. At this point, PostgreSQL does not store any stats for JSONB columns or keys. This can sometimes result in poor choices like using nested loop joins vs. hash joins.
 
-5. Switch to pgAdmin
-6. Navigate to **Databases->airbnb->Schemas->public->Tables**
-7. Right-click the **Tables** node, select **Query Tool**
+6. Switch to pgAdmin
+7. Navigate to **Databases->airbnb->Schemas->public->Tables**
+8. Right-click the **Tables** node, select **Query Tool**
 
     ![Alt text](media/query_tool.png)
 
-8. Run each of the following commands to see the imported data after its tranformation.  Note that we did not fully expand the JSON into all possible columns so as to show the new JSON syntax later:
+9. Run each of the following commands to see the imported data after its transformation.  Note that we did not fully expand the JSON into all possible columns so as to show the new JSON syntax later:
 
     ```sql
     select * from listings limit 10;
@@ -260,7 +269,7 @@ There are several developer based changes in PostgreSQL 16 as related to SQL syn
 
     ![Alt text](media/02_02_json_04.png)
 
-5. When combining the above, you can create intricate `CASE` statements based on the target type (in the event that it could be mutiple types):
+5. When combining the above, you can create intricate `CASE` statements based on the target type (in the event that it could be multiple types):
 
     ```sql
     SELECT
@@ -287,7 +296,7 @@ There are several developer based changes in PostgreSQL 16 as related to SQL syn
 
     ![Alt text](media/02_primary_address.png)
 
-6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, you are using the containment operator (where one json document is contained inside another) to select data in addition to using the backwards compatable JSON syntax:
+6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, you are using the containment operator (where one json document is contained inside another) to select data in addition to using the backwards compatible JSON syntax:
 
     ```sql
     SELECT listing_id, name as listing_name, city, listings.amenities
@@ -345,7 +354,7 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
 
     ![Alt text](media/02_bedrooms_json_query.png)
 
-There are many other types of funtions and operators in PostgreSQL that you can utilize when working with JSON data.  You can reference the latest information for PG16 in the [9.16. JSON Functions and Operators](https://www.postgresql.org/docs/16/functions-json.html) documentation.
+There are many other types of functions and operators in PostgreSQL that you can utilize when working with JSON data.  You can reference the latest information for PG16 in the [9.16. JSON Functions and Operators](https://www.postgresql.org/docs/16/functions-json.html) documentation.
 
 ### Task 3: Creating Indexes
 
@@ -442,7 +451,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
 
     ![Alt text](media/02_02_aggregate.png)
 
-2. Modify the query to utlize the new `ANY_VALUE` function:
+2. Modify the query to utilize the new `ANY_VALUE` function:
 
     ```sql
     SELECT 
@@ -477,6 +486,8 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
 
 The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data into a table using a common token in the source data.
 
+> NOTE: These paths below are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
+
 1. Review the `C:\labfiles\microsoft-postgres-docs-project\artifacts\data\default.csv` file, notice the usage of the `\D` in the source data:
 
     ![Alt text](media/02_02_copy_from_default.png)
@@ -507,7 +518,7 @@ Notice every entry from the source file with the default of '\D' was converted t
 
 ### Task 1: Allow parallelization of FULL and internal RIGHT OUTER hash joins
 
-In general, the more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal `RIGHT OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs were more to perform than the parallezation setup.
+In general, the more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal `RIGHT OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs were more to perform than the parallelization setup.
 
 With this change, many queries you were performing using these joins will now run drastically faster.
 
@@ -569,12 +580,7 @@ Full JOINs are commonly used to find the differences between 2 tables. Prior to 
 
 Aggregate functions typically perform some kind of mathematical operation on a column or set of columns.  If you were to calculate several aggregates at once, you could probably imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
 
-Not all aggregate functions have supported this type of optimization, as such with the `string_agg()` and `array_agg()` functions.  In PostgreSQL 16, this support was added and per the description on the code commit **adds combine, serial and deserial functions for the array_agg() and string_agg() aggregate functions, thus allowing these aggregates to
-partake in partial aggregations.  This allows both parallel aggregation to
-take place when these aggregates are present and also allows additional
-partition-wise aggregation plan shapes to include plans that require
-additional aggregation once the partially aggregated results from the
-partitions have been combined.**
+Not all aggregate functions have supported this type of optimization, as such with the `string_agg()` and `array_agg()` functions. In PostgreSQL 16, this support was added and per the description on the code commit **adds combine, serial and deserial functions for the array_agg() and string_agg() aggregate functions, thus allowing these aggregates to partake in partial aggregations. This allows both parallel aggregation to take place when these aggregates are present and also allows additional partition-wise aggregation plan shapes to include plans that require additional aggregation once the partially aggregated results from the partitions have been combined.**
 
 The following is an example of a query that performs aggregates with the two functions included.  If this were to run on a pre-16 version, the query would be much slower than in version 16.
 
@@ -745,7 +751,7 @@ In lab 1 you enabled the Query Store via server parameters.  As you were working
 
     ![Alt text](media/02_05_query_store.png)
 
-For more information on the query store feature, reference [Monitor performance with the Query Store](https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-query-store)
+For more information on the query store feature, reference [Monitor performance with the Query Store](https://learn.microsoft.com/azure/postgresql/single-server/concepts-query-store)
 
 ## Exercise 5: Logical Replication
 
@@ -773,7 +779,7 @@ For more information on the query store feature, reference [Monitor performance 
     SELECT pg_create_logical_replication_slot('my_pub_slot', 'pgoutput');
     ```
 
-### Task 2: Setup Subcsriber
+### Task 2: Setup Subscriber
 
 1. On the **PREFIX-pg-flex-REGION-14** server for the `airbnb` database, run the following.  It will setup the subscription (you should already have the tables from the lab setup). Be sure to replace the `PREFIX` and `REGION` values:
 
@@ -812,7 +818,7 @@ PgBouncer is a well known and supported 3rd party open-source, community-develop
 
 References:
 
-- https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-pgbouncer
+- <https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-pgbouncer>
 
 ### Task 1: Enable PgBouncer and PgBouncer Metrics
 
