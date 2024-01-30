@@ -430,11 +430,11 @@ In this task, you will use the `azure_cognitive.analyze_sentiment` function to e
 
     The `azure_cognitive.sentiment_analysis_result` is a composite type containing the sentiment predictions of the input text. It includes the sentiment, which can be positive, negative, neutral, or mixed, and the scores for positive, neutral, and negative aspects found in the text. The scores are represented as real numbers between 0 and 1. For example, in (neutral,0.26,0.64,0.09), the sentiment is neutral with a positive score of 0.26, neutral of 0.64, and negative at 0.09.
 
-4. Now that you have an understanding of how to analyze sentiment using the extension and the shape of the return type, execute the following query to see how it works:
+4. Now that you have an understanding of how to analyze sentiment using the extension and the shape of the return type, execute the following query that looks for reviews that are overwhelmingly positive:
 
     ```sql
     WITH cte AS (
-        SELECT id, azure_cognitive.analyze_sentiment(comments, 'en') AS sentiment FROM reviews LIMIT 3
+        SELECT id, azure_cognitive.analyze_sentiment(comments, 'en') AS sentiment FROM reviews LIMIT 100
     )
     SELECT
         id,
@@ -442,7 +442,9 @@ In this task, you will use the `azure_cognitive.analyze_sentiment` function to e
         (sentiment).positive_score,
         (sentiment).neutral_score,
         (sentiment).negative_score
-    FROM cte;
+    FROM cte
+    WHERE (sentiment).positive_score > 0.98
+    LIMIT 10;
     ```
 
     The above query uses a common table expression or CTE to get the sentiment scores for the first three records in the `reviews` table. It then selects the `sentiment` composite type columns from the CTE to extract the individual values from the `sentiment_analysis_result`.
