@@ -20,7 +20,7 @@ In this lab you will create an [Azure Database for PostgreSQL Flexible Server](h
 - [Azure subscription](https://azure.microsoft.com/free/)
 - Optional - Computer with [Postgres 16](https://www.postgresql.org/download/) and [pgAdmin](https://www.pgadmin.org/)
 
-## Exercise 1: Creating an Azure Database for PostgreSQL Flexible Server
+## Exercise 1: Creating an Azure Database for PostgreSQL - Flexible Server
 
 In this exercise you will create a new Azure Database for PostgreSQL Flexible Server using the Azure Portal.
 
@@ -30,7 +30,7 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
     ![Alt text](media/01_00_create_resource.png)
 
 3. In the left side navigation, select **Databases**.
-4. Under **Azure Database for PostgreSQL Flexible Server**, select **Create**.
+4. Under **Azure Database for PostgreSQL**, select **Create**.
 
     ![Alt text](media/01_00_databases.png)
 
