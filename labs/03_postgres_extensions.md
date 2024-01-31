@@ -202,7 +202,7 @@ The [pg_azure_storage extension](https://learn.microsoft.com/azure/postgresql/fl
 
 ### Task 1: Add extension to allowlist
 
-Before you can install and use extensions the `pg_azure_storage` extension, you must _allowlist_ it.
+Before you can install and use the `azure_storage` extension, you must _allowlist_ it.
 
 1. In a web browser, navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/).
 

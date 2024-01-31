@@ -20,17 +20,17 @@ In this lab you will create an [Azure Database for PostgreSQL Flexible Server](h
 - [Azure subscription](https://azure.microsoft.com/free/)
 - Optional - Computer with [Postgres 16](https://www.postgresql.org/download/) and [pgAdmin](https://www.pgadmin.org/)
 
-## Exercise 1: Creating an Azure Database for PostgreSQL Flexible Server
+## Exercise 1: Creating an Azure Database for PostgreSQL - Flexible Server
 
 In this exercise you will create a new Azure Database for PostgreSQL Flexible Server using the Azure Portal.
 
-1. Open the [Azure Portal](https://portal.azure.com/), if prompted, login using your lab credentials
+1. Open the [Azure Portal](https://portal.azure.com/), if prompted, login using your lab credentials.
 2. Select **Create a resource (+)** in the upper-left corner of the portal or select **Create a resource** under **Azure services**.
 
     ![Alt text](media/01_00_create_resource.png)
 
-3. In the left side navigation, select **Databases**
-4. Under **Azure Database for PostgreSQL Flexible Server**, select **Create**
+3. In the left side navigation, select **Databases**.
+4. Under **Azure Database for PostgreSQL**, select **Create**.
 
     ![Alt text](media/01_00_databases.png)
 
@@ -44,16 +44,16 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
   
     ![Alt text](media/01_02_create_server_basics_00.png)
 
-6. Under **Compute + Storage**, select **Configure Server**
-7. For the size, select `Standard_D2ds_v5`
+6. Under **Compute + Storage**, select **Configure Server**.
+7. For the size, select `Standard_D2ds_v5`.
 8. Please **DO NOT** select the **High Availability** option as it is subject to availability and capacity limits in various regions.
 
     ![Alt text](media/01_03_create_server_basics_02.png)
   
-9. Select **Save**
-10. Authentication method: `PostgreSQL authentication only`
-11. Admin username: `s2admin`
-12. Password and confirm password: `Seattle123Seattle123`
+9. Select **Save**.
+10. Authentication method: `PostgreSQL authentication only`.
+11. Admin username: `s2admin`.
+12. Password and confirm password: `Seattle123Seattle123`.
 
     ![Alt text](media/01_03_create_server_basics_03.png)
 
@@ -77,7 +77,7 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
     ![Alt text](media/01_07_review_create.png)
 
 16. Select **Create** to provision the server. This operation may take a few minutes.
-17. In the top right of the toolbar, select the Notifications icon (a bell)
+17. In the top right of the toolbar, select the Notifications icon (a bell).
 
       ![Alt text](media/01_08_deployment_00.png)
 
