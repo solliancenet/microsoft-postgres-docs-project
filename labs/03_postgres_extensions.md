@@ -142,7 +142,7 @@ With `PostGIS` installed in your database, you can take advantage of the [Geomet
         0.025
     )
     AND c.date = '2016-01-13'
-    AND c.available = true
+    AND c.available = 't'
     AND c.price <= 75.00;
     ```
 
