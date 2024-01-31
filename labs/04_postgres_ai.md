@@ -485,7 +485,7 @@ In this task, you run a final query that ties together your work across labs 3 a
             0.025
         )
         AND c.date = '2016-01-13'
-        AND c.available = true
+        AND c.available = 't'
         AND c.price <= 75.00
         AND l.listing_id IN (SELECT listing_id FROM reviews)
         ORDER BY description_vector <=> azure_openai.create_embeddings('embeddings', 'Properties with a private room near Discovery Park')::vector
