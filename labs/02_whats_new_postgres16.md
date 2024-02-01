@@ -54,7 +54,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
 ### Task 2: Create tables and data
 
-1. In your Windows-based lab virtual machine, open a command prompt window, in the windows search are, type **cmd** and select it.
+1. In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
 2. Run the following command to connect to your database, be sure to replace `PREFIX` and `REGION` with your lab information (optionally you can use pgAdmin to open a psql window):
 
     ```cmd
@@ -194,7 +194,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
     ![Alt text](media/query_tool.png)
 
-10. Run each of the following commands to see the imported data after its tranformation.  Note that we did not fully expand the JSON into all possible columns so as to show the new JSON syntax later:
+10. Run each of the following commands to see the imported data after its transformation.  Note that we did not fully expand the JSON into all possible columns so as to show the new JSON syntax later:
 
     ```sql
     select * from listings limit 10;
@@ -210,7 +210,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
 ## Exercise 2: Developer Features
 
-There are several developer based changes in PostgreSQL 16 as related to SQL syntax. In this exercise we explore several of them including the new SQL standard JSON functions.
+There are several developer-based changes in PostgreSQL 16 as related to SQL syntax. In this exercise we explore several of them including the new SQL standard JSON functions.
 
 - [Function Json](https://www.postgresql.org/docs/16/functions-json.html)
 
@@ -488,20 +488,21 @@ The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data int
 
 > NOTE: These paths below are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
 
-1. Review the `C:\labfiles\microsoft-postgres-docs-project\artifacts\data\default.csv` file, notice the usage of the `\D` in the source data:
+1. Download and review the `https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/default.csv` file
+2. Notice the usage of the `\D` in the source data:
 
     ![Alt text](media/02_02_copy_from_default.png)
 
-2. In pgAdmin, right-click the `airbnb` database, select **PSQL Tool**.
-3. In the psql window, run the following command to import the data:
+3. In pgAdmin, right-click the `airbnb` database, select **PSQL Tool**.
+4. In the psql window, run the following command to import the data:
 
     ```sql
     CREATE TABLE default_test(c1 INT PRIMARY KEY, c2 TEXT DEFAULT 'the_default_value') ;
     
-    \COPY default_test FROM 'C:\labfiles\microsoft-postgres-docs-project\artifacts\data\default.csv' WITH (format csv, default '\D', header);
+    \COPY default_test FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/default.csv' WITH (format csv, default '\D', header);
     ```
 
-4. Run the following command to review the results of the `COPY FROM` command:
+5. Run the following command to review the results of the `COPY FROM` command:
 
     ```cmd
     SELECT
@@ -556,7 +557,7 @@ With this change, many queries you were performing using these joins will now ru
 
     > NOTE: If the table values are very small, the effort of doing a parallel operation may be more than the effort to do a non-parallel execution.  The tables and rows above should be enough to generate a Parallel Hash Full Join plan.
 
-4. Run the following command to see the execution plan of the the select statement:
+4. Run the following command to see the execution plan of the select statement:
 
     ```sql
     EXPLAIN (costs off)
@@ -685,7 +686,7 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 
     ![Alt text](media/02_pg_stat_01.png)
 
-2. Using `pgbench` you can generate some IO data (~750MB of data). In your Windows-based lab virtual machine, open a command prompt window, in the windows search are, type **cmd** and select it.
+2. Using `pgbench` you can generate some IO data (~750MB of data). In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
 3. Type the following. Be sure to replace the `PREFIX` and `REGION` tokens:
 
     ```sql
@@ -788,7 +789,7 @@ Some common uses for this data include:
 
 ## Exercise 6: PgBouncer (Optional)
 
-PgBouncer is a well known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
+PgBouncer is a well-known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
 
 References:
 
@@ -818,7 +819,7 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 5. Select **Add metric**.
 6. Under the **PGBOUNCER** category, select **Active client connections**.
 7. In the top right, select the time to be **Last 30 minutes** then select **Apply**.
-8. In your Windows-based lab virtual machine, open a command prompt window, in the windows search are, type **cmd** and select it.
+8. In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
 9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password `Seattle123Seattle123`.  Notice the use of the `-c` parameter that will create 100 different connections, be sure to replace `PREFIX` with your lab information:
 
     ```sql
