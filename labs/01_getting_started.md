@@ -2,11 +2,11 @@
 
 - [Hands on Lab: Provisioning, configuring, and getting started with development](#hands-on-lab-provisioning-configuring-and-getting-started-with-development)
   - [Prerequisites](#prerequisites)
-  - [Exercise 1: Creating an Azure Database for PostgreSQL Flexible Server](#exercise-1-creating-an-azure-database-for-postgresql-flexible-server)
+  - [Exercise 1: Creating an Azure Database for PostgreSQL - Flexible Server](#exercise-1-creating-an-azure-database-for-postgresql---flexible-server)
   - [Exercise 2: Adding a database in the portal](#exercise-2-adding-a-database-in-the-portal)
   - [Exercise 3: Configuring maintenance](#exercise-3-configuring-maintenance)
   - [Exercise 4: Connecting with pgAdmin](#exercise-4-connecting-with-pgadmin)
-    - [Task 1: Networking Setup (Local Device) - OPTIONAL](#task-1-networking-setup-local-device---optional)
+    - [Task 1: Networking Setup (Non-Lab Environment - BYOD)](#task-1-networking-setup-non-lab-environment---byod)
     - [Task 2: Networking Setup (Lab Environment)](#task-2-networking-setup-lab-environment)
     - [Task 2: Add Server to pgAdmin](#task-2-add-server-to-pgadmin)
   - [Exercise 5: Writing your first query](#exercise-5-writing-your-first-query)
@@ -30,7 +30,7 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
     ![Alt text](media/01_00_create_resource.png)
 
 3. In the left side navigation, select **Databases**.
-4. Under **Azure Database for PostgreSQL**, select **Create**.
+4. Under **Azure Database for PostgreSQL Flexible Server**, select **Create**.
 
     ![Alt text](media/01_00_databases.png)
 
@@ -100,104 +100,104 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
 
 In this exercise you will use the Azure Portal to add a new database to your newly created Azure Database for PostgreSQL Flexible Server.
 
-1. Browse to the new **PREFIX-pg-flex-REGION-16** instance
-2. Under **Settings**, select **Databases**
-3. In the menu, select **+Add**
-4. For the name, type **airbnb**
+1. Browse to the new **PREFIX-pg-flex-REGION-16** instance.
+2. Under **Settings**, select **Databases**.
+3. In the menu, select **+Add**.
+4. For the name, type **airbnb**.
 
     ![Alt text](media/01_11_pg_database_create.png)
 
-5. Select **Save**
+5. Select **Save**.
 
 ## Exercise 3: Configuring maintenance
 
 In this exercise you will modify the [maintenance schedule](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-maintenance) of your Azure Database for PostgreSQL Flexible Server. By changing the schedule you can match the Azure update schedule to your own internal update schedule.
 
-1. Browse to the **PREFIX-pg-flex-REGION-16** instance
-2. Under **Settings**, select **Maintenance**
-3. Select **Custom schedule**
-4. For the **Day of week**, select **Saturday**
-5. For the **Start time (UTC)**, select **23**
+1. Browse to the **PREFIX-pg-flex-REGION-16** instance.
+2. Under **Settings**, select **Maintenance**.
+3. Select **Custom schedule**.
+4. For the **Day of week**, select **Saturday**.
+5. For the **Start time (UTC)**, select **23**.
   
       ![Alt text](media/01_12_pg_maintenance.png)
 
-6. Select **Save**
+6. Select **Save**.
 
 ## Exercise 4: Connecting with pgAdmin
 
 If you have a laptop or desktop that has pgAdmin and PostgreSQL installed, you can perform these steps on that device. If you do not have a local device capable of running pgAdmin or PostgreSQL, you can utilize the virtual machine that was deployed to your lab environment.
 
-### Task 1: Networking Setup (Local Device) - OPTIONAL
+### Task 1: Networking Setup (Non-Lab Environment - BYOD)
 
 If you are using your own device, ensure the following has been completed:
 
-1. Download and Install [pgAdmin](https://www.pgadmin.org/download/)
-2. Download and Install [PostgreSQL 16](https://www.postgresql.org/download/)
-3. Switch back to the Azure Portal
-4. Browse to the `PREFIX-pg-flex-REGION-16` instance
-5. Under **Settings**, select **Networking**
+1. Download and Install [pgAdmin](https://www.pgadmin.org/download/).
+2. Download and Install [PostgreSQL 16](https://www.postgresql.org/download/).
+3. Switch back to the Azure Portal.
+4. Browse to the `PREFIX-pg-flex-REGION-16` instance.
+5. Under **Settings**, select **Networking**.
 6. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
 7. Under **Firewall rules**, add an entry for the IP address of your device.
 
     > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
 
-8. Select **Save**
-9. Repeat for the `PREFIX-pg-flex-REGION-14` instance
+8. Select **Save**.
+9. Repeat for the `PREFIX-pg-flex-REGION-14` instance. Note that this instance was created by the lab ARM template for you.
 
 ### Task 2: Networking Setup (Lab Environment)
 
 If you are using the virtual machine from the lab environment, all the software has been installed for you. Login using the following:
 
-1. Switch to the Azure Portal
-2. Browse to your resource group
-3. Select the **PREFIX-vm-pgdb01** virtual machine
-4. In the tabs, select **Connect->Connect**
-5. Copy and save the IP address
-6. Select **Download RDP file**
-7. Open the RDP file with Remote Desktop
-8. Select **Connect**
-9. Login with `s2admin` and password `Seattle123Seattle123`
-10. When prompted, select **Next**, then **Accept**
-11. Switch back to the Azure Portal
-12. Browse to the `PREFIX-pg-flex-REGION-16` instance
-13. Under **Settings**, select **Networking**
+1. Switch to the Azure Portal.
+2. Browse to your resource group.
+3. Select the **PREFIX-vm-pgdb01** virtual machine.
+4. In the tabs, select **Connect->Connect**.
+5. Copy and save the IP address.
+6. Select **Download RDP file**.
+7. Open the RDP file with Remote Desktop.
+8. Select **Connect**.
+9. Login with `s2admin` and password `Seattle123Seattle123`.
+10. When prompted, select **Next**, then **Accept**.
+11. Switch back to the Azure Portal.
+12. Browse to the `PREFIX-pg-flex-REGION-16` instance.
+13. Under **Settings**, select **Networking**.
 14. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
-15. Under **Firewall rules**, add an entry using the IP address you copied above
+15. Under **Firewall rules**, add an entry using the IP address you copied above.
 
     > NOTE: You can find your IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
 
-16. Select **Save**
-17. Repeat the networking steps for the `PREFIX-pg-flex-REGION-14` instance
+16. Select **Save**.
+17. Repeat the networking steps for the `PREFIX-pg-flex-REGION-14` instance. Note that this instance was created by the lab ARM template for you.
 
 ### Task 2: Add Server to pgAdmin
 
-1. From the lab virtual machine, open **pgAdmin**
-2. Right-click the **Servers** node, select **Register->Server**
+1. From the lab virtual machine, open **pgAdmin**.
+2. Right-click the **Servers** node, select **Register->Server**.
   
     ![Alt text](media/01_14_pg_admin_register.png)
 
-3. For name, type **PREFIX-pg-flex-REGION-16**, be sure to replace `PREFIX` with your lab information
-4. Select the **Connection** tab
-5. For the **host name/address**, paste the server name you copied from above
-6. For the username, type **s2admin**
-7. For the password, type **Seattle123Seattle123**
+3. For name, type **PREFIX-pg-flex-REGION-16**, be sure to replace `PREFIX` with your lab information.
+4. Select the **Connection** tab.
+5. For the **host name/address**, paste the server name you copied from above.
+6. For the username, type **s2admin**.
+7. For the password, type **Seattle123Seattle123**.
 8. Select **Save password?** to toggle it on.
-9. Select **Save**
-10. Again, repeat for the **PREFIX-pg-flex-REGION-14** instance
+9. Select **Save**.
+10. Again, repeat for the **PREFIX-pg-flex-REGION-14** instance.
 
 ## Exercise 5: Writing your first query
 
 Using pgAdmin, you will execute some basic queries
 
-1. Switch to pgAdmin
-2. Expand the **PREFIX-pg-flex-REGION-14** node
-3. Expand the **Databases** node
-4. Expand the **airbnb->Schemas->public** nodes
+1. Switch to pgAdmin.
+2. Expand the **PREFIX-pg-flex-REGION-14** node.
+3. Expand the **Databases** node.
+4. Expand the **airbnb->Schemas->public** nodes.
 
     > NOTE:  If for some reason you do not see the **airbnb** table, use `psql` to run the script in the `"c:\labfiles\microsoft-postgres-docs-project\artifacts\data\airbnb.sql"`
 
-5. Expand the **Tables** node
-6. Right-click the new `airbnb` table, select **Query Tool**
+5. Expand the **Tables** node.
+6. Right-click the new `airbnb` table, select **Query Tool**.
 7. Copy the following into the query tool window and execute it:
 
     ```sql
@@ -217,15 +217,15 @@ In the next set of labs, you will explore several developer and performance feat
 
 If you would like to run these labs in your own Azure subscription, you will need to execute the following steps using the provided ARM template:
 
-1. Switch to the Azure Portal
-2. Select the **+** in the top left
-3. Search for **template**, select the **Template deployment (deploy using custom templates)
-4. Select **Create**
-5. Select **Build your own template in the editor**
-6. Copy and paste the `/artifacts/template.json` file into the window
-7. Select **Save**
+1. Switch to the Azure Portal.
+2. Select the **+** in the top left.
+3. Search for **template**, select the **Template deployment (deploy using custom templates).
+4. Select **Create**.
+5. Select **Build your own template in the editor**.
+6. Copy and paste the `/artifacts/template.json` file into the window.
+7. Select **Save**.
 8. Set the **prefix** parameter to match your lab environment or your initials (ex `ABC`).
-9. Select **Review + create**
+9. Select **Review + create**.
 10. Select **Create**, the deployment will take a few minutes.  Once deployed, you will have:
     - A PostgreSQL 14 instance.
     - Windows 11 Virtual Machine with necessary software installed.
