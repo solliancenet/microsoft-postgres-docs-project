@@ -284,16 +284,6 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
     UPDATE listings l
     SET description_vector = azure_openai.create_embeddings('{your-deployment-name}', description, throw_on_error => false)
     WHERE listing_id IN (SELECT listing_id FROM empty_vectors);
-
-    WITH empty_vectors AS (
-        SELECT listing_id FROM listings
-        WHERE description_vector IS NULL
-        AND description <> ''
-        LIMIT 100
-    )
-    UPDATE listings l
-    SET description_vector = azure_openai.create_embeddings('embeddings', description, throw_on_error => false)
-    WHERE listing_id IN (SELECT listing_id FROM empty_vectors);
     ```
 
     The above query uses a common table expression (CTE) to retrieve records from the `listings` table where the `description_vector` field is null and the `description` field is not an empty string. This CTE also includes `LIMIT 100` to reduce the number of records returns to only the first 100. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. The limited number of records when performing this update is to prevent the calls from exceeding the call rate limit of the Azure OpenAI service. The `throw_on_error` parameter is false, allowing the query to proceed if the rate limit is exceeded. If you exceed the limit, you will see a warning similar to the following:
