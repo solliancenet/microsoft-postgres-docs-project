@@ -1,6 +1,10 @@
 # Hands-on Lab: Generative AI with Azure Database for PostgreSQL Flexible Server
 
 - [Hands-on Lab: Generative AI with Azure Database for PostgreSQL Flexible Server](#hands-on-lab-generative-ai-with-azure-database-for-postgresql-flexible-server)
+  - [Prerequisites](#prerequisites)
+    - [Task 1: Provision an Azure Database for PostgreSQL Flexible Server](#task-1-provision-an-azure-database-for-postgresql-flexible-server)
+    - [Task 2: Connect to the database using psql in the Azure Cloud Shell](#task-2-connect-to-the-database-using-psql-in-the-azure-cloud-shell)
+    - [Task 3: Add data to the database](#task-3-add-data-to-the-database)
   - [Exercise 1: Add Azure AI and Vector extensions to allowlist](#exercise-1-add-azure-ai-and-vector-extensions-to-allowlist)
   - [Exercise 2: Create an Azure OpenAI resource](#exercise-2-create-an-azure-openai-resource)
     - [Task 1: Provision an Azure OpenAI service](#task-1-provision-an-azure-openai-service)
@@ -20,17 +24,213 @@
     - [Task 3: Analyze the sentiment of reviews](#task-3-analyze-the-sentiment-of-reviews)
   - [Exercise 6: Execute a final query to tie it all together (Optional)](#exercise-6-execute-a-final-query-to-tie-it-all-together-optional)
     - [Task 1: Connect to the database using pgAdmin](#task-1-connect-to-the-database-using-pgadmin)
-    - [Task 2: Execute a query and view results on a map](#task-2-execute-a-query-and-view-results-on-a-map)
-  - [Exercise 6: Clean up](#exercise-6-clean-up)
+    - [Task 2: Verify that the PostGIS extension is installed in your database](#task-2-verify-that-the-postgis-extension-is-installed-in-your-database)
+    - [Task 3: Execute a query and view results on a map](#task-3-execute-a-query-and-view-results-on-a-map)
+  - [Exercise 7: Clean up](#exercise-7-clean-up)
   - [Summary](#summary)
 
 [Generative AI](https://learn.microsoft.com/training/paths/introduction-generative-ai/) is a form of artificial intelligence in which [large language models](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-overview#large-language-model-llm) (LLMs) are trained to generate original content based on natural language input. LLMs are designed to understand and generate human-like language output and are known for their ability to perform a wide range of natural language understanding and generation tasks. Generative AI has a wide range of applications for data-driven applications, including semantic search, recommendation systems, and content generation, such as summarization, among many others.
 
 In this lab, you take advantage of [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/overview) and the [Azure AI Language service](https://learn.microsoft.com/azure/ai-services/language-service/) to integrate rich generative AI capabilities directly into your Azure Database for PostgreSQL Flexible Server using the [Azure AI Extension](https://learn.microsoft.com/azure/postgresql/flexible-server/generative-ai-azure-overview). The `azure_ai` extension adds the ability to leverage LLMs directly from your database.
 
-> Important:
->
-> This lab builds upon your work with extensions in Lab 3 and relies on data loaded into the Azure Database for PostgreSQL Flexible Server in that lab.
+## Prerequisites
+
+This lab uses the Azure Database for PostgreSQL instance created in Lab 1, the data and tables created in Lab 2, and it builds upon the work you did with extensions in Lab 3. If you are starting this lab without completing the previous labs, expand the section below and complete the steps to set up your database.
+
+<details>
+<summary>Expand this section to view the prerequisite setup steps.</summary>
+
+### Task 1: Provision an Azure Database for PostgreSQL Flexible Server
+
+1. In a web browser, navigate to the [Azure portal](https://portal.azure.com/).
+
+2. select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the bottom of your browser window.
+
+    ![The Cloud Shell icon is highlighted in the Azure portal's toolbar.](media/portal-toolbar-cloud-shell.png)
+
+3. At the cloud shell prompt, run the following commands to define variables for creating resources. The variables represent the names to assign to your resource group and database and specify the Azure region into which resources should be deployed.
+
+    The resource group name specified is `rg-postgresql-labs`, but you can provide any name you wish to use to host the resources associated with this lab.
+
+    ```bash
+    RG_NAME=rg-postgresql-labs
+    ```
+
+    In the database name, replace the `{SUFFIX}` token with a unique value, such as your initials, to ensure the database server name is globally unique.
+
+    ```bash
+    DATABASE_NAME=pgsql-flex-{SUFFIX}
+    ```
+
+    Replace the region with whatever location you want to use for lab resources.
+
+    ```bash
+    REGION=eastus
+    ```
+
+4. Run the following Azure CLI command to create a resource group, specifying the location. If you have more than one Azure subscription, use the `az account set --subscription <subscription id>` command first to select the subscription you want to use for lab resources.
+
+    ```bash
+    az group create --name $RG_NAME --location $REGION
+    ```
+
+5. Provision an Azure Database for PostgreSQL database instance within the resource group you created above by running the following Azure CLI command:
+
+    ```bash
+    az postgres flexible-server create --name $DATABASE_NAME --location $REGION --resource-group $RG_NAME \
+        --admin-user s2admin --admin-password Seattle123Seattle123 --database-name airbnb \
+        --public-access 0.0.0.0-255.255.255.255 --version 16 \
+        --sku-name Standard_D2ds_v5 --storage-size 32 --yes
+    ```
+
+### Task 2: Connect to the database using psql in the Azure Cloud Shell
+
+In this task, you use the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) to connect to your database.
+
+1. You need the connection details for your database to connect to it using `psql` in the Cloud Shell. Using the open [Azure portal](https://portal.azure.com/) window with the cloud shell pane at the bottom, navigate to your Azure Database for PostgreSQL Flexible Server resource, and in the left-hand navigation menu, select **Connect** under **Settings**.
+
+    ![The Connect menu item is highlighted under Settings in the left-hand navigation menu in the Azure portal.](media/azure-postgres-connect.png)
+
+2. From the database's **Connect** page in the Azure portal, select **airbnb** for the **Database name**, then copy the **Connection details** block and paste it into the Cloud Shell.
+
+    ![The Connection strings page of the Azure Cosmos DB Cluster resource is highlighted. On the Connection strings page, the copy to clipboard button to the right of the psql connection string is highlighted.](media/postgresql-connection-details-psql.png)
+
+3. At the Cloud Shell prompt, replace the `{your_password}` token with the password you assigned to the `s2admin` user when creating your database, then run the command. If you followed the instructions in Lab 1, the password should be `Seattle123Seattle123`.
+
+4. Connect to your database using the `psql` command-line utility by entering the following at the prompt:
+
+    ```bash
+    psql
+    ```
+
+    Connecting to the database from the Cloud Shell requires that the `Allow public access from any Azure service within Azure to the server` box is checked on the **Networking** page of the database. If you receive a message that you are unable to connect, please verify this is checked and try again.
+
+### Task 3: Add data to the database
+
+Using the `psql` command prompt, you will create tables and populate them with data for use in the lab.
+
+1. Run the following commands to create temporary tables for importing JSON data from a public blob storage account.
+
+    ```sql
+    CREATE TABLE temp_calendar (data jsonb);
+    CREATE TABLE temp_listings (data jsonb);
+    CREATE TABLE temp_reviews (data jsonb);
+    ```
+
+2. Using the `COPY` command, populate each temporary table with data from JSON files in a public storage account.
+
+    ```sql
+    \COPY temp_calendar (data) FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/calendar.json'
+    ```
+
+    ```sql
+    \COPY temp_listings (data) FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/listings.json'
+    ```
+
+    ```sql
+    \COPY temp_reviews (data) FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/reviews.json'
+    ```
+
+3. Run the following command to create the tables for storing data in the shape used by this lab:
+
+    ```sql
+    CREATE TABLE listings (
+        listing_id int,
+        name varchar(50),
+        street varchar(50),
+        city varchar(50),
+        state varchar(50),
+        country varchar(50),
+        zipcode varchar(50),
+        bathrooms int,
+        bedrooms int,
+        latitude decimal(10,5), 
+        longitude decimal(10,5), 
+        summary varchar(2000),
+        description varchar(2000),
+        host_id varchar(2000),
+        host_url varchar(2000),
+        listing_url varchar(2000),
+        room_type varchar(2000),
+        amenities jsonb,
+        host_verifications jsonb,
+        data jsonb
+    );
+    ```
+
+    ```sql
+    CREATE TABLE reviews (
+        id int, 
+        listing_id int, 
+        reviewer_id int, 
+        reviewer_name varchar(50), 
+        date date,
+        comments varchar(2000)
+    );
+    ```
+
+    ```sql
+    CREATE TABLE calendar (
+        listing_id int, 
+        date date,
+        price decimal(10,2), 
+        available boolean
+    );
+    ```
+
+4. Finally, run the following `INSERT INTO` statements to load data from the temporary tables to the main tables, extracting data from the JSON `data` field into individual columns:
+
+    ```sql
+    INSERT INTO listings
+    SELECT 
+        data['id']::int, 
+        replace(data['name']::varchar(50), '"', ''),
+        replace(data['street']::varchar(50), '"', ''),
+        replace(data['city']::varchar(50), '"', ''),
+        replace(data['state']::varchar(50), '"', ''),
+        replace(data['country']::varchar(50), '"', ''),
+        replace(data['zipcode']::varchar(50), '"', ''),
+        data['bathrooms']::int,
+        data['bedrooms']::int,
+        data['latitude']::decimal(10,5),
+        data['longitude']::decimal(10,5),
+        replace(data['description']::varchar(2000), '"', ''),        
+        replace(data['summary']::varchar(2000), '"', ''),        
+        replace(data['host_id']::varchar(50), '"', ''),
+        replace(data['host_url']::varchar(50), '"', ''),
+        replace(data['listing_url']::varchar(50), '"', ''),
+        replace(data['room_type']::varchar(50), '"', ''),
+        data['amenities']::jsonb,
+        data['host_verifications']::jsonb,
+        data::jsonb
+    FROM temp_listings;
+    ```
+
+    ```sql
+    INSERT INTO reviews
+    SELECT 
+        data['id']::int,
+        data['listing_id']::int,
+        data['reviewer_id']::int,
+        replace(data['reviewer_name']::varchar(50), '"', ''), 
+        to_date(replace(data['date']::varchar(50), '"', ''), 'YYYY-MM-DD'),
+        replace(data['comments']::varchar(2000), '"', '')
+    FROM temp_reviews;
+    ```
+
+    ```sql
+    INSERT INTO calendar
+    SELECT 
+        data['listing_id']::int,
+        to_date(replace(data['date']::varchar(50), '"', ''), 'YYYY-MM-DD'),
+        data['price']::decimal(10,2),
+        replace(data['available']::varchar(50), '"', '')::boolean
+    FROM temp_calendar;
+    ```
+
+    You are now ready to begin Lab 4!
+
+</details>
 
 ## Exercise 1: Add Azure AI and Vector extensions to allowlist
 
@@ -41,6 +241,7 @@ Throughout this lab, you use the [azure_ai](https://learn.microsoft.com/azure/po
 2. From the database's left-hand navigation menu, select **Server parameters** under **Settings**, then enter `azure.extensions` into the search box. Expand the **VALUE** dropdown list, then locate and check the box next to each of the following extensions:
 
     - AZURE_AI
+    - POSTGIS (Note that this will already be checked if you completed lab 3.)
     - VECTOR
 
     ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, azure.extensions is entered and highlighted in the search bar and the AZURE_AI extension is selected and highlighted.](media/postgresql-server-parameters-extensions-azure-ai.png)
@@ -125,9 +326,9 @@ In this task, you use the [psql command-line utility](https://www.postgresql.org
 
     ![The Connect menu item is highlighted under Settings in the left-hand navigation menu in the Azure portal.](media/azure-postgres-connect.png)
 
-2. With the **Connect** page open, select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the top of your browser window.
+2. With the **Connect** page open, select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the bottom of your browser window.
 
-    ![The Cloud Shell icon is highlighted in the Azure portal toolbar and a Cloud Shell window is open at the top of the browser window.](media/portal-cloud-shell-postgres.png)
+    ![The Cloud Shell icon is highlighted in the Azure portal toolbar and a Cloud Shell window is open at the bottom of the browser window.](media/portal-cloud-shell-postgres.png)
 
 3. From the database's **Connect** page in the Azure portal, select **airbnb** for the **Database name**, then copy the **Connection details** block and paste it into the Cloud Shell.
 
@@ -195,6 +396,12 @@ Reviewing the objects within the `azure_ai` extension can provide a better under
     | `azure_openai.subscription_key` | A subscription key for an OpenAI resource. |
     | `azure_cognitive.endpoint` | A supported Cognitive Services endpoint (e.g., <https://example.cognitiveservices.azure.com>). |
     | `azure_cognitive.subscription_key` | A subscription key for a Cognitive Services resource. |
+
+3. To ensure the **s2admin** account you specified as the database administrator has appropriate permissions to assign the settings for the `azure_ai` extension, run the following command to `GRANT` it the necessary rights.
+
+    ```sql
+    GRANT azure_ai_settings_manager TO s2admin;
+    ```
 
     > Important
     >
@@ -286,7 +493,7 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
     WHERE listing_id IN (SELECT listing_id FROM empty_vectors);
     ```
 
-    The above query uses a common table expression (CTE) to retrieve records from the `listings` table where the `description_vector` field is null and the `description` field is not an empty string. This CTE also includes `LIMIT 100` to reduce the number of records returns to only the first 100. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. The limited number of records when performing this update is to prevent the calls from exceeding the call rate limit of the Azure OpenAI service. The `throw_on_error` parameter is false, allowing the query to proceed if the rate limit is exceeded. If you exceed the limit, you will see a warning similar to the following:
+    The above query uses a common table expression (CTE) to retrieve records from the `listings` table where the `description_vector` field is null, and the `description` field is not an empty string. This CTE also includes `LIMIT 100` to reduce the number of records returned to 100. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. Limiting the number of records to 100 when performing this update is done to prevent the calls to create embeddings from exceeding the call rate limit of the Azure OpenAI service. The `throw_on_error` parameter is false, allowing the query to proceed if the rate limit is exceeded. If you exceed the limit, you will see a warning similar to the following:
 
     ```sql
     WARNING:  azure_ai::azure_ai: 429: Requests to the Get a vector representation of a given input that can be easily consumed by machine learning models and algorithms. Operation under Azure OpenAI API version 2023-05-15 have exceeded call rate limit of your current OpenAI S0 pricing tier. Please retry after 1 second. Please go here: https://aka.ms/oai/quotaincrease if you would like to further increase the default rate limit.
@@ -302,7 +509,7 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
 
 ### Task 3: Perform a vector similarity search
 
-Vector similarity is a method used to measure two items' similarity by representing them as vectors, which are series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors. Each embedding is a vector of floating point numbers, so the distance between two embeddings in the vector space correlates with the semantic similarity between two inputs in the original format.
+Vector similarity is a method used to measure two items' similarity by representing them as vectors, a series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors. Each embedding is a vector of floating point numbers, so the distance between two embeddings in the vector space correlates with the semantic similarity between two inputs in the original format.
 
 1. To enable more efficient searching over the `vector` field by creating an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to utilize the latest graph-based algorithms to approximate nearest-neighbor queries.
 
@@ -420,7 +627,7 @@ In this task, you will use the `azure_cognitive.analyze_sentiment` function to e
 
     The `azure_cognitive.sentiment_analysis_result` is a composite type containing the sentiment predictions of the input text. It includes the sentiment, which can be positive, negative, neutral, or mixed, and the scores for positive, neutral, and negative aspects found in the text. The scores are represented as real numbers between 0 and 1. For example, in (neutral,0.26,0.64,0.09), the sentiment is neutral with a positive score of 0.26, neutral of 0.64, and negative at 0.09.
 
-4. Now that you have an understanding of how to analyze sentiment using the extension and the shape of the return type, execute the following query that looks for reviews that are overwhelmingly positive:
+4. Now that you have an understanding of how to analyze sentiment using the extension and the shape of the return type, execute the following query that looks for overwhelmingly positive reviews:
 
     ```sql
     WITH cte AS (
@@ -445,25 +652,75 @@ In this exercise, you connect to your database in **pgAdmin** and execute a fina
 
 ### Task 1: Connect to the database using pgAdmin
 
-In Lab 1, you downloaded and installed [pgAdmin](https://www.pgadmin.org/download/) and registered a connection to your database server. In this task, you will open pgAdmin and connect to your database.
+In this task, you will open pgAdmin and connect to your database.
 
-> Note: you configured pgAdmin to connect to your server in Lab 1. If necessary, refer back to those steps to register your database server and establish a connection to your database.
+1. If you do not already have it installed, download and install [pgAdmin](https://www.pgadmin.org/download/).
 
-1. Open **pgAdmin** on your local or lab virtual machine.
+2. Open **pgAdmin** and, if you have not already done so, register your server by right-clicking **Servers** in the Object Explorer and selecting **Register > Server**.
 
-2. Expand the **Servers** node within the Object Explorer, select your database server from the list, then right-click the server and select **Connect Server** from the context menu.
+    **Note: you can skip this step if you registered the server in pgAdmin in a previous lab.**
+
+    ![In the pgAdmin Object Explorer, Servers is selected and in its flyout menu, Register > Server is highlighted.](media/pgadmin-register-server.png)
+
+    Retrieve the server name of your Azure Database for PostgreSQL Flexible Server from the Azure portal.
+
+    ![The server name of the Azure Database for PostgresSQL Flexible Server is highlighted in the Azure portal.](media/azure-portal-postgresql-server-name.png)
+
+    In the **Register - Server** dialog, paste your Azure Database for PostgreSQL Flexible Server server name into the **Name** field on the **General** tab.
+
+    ![On the General tab of the Register - Server dialog, the Name field is populated with the server name value from the Azure portal and the field is highlighted.](media/pgadmin-register-server-general-tab.png)
+
+    Next, select the **Connection** tab and paste your server name into the **Hostname/address** field. Enter **s2admin** into the **Username** field, enter **Seattle123Seattle123** into the **Password** box, and optionally, select **Save password**.
+
+    ![On the Connection tab of the Register - Server dialog, the Hostname/address field is populated with the server name value from the Azure portal, and the field is highlighted. A value of s2admin has been entered into the Username box, Seattle123Seattle123 is entered into the password box, and the Save password option is selected. All these fields are highlighted.](media/pgadmin-register-server-connection-tab.png)
+
+    Finally, select the **Parameters** tab and set the **SSL mode** to **require**.
+
+    ![On the Parameters tab of the Register - Server dialog, the value of require is selected from the SSL Mode option, and the field is highlighted. The Save button is highlighted.](media/pgadmin-register-server-parameters-tab.png)
+
+    Select **Save** to register your server.
+
+3. Expand the **Servers** node within the Object Explorer, select your database server from the list, then right-click the server and select **Connect Server** from the context menu.
 
     ![The Azure Database for PostgreSQL Flexible Server instance is selected and highlighted in the Object Explorer in pgAdmin. In the server's context menu, Connect Server is highlighted.](media/pg-admin-server-connect.png)
   
-3. Once connected to your server, expand the **Databases** node and select the **airbnb** database. Right-click the **airbnb** database and select **Query Tool** from the context menu.
+4. Once connected to your server, expand the **Databases** node and select the **airbnb** database. Right-click the **airbnb** database and select **Query Tool** from the context menu.
 
     ![Under the server databases, the airbnb database is selected and Query Tool is highlighted in the context menu.](media/pg-admin-airbnb-database-query-tool.png)
 
-### Task 2: Execute a query and view results on a map
+### Task 2: Verify that the PostGIS extension is installed in your database
 
-In this task, you run a final query that ties together your work across labs 3 and 4.
+**If you completed Lab 3, you can skip to [Task 3, below](#task-3-execute-a-query-and-view-results-on-a-map).**
 
-1. Run the below query that incorporates elements of the `azure_ai` and `PostGIS` extensions you have worked with in labs 3 and 4:
+To install the `postgis` extension in your database, you will use the [CREATE EXTENSION](https://www.postgresql.org/docs/current/static/sql-createextension.html) command.
+
+1. In the query window you opened above, run the `CREATE EXTENSION` command with the `IF NOT EXISTS` clause to install the `postgis` extension in your database.
+
+    ```sql
+    CREATE EXTENSION IF NOT EXISTS postgis;
+    ```
+
+    With the `PostGIS` extension now loaded, you are ready to begin working with geospatial data in the database. The `listings` table you created and populated above contains the latitude and longitude of all listed properties. To use these data for geospatial analysis, you must alter the `listings` table to add a `geometry` column that accepts the `point` data type. These new data types are included in the `postgis` extension.
+
+2. To accommodate `point` data, add a new `geometry` column to the table that accepts `point` data. Copy and paste the following query into the open pgAdmin query window:
+
+    ```sql
+    ALTER TABLE listings
+    ADD COLUMN listing_location geometry(point, 4326);
+    ```
+
+3. Next, update the table with geospatial data associated with each listing by adding the longitude and latitude values into the `geometry` column.
+
+    ```sql
+    UPDATE listings
+    SET listing_location = ST_SetSRID(ST_Point(longitude, latitude), 4326);
+    ```
+
+### Task 3: Execute a query and view results on a map
+
+You run a final query in this task that ties your work across labs 3 and 4.
+
+1. Run the below query that incorporates elements of the `azure_ai`, `pgvector`, and `PostGIS` extensions you have worked with in labs 3 and 4:
 
     ```sql
     WITH listings_cte AS (
@@ -509,7 +766,7 @@ In this task, you run a final query that ties together your work across labs 3 a
 
     ![The Geometry Viewer tab is highlighted and a property point is highlighted on the map.](media/pgadmin-final-query-geometry-viewer.png)
 
-## Exercise 6: Clean up
+## Exercise 7: Clean up
 
 It is crucial that you clean up any resources you created for these labs once you have completed them. You are charged for the configured capacity, not how much the database is used. To delete your resource group and all resources you created for this lab, follow the instructions below:
 
