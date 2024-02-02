@@ -296,7 +296,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
 
     ![Alt text](media/02_primary_address.png)
 
-6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, you are using the containment operator (where one json document is contained inside another) to select data in addition to using the backwards compatible JSON syntax:
+6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, you are using the containment operator (where one json document is contained inside another) to select data in addition to using the backwards compatible JSON syntax.  Note the usage of the ["?" operator](https://www.postgresql.org/docs/9.5/functions-json.html) that tests the existance of the top level key for the `host_is_superhost`:
 
     ```sql
     SELECT listing_id, name as listing_name, city, listings.amenities
@@ -407,7 +407,7 @@ For information on Full Text Search, reference [Full Text Search](https://www.po
 2. Do a text search, note the use of a `Seq Scan`:
 
     ```sql
-    EXPLAIN SELECT *
+    EXPLAIN ANALYZE SELECT *
     FROM listings
     WHERE ts_summary @@ to_tsquery('amazing');
     ```
@@ -423,7 +423,7 @@ For information on Full Text Search, reference [Full Text Search](https://www.po
 4. Again, re-run the query, you should see the usage of a `Bitmap Heap Scan` instead of a `Seq Scan`:
 
     ```sql
-    EXPLAIN SELECT *
+    EXPLAIN ANALYZE SELECT *
     FROM listings
     WHERE ts_summary @@ to_tsquery('amazing');
     ```
@@ -446,7 +446,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
     FROM 
         listings l
     GROUP 
-        BY l.city
+        BY l.city;
     ```
 
     ![Alt text](media/02_02_aggregate.png)
@@ -461,7 +461,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
     FROM 
         listings l
     GROUP 
-        BY l.city
+        BY l.city;
     ```
 
     ![Alt text](media/02_02_aggregate_02.png)
@@ -475,7 +475,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
     from 
         listings l
     group 
-        by l.city, l.zipcode
+        by l.city, l.zipcode;
     ```
 
     ![Alt text](media/02_group_by.png)
@@ -508,7 +508,7 @@ The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data int
     SELECT
         *
     FROM
-        default_test
+        default_test;
     ```
 
     ![Alt text](media/02_default_values.png)
@@ -557,14 +557,14 @@ With this change, many queries you were performing using these joins will now ru
 
     > NOTE: If the table values are very small, the effort of doing a parallel operation may be more than the effort to do a non-parallel execution.  The tables and rows above should be enough to generate a Parallel Hash Full Join plan.
 
-4. Run the following command to see the execution plan of the select statement:
+4. Run the following command to see the execution plan of the select statement, note that we are disabling the calculation of costs to ensure that you see the parallel hash full join in the execution plan.  This is because the costs to do parallel for this query may be higher than simply doing a regular hash full join:
 
     ```sql
     EXPLAIN (costs off)
     SELECT count(*)
     FROM left_table lt
     FULL OUTER JOIN right_table rt
-    ON lt.x = rt.x
+    ON lt.x = rt.x;
     ```
 
 5. In the execution plan, you should notice the use of a `Parallel Hash Full Join`.  
@@ -629,13 +629,13 @@ The following is an example of a query that performs aggregates with the two fun
         y;
     ```
 
-4. In pre-16 instances, you would see a `HashAggregate` (feel free to test on the PG14 instance):
-
-    ![Alt text](media/02_03_query_02.png)
-
-5. In 16+, you will see a `Finalize GroupAggregate`:
+4. In 16+, you will see a `Finalize GroupAggregate`:
 
     ![Alt text](media/02_03_query_03.png)
+
+5. In pre-16 instances, you would see a `HashAggregate` (feel free to test on the PG14 instance):
+
+    ![Alt text](media/02_03_query_02.png)
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=16fd03e956540d1b47b743f6a84f37c54ac93dd4).
 
@@ -840,7 +840,7 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 2. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password `Seattle123Seattle123`. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` and `REGION` with your lab information:
 
     ```sql
-    pgbench -c 100 -T 180 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
+    pgbench -c 100 -T 180 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 6432 -U s2admin -d airbnb
     ```
 
 3. Switch back to the metrics window.  After a minute, you should see that the server `active connections` will max out and the PgBouncer `active client connections` will increase to handle the load on behalf of the server.
