@@ -271,7 +271,7 @@ In this task, you will open pgAdmin and connect to your database.
 
 2. Open **pgAdmin** and, if you have not already done so, register your server by right-clicking **Servers** in the Object Explorer and selecting **Register > Server**.
 
-    > **Note: you can skip this step if you registered the server in pgAdmin in a previous lab.**
+    **Note: you can skip this step if you registered the server in pgAdmin in a previous lab.**
 
     ![In the pgAdmin Object Explorer, Servers is selected and in its flyout menu, Register > Server is highlighted.](media/pgadmin-register-server.png)
 
