@@ -282,7 +282,7 @@ ng serve -o
 
 ## Deploy the Java Server Application to Azure
 
-- Open a command prompt window
+- In your Windows-based lab virtual machine, open a command prompt window, in the windows search are, type **cmd** and select it.
 - Run the following command to create the Maven configuration to deploy the app.
 - Be sure to replace the maven version (ex `3.8.1`)
 

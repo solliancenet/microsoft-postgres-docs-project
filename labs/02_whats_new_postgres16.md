@@ -18,10 +18,9 @@
     - [Task 2: Allow aggregate functions string\_agg() and array\_agg() to be parallelized](#task-2-allow-aggregate-functions-string_agg-and-array_agg-to-be-parallelized)
     - [Task 3: Add EXPLAIN option GENERIC\_PLAN to display the generic plan for a parameterized query](#task-3-add-explain-option-generic_plan-to-display-the-generic-plan-for-a-parameterized-query)
     - [Task 4: Using pg\_stat\_io for enhanced IO monitoring](#task-4-using-pg_stat_io-for-enhanced-io-monitoring)
-    - [Task 5: Using Query Store](#task-5-using-query-store)
   - [Exercise 5: Logical Replication](#exercise-5-logical-replication)
     - [Task 1 : Setup Publication](#task-1--setup-publication)
-    - [Task 2: Setup Subscriber](#task-2-setup-subscriber)
+    - [Task 2: Setup Subcsriber](#task-2-setup-subcsriber)
     - [Task 3: Sync Data](#task-3-sync-data)
   - [Exercise 6: PgBouncer (Optional)](#exercise-6-pgbouncer-optional)
     - [Task 1: Enable PgBouncer and PgBouncer Metrics](#task-1-enable-pgbouncer-and-pgbouncer-metrics)
@@ -44,26 +43,27 @@ In this exercise you will create some tables and use the COPY command to move da
 
 You will utilize the query store and logical replication in subsequent labs.  Here you will modify the server parameters to support these exercises. You are going to enable query store now as it takes a few minutes for the queries to start to be recorded.
 
-1. Switch to the Azure Portal
-2. Browse to your primary **PREFIX-pg-flex-REGION-16** instance or writer endpoint
-3. Under **Settings**, select **Server parameters**
-4. Browse for `pg_qs.query_capture_mode`
-5. Set the value to `TOP`
-6. Browse for the `wal_level` parameters
-7. Set the value to `logical`
-8. Select **Save**
-9. Select **Save & Restart**
-10. Repeat the same steps for any replicas and for the **PREFIX-pg-flex-REGION-14** instance
+1. Switch to the Azure Portal.
+2. Browse to your primary **PREFIX-pg-flex-REGION-16** instance or writer endpoint.
+3. Under **Settings**, select **Server parameters**.
+4. Browse for the `wal_level` parameters.
+5. Set the value to `logical`.
+6. Select **Save**.
+7. Select **Save & Restart**.
+8. Repeat the same steps for any replicas and for the **PREFIX-pg-flex-REGION-14** instance.
 
 ### Task 2: Create tables and data
 
-1. In your lab virtual machine, open a command prompt, run the following command to connect to your database, be sure to replace `PREFIX` and `REGION` with your lab information (optionally you can use pgAdmin to open a psql window):
+1. In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
+2. Run the following command to connect to your database, be sure to replace `PREFIX` and `REGION` with your lab information (optionally you can use pgAdmin to open a psql window):
 
     ```cmd
     psql -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -U s2admin -d airbnb
     ```
 
-2. Run the following commands to create some temp tables and import the JSON and CSV data to the server.  Notice the usage of `json` files to do the import using the `COPY` command. Once into a temporary table, we than do some massaging:
+3. Run the following commands to create some temp tables and import the JSON and CSV data to the server.  Notice the usage of `json` files to do the import using the `COPY` command. Once into a temporary table, we than do some massaging:
+
+    > NOTE: These paths are Windows based and you may need to adjust based on your environment (WSL, Linux, etc).
 
     ```sql
     DROP TABLE IF EXISTS temp_calendar;
@@ -75,7 +75,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
     CREATE TABLE temp_reviews (data jsonb);
     ```
 
-3. Now, use the `COPY` command to populate the tables with data from JSON files in a public storage account.
+4. Now, use the `COPY` command to populate the tables with data from JSON files in a public storage account.
 
     ```sql
     \COPY temp_calendar (data) FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/calendar.json'
@@ -91,7 +91,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
     ![Alt text](media/02_01_02_copy.png)
 
-4. Run the following command to create the main tables:
+5. Run the following command to create the main tables:
 
     ```sql
     DROP TABLE IF EXISTS listings;
@@ -138,7 +138,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
     );
     ```
 
-5. Run the following to import the data from the temp tables to the main tables:
+6. Run the following to import the data from the temp tables to the main tables:
 
     ```sql
     INSERT INTO listings
@@ -188,13 +188,13 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
     > NOTE: We are storing data in the tables as JSONB for lab purposes.  In the real world, you may not want to do something like this as with normal columns, PostgreSQL maintains statistics about the distributions of values in each column of the table – most common values (MCV), NULL entries, histogram of distribution. Based on this data, the PostgreSQL query planner makes smart decisions on the plan to use for the query. At this point, PostgreSQL does not store any stats for JSONB columns or keys. This can sometimes result in poor choices like using nested loop joins vs. hash joins.
 
-6. Switch to pgAdmin
-7. Navigate to **Databases->airbnb->Schemas->public->Tables**
-8. Right-click the **Tables** node, select **Query Tool**
+7. Switch to pgAdmin.
+8. Navigate to **Databases->airbnb->Schemas->public->Tables**.
+9. Right-click the **Tables** node, select **Query Tool**.
 
     ![Alt text](media/query_tool.png)
 
-9. Run each of the following commands to see the imported data after its transformation.  Note that we did not fully expand the JSON into all possible columns so as to show the new JSON syntax later:
+10. Run each of the following commands to see the imported data after its transformation.  Note that we did not fully expand the JSON into all possible columns so as to show the new JSON syntax later:
 
     ```sql
     select * from listings limit 10;
@@ -210,7 +210,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
 ## Exercise 2: Developer Features
 
-There are several developer based changes in PostgreSQL 16 as related to SQL syntax. In this exercise we explore several of them including the new SQL standard JSON functions.
+There are several developer-based changes in PostgreSQL 16 as related to SQL syntax. In this exercise we explore several of them including the new SQL standard JSON functions.
 
 - [Function Json](https://www.postgresql.org/docs/16/functions-json.html)
 
@@ -488,20 +488,21 @@ The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data int
 
 > NOTE: These paths below are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
 
-1. Review the `C:\labfiles\microsoft-postgres-docs-project\artifacts\data\default.csv` file, notice the usage of the `\D` in the source data:
+1. Download and review the `https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/default.csv` file
+2. Notice the usage of the `\D` in the source data:
 
     ![Alt text](media/02_02_copy_from_default.png)
 
-2. In pgAdmin, right-click the `airbnb` database, select **PSQL Tool**
-3. In the psql window, run the following command to import the data:
+3. In pgAdmin, right-click the `airbnb` database, select **PSQL Tool**.
+4. In the psql window, run the following command to import the data:
 
     ```sql
     CREATE TABLE default_test(c1 INT PRIMARY KEY, c2 TEXT DEFAULT 'the_default_value') ;
     
-    \COPY default_test FROM 'C:\labfiles\microsoft-postgres-docs-project\artifacts\data\default.csv' WITH (format csv, default '\D', header);
+    \COPY default_test FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/default.csv' WITH (format csv, default '\D', header);
     ```
 
-4. Run the following command to review the results of the `COPY FROM` command:
+5. Run the following command to review the results of the `COPY FROM` command:
 
     ```cmd
     SELECT
@@ -522,7 +523,7 @@ In general, the more things you can do in parallel the faster you will get resul
 
 With this change, many queries you were performing using these joins will now run drastically faster.
 
-1. Switch to pgAdmin
+1. Switch to pgAdmin.
 2. Run the following commands to setup some sample tables and data on the PG16 instance.
 
     ```sql
@@ -556,7 +557,7 @@ With this change, many queries you were performing using these joins will now ru
 
     > NOTE: If the table values are very small, the effort of doing a parallel operation may be more than the effort to do a non-parallel execution.  The tables and rows above should be enough to generate a Parallel Hash Full Join plan.
 
-4. Run the following command to see the execution plan of the the select statement:
+4. Run the following command to see the execution plan of the select statement:
 
     ```sql
     EXPLAIN (costs off)
@@ -580,7 +581,7 @@ Full JOINs are commonly used to find the differences between 2 tables. Prior to 
 
 Aggregate functions typically perform some kind of mathematical operation on a column or set of columns.  If you were to calculate several aggregates at once, you could probably imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
 
-Not all aggregate functions have supported this type of optimization, as such with the `string_agg()` and `array_agg()` functions. In PostgreSQL 16, this support was added and per the description on the code commit **adds combine, serial and deserial functions for the array_agg() and string_agg() aggregate functions, thus allowing these aggregates to partake in partial aggregations. This allows both parallel aggregation to take place when these aggregates are present and also allows additional partition-wise aggregation plan shapes to include plans that require additional aggregation once the partially aggregated results from the partitions have been combined.**
+Not all aggregate functions have supported this type of optimization, as such with the `string_agg()` and `array_agg()` functions.  In PostgreSQL 16, this support was added and per the description on the code commit "adds combine, serial and deserial functions for the array_agg() and string_agg() aggregate functions, thus allowing these aggregates to partake in partial aggregations.  This allows both parallel aggregation to take place when these aggregates are present and also allows additional partition-wise aggregation plan shapes to include plans that require additional aggregation once the partially aggregated results from the partitions have been combined."
 
 The following is an example of a query that performs aggregates with the two functions included.  If this were to run on a pre-16 version, the query would be much slower than in version 16.
 
@@ -685,7 +686,8 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 
     ![Alt text](media/02_pg_stat_01.png)
 
-2. Using `pgbench` you can generate some IO data (~750MB of data). Open a command prompt, type the following. Be sure to replace the `PREFIX` and `REGION` tokens:
+2. Using `pgbench` you can generate some IO data (~750MB of data). In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
+3. Type the following. Be sure to replace the `PREFIX` and `REGION` tokens:
 
     ```sql
     cd "C:\Program Files\PostgreSQL\16\bin"
@@ -693,7 +695,7 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
     pgbench -i -s 50 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
-3. Again, run the previous command to see the newly generated IO information.
+4. Again, run the previous command to see the newly generated IO information.
 
     ```sql
     --see client backed / bulk write in context after pgbench
@@ -702,13 +704,13 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
     order by writes desc;
     ```
 
-4. You should see the backend_type `client_backend` values change to be much higher:
+5. You should see the backend_type `client_backend` values change to be much higher:
 
     ![Alt text](media/pg_stat_io.png)
 
-5. `pg_stat_io` will also break apart the operations into more granular statistics via the `context` column.  The `pgbench` test above generated context values in the `vacuum` and `bulkwrite` context categories.  When using basic DDL commands, the values will go into different context categories.
+6. `pg_stat_io` will also break apart the operations into more granular statistics via the `context` column.  The `pgbench` test above generated context values in the `vacuum` and `bulkwrite` context categories.  When using basic DDL commands, the values will go into different context categories.
 
-6. Run the following command to create some more test data using basic DDL `INSERT`:
+7. Run the following command to create some more test data using basic DDL `INSERT`:
 
     ```sql
     insert into agg_test
@@ -718,40 +720,19 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
     checkpoint;
     ```
 
-7. Again, run the previous command to see the newly generated IO information.
+8. Again, run the previous command to see the newly generated IO information.
 
     ```sql
     select * from pg_stat_io 
     order by writes desc;
     ```
 
-8. Review the backendtype of `client_backend`, object of `relation`, context of `normal` and the `extends` column value.  Because you were adding data to an existing table, you are performing `extends` operations.
+9. Review the backendtype of `client_backend`, object of `relation`, context of `normal` and the `extends` column value.  Because you were adding data to an existing table, you are performing `extends` operations.
 
 Some common uses for this data include:
 
 - Review if high evictions are occurring.  If so, shared buffers should be increased.
 - Large number of fsyncs by client backends could indicate misconfiguration of the shared buffers and/or the checkpointer.
-
-### Task 5: Using Query Store
-
-The Query Store feature in Azure Database for PostgreSQL provides a way to track query performance over time. Query Store simplifies performance troubleshooting by helping you quickly find the longest running and most resource-intensive queries. Query Store automatically captures a history of queries and runtime statistics, and it retains them for your review. It separates data by time windows so that you can see database usage patterns. Data for all users, databases, and queries is stored in a database named azure_sys in the Azure Database for PostgreSQL instance.
-
-In lab 1 you enabled the Query Store via server parameters.  As you were working with Lab 2 exercises above, you executed several actions against the database.
-
-1. In pgAdmin, expand the `azure_sys` database, right-click it and select **Query Tool**
-2. Run the following to see what the most expensive queries were:
-
-    ```sql
-    SELECT * 
-    FROM query_store.qs_view
-    ORDER BY total_time desc;
-    ```
-
-3. You should see a series of queries sorted by their total time, you can also sort by `max_time`, `mean_time` or `stddev_time`:
-
-    ![Alt text](media/02_05_query_store.png)
-
-For more information on the query store feature, reference [Monitor performance with the Query Store](https://learn.microsoft.com/azure/postgresql/single-server/concepts-query-store)
 
 ## Exercise 5: Logical Replication
 
@@ -773,18 +754,12 @@ For more information on the query store feature, reference [Monitor performance 
     alter publication my_pub add table reviews;
     ```
 
-3. Create a replication slot:
-
-    ```sql
-    SELECT pg_create_logical_replication_slot('my_pub_slot', 'pgoutput');
-    ```
-
-### Task 2: Setup Subscriber
+### Task 2: Setup Subcsriber
 
 1. On the **PREFIX-pg-flex-REGION-14** server for the `airbnb` database, run the following.  It will setup the subscription (you should already have the tables from the lab setup). Be sure to replace the `PREFIX` and `REGION` values:
 
     ```sql
-    CREATE SUBSCRIPTION my_pub_subscription CONNECTION 'host=PREFIX-pg-flex-REGION-16.postgres.database.azure.com port=5432 dbname=airbnb user=s2admin password=Seattle123Seattle123' PUBLICATION my_pub WITH (copy_data=true, enabled=true, create_slot=false, slot_name='my_pub_slot');
+    CREATE SUBSCRIPTION my_pub_subscription CONNECTION 'host=PREFIX-pg-flex-REGION-16.postgres.database.azure.com port=5432 dbname=airbnb user=s2admin password=Seattle123Seattle123' PUBLICATION my_pub WITH (copy_data=true, enabled=true, create_slot=true, slot_name='my_pub_slot');
     ```
 
 ### Task 3: Sync Data
@@ -814,7 +789,7 @@ For more information on the query store feature, reference [Monitor performance 
 
 ## Exercise 6: PgBouncer (Optional)
 
-PgBouncer is a well known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
+PgBouncer is a well-known and supported 3rd party open-source, community-developed project. PgBouncer is commonly used to reduce resource overhead by managing a pool of connections to PostgreSQL, making it ideal for environments with high concurrency and frequent short-lived connections. It enables optimization by reducing the load on PostgreSQL server caused by too many connections.
 
 References:
 
@@ -824,27 +799,27 @@ References:
 
 You can use PgBouncer metrics to monitor the performance of the PgBouncer process, including details for active connections, idle connections, total pooled connections, and the number of connection pools. Each metric is emitted at a 1-minute interval and has up to 93 days of history. Customers can configure alerts on the metrics and also access the new metrics dimensions to split and filter metrics data by database name. PgBouncer metrics are disabled by default. For PgBouncer metrics to work, both the server parameters pgbouncer.enabled and metrics.pgbouncer_diagnostics must be enabled. These parameters are dynamic and don't require an instance restart.
 
-- Browse to the Azure Portal and your **PREFIX-pg-flex-REGION-16** resource
-- Under **Settings**, select **Server parameters**
-- Search for the `pgbouncer.enabled` dynamic parameters
-- Toggle the setting to `TRUE`
+- Browse to the Azure Portal and your **PREFIX-pg-flex-REGION-16** resource.
+- Under **Settings**, select **Server parameters**.
+- Search for the `pgbouncer.enabled` dynamic parameters.
+- Toggle the setting to `TRUE`.
 
     ![Alt text](media/02_03_enable_pgbouncer.png)
 
-- Search for the `metrics.pgbouncer_diagnostics` dynamic parameters
-- Toggle the setting to `TRUE`
-- Select **Save**
+- Search for the `metrics.pgbouncer_diagnostics` dynamic parameters.
+- Toggle the setting to `TRUE`.
+- Select **Save**.
 
 ### Task 2: Performance without PgBouncer
 
-1. Switch to the Azure Portal
-2. Browse to the `PREFIX-pg-flex-REGION-16.postgres.database.azure.com` instance
-3. Under **Monitoring** select **Metrics**
-4. For the **Metric**, under the **TRAFFIC** category, select **Active connections**
-5. Select **Add metric**
-6. Under the **PGBOUNCER** category, select **Active client connections**
-7. In the top right, select the time to be **Last 30 minutes** then select **Apply**
-8. Switch to a command prompt
+1. Switch to the Azure Portal.
+2. Browse to the `PREFIX-pg-flex-REGION-16.postgres.database.azure.com` instance.
+3. Under **Monitoring** select **Metrics**.
+4. For the **Metric**, under the **TRAFFIC** category, select **Active connections**.
+5. Select **Add metric**.
+6. Under the **PGBOUNCER** category, select **Active client connections**.
+7. In the top right, select the time to be **Last 30 minutes** then select **Apply**.
+8. In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
 9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password `Seattle123Seattle123`.  Notice the use of the `-c` parameter that will create 100 different connections, be sure to replace `PREFIX` with your lab information:
 
     ```sql
@@ -861,7 +836,7 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 
 ### Task 3: Performance with PgBouncer
 
-1. Switch back to the command prompt.
+1. Switch back to the windows command prompt.
 2. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password `Seattle123Seattle123`. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` and `REGION` with your lab information:
 
     ```sql
