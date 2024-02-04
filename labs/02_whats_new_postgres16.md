@@ -50,7 +50,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
 5. Set the value to `logical`.
 6. Select **Save**.
 7. Select **Save & Restart**.
-8. Repeat the same steps for any replicas and for the **PREFIX-pg-flex-REGION-14** instance.
+8. **Repeat the same steps** for any replicas and for the **PREFIX-pg-flex-REGION-14** instance.
 
 ### Task 2: Create tables and data
 
@@ -782,7 +782,7 @@ Some common uses for this data include:
     SELECT * 
     FROM calendar
     ORDER BY date desc
-    limit 50
+    limit 50;
     ```
 
     ![Alt text](media/02_05_replication.png)
