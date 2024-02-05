@@ -687,13 +687,13 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
     ![Alt text](media/02_pg_stat_01.png)
 
 2. Using `pgbench` you can generate some IO data (~750MB of data). In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
-3. Type the following. Be sure to replace the `PREFIX` and `REGION` tokens:
+3. Type the following. Be sure to replace the `PREFIX` and `REGION` tokens. On Windows you can find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, you can install it using `sudo apt-get install postgresql-contrib`:
 
     ```sql
-    cd "C:\Program Files\PostgreSQL\16\bin"
-
     pgbench -i -s 50 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
+
+    > NOTE: In Azure Cloud Shell, you will need to check the version to ensure it is compatable with your target version (`pgbench --version`)
 
 4. Again, run the previous command to see the newly generated IO information.
 
@@ -820,11 +820,9 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 6. Under the **PGBOUNCER** category, select **Active client connections**.
 7. In the top right, select the time to be **Last 30 minutes** then select **Apply**.
 8. In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
-9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password `Seattle123Seattle123`.  Notice the use of the `-c` parameter that will create 100 different connections, be sure to replace `PREFIX` with your lab information:
+9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password `Seattle123Seattle123`.  Notice the use of the `-c` parameter that will create 100 different connections, be sure to replace `PREFIX` with your lab information. On Windows you can find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, you can install it using `sudo apt-get install postgresql-contrib`::
 
     ```sql
-    cd "C:\Program Files\PostgreSQL\16\bin"
-
     pgbench -c 100 -T 180 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
