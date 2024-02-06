@@ -101,6 +101,10 @@ InstallChocolaty
 
 InstallAzPowerShellModule
 
+InstallGit
+        
+InstallAzureCli
+
 Uninstall-AzureRm -ea SilentlyContinue
 
 CreateLabFilesDirectory

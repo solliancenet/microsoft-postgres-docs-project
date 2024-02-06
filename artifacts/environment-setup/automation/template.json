@@ -528,7 +528,7 @@
                         "autoUpgradeMinorVersion": true,
                         "settings": {
                             "fileUris": [
-                            "https://raw.githubusercontent.com/solliancenet/specktra-install-scripts/main/postgres-sql-dev-labs/post-install-script02.ps1"
+                            "https://raw.githubusercontent.com/solliancenet/microsoft-postgres-docs-project/main/artifacts/environment-setup/spektra/post-install-script02.ps1"
                             ]
                         },
                         "protectedSettings": {
