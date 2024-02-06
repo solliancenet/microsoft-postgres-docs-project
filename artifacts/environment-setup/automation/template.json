@@ -528,7 +528,7 @@
                         "autoUpgradeMinorVersion": true,
                         "settings": {
                             "fileUris": [
-                            "https://raw.githubusercontent.com/solliancenet/specktra-install-scripts/main/postgres-sql-dev-labs/post-install-script01.ps1"
+                            "https://raw.githubusercontent.com/solliancenet/specktra-install-scripts/main/postgres-sql-dev-labs/post-install-script02.ps1"
                             ]
                         },
                         "protectedSettings": {
@@ -576,9 +576,6 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('pg-vnet-hub'), 'default')]"
             ],
-            "tags": {
-                "ServiceResourceId": "/subscriptions/e433f371-e5e9-4238-abc2-7c38aa596a18/resourceGroups/cjg-postgre/providers/Microsoft.DataMigration/services/dms-postgre-01"
-            },
             "properties": {
                 "ipConfigurations": [
                     {
