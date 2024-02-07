@@ -11,7 +11,7 @@
             "type": "String"
         },
         "adminPassword": {
-            "defaultValue": "Seattle123Seattle123",
+            "defaultValue": "GET-AZUSER-PASSWORD",
             "type": "String"
         },
         "location": {
@@ -26,6 +26,30 @@
             "metadata": {
                 "description": "The primary location."
             }
+        },
+        "vmAdminUsername": {
+            "defaultValue": "s2admin",
+            "type": "String"
+        },
+        "vmAdminPassword": {
+            "defaultValue": "GET-AZUSER-PASSWORD",
+            "type": "String"
+        },
+        "azureUsername": {
+            "defaultValue": "GET-AZUSER-PASSWORD",
+            "type": "String"
+        },
+        "azurePassword": {
+            "defaultValue": "GET-AZUSER-PASSWORD",
+            "type": "String"
+        },
+        "odlId": {
+            "defaultValue": "GET-ODL-ID",
+            "type": "String"
+        },
+        "deploymentId": {
+            "defaultValue": "GET-DEPLOYMENT-ID",
+            "type": "String"
         }
     },
     "variables": {

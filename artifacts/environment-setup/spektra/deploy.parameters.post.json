@@ -13,6 +13,24 @@
       },
       "location": {
         "value": "GET-REGION"
+      },
+      "vmAdminUsername": {
+        "value": "s2admin"
+      },
+      "vmAdminPassword": {
+        "value": "GET-AZUSER-PASSWORD"
+      },
+      "azureUsername": {
+        "value": "GET-AZUSER-UPN"
+      },
+      "azurePassword": {
+        "value": "GET-AZUSER-PASSWORD"
+      },
+      "odlId": {
+        "value": "GET-ODL-ID"
+      },
+      "deploymentId": {
+        "value": "GET-DEPLOYMENT-ID"
       }
     }
   }
