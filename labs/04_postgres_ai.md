@@ -599,7 +599,7 @@ Vector similarity is a method used to measure two items' similarity by represent
        ->  Index Scan using listings_description_vector_idx on listings  (cost=116.48..2228.28 rows=2224 width=261) (actual time=1.111..1.128 rows=3 loops=1)
     ```
 
-    The query planning and execution times should reflect a significant reduction in the time it took to plan and run the query:
+    The query execution times should reflect a significant reduction in the time it took to plan and run the query:
 
     ```sql
     Planning Time: 56.802 ms
