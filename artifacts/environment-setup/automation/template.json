@@ -43,18 +43,18 @@
         "linuxFxVersion": "JAVA|11-java11",
         "alwaysOn": "true",
         "vault-name": "[concat(parameters('prefix'),'-kv-', variables('unique'))]",
-        "vm_db_name": "[concat(parameters('prefix'),'-vm-pgdb01')]",
+        "vm_db_name": "[concat(parameters('prefix'),'-pgdb01')]",
         "app_name": "[concat(parameters('prefix'),'-app01')]",
         "api_name": "[concat(parameters('prefix'),'-api01')]",
         "insights-name": "[concat(parameters('prefix'),'-pg-insights')]",
-        "vm-db-ip": "[concat(parameters('prefix'),'-vm-pg-ip-01')]",
+        "vm-db-ip": "[concat(parameters('prefix'),'-pg-ip-01')]",
         "pg-vnet-db": "[concat(parameters('prefix'),'-vnet-postgresql')]",
         "pg-vnet-app01": "[concat(parameters('prefix'),'-vnet-app01')]",
         "pg-vnet-hub": "[concat(parameters('prefix'),'-vnet-hub')]",
         "pg-nsg-01": "[concat(parameters('prefix'),'-pg-nsg')]",
         "pg-flex-14": "[concat(parameters('prefix'),'-pg-flex-', parameters('location'), '-14')]",
         "pg-flex-16": "[concat(parameters('prefix'),'-pg-flex-', parameters('location'), '-16')]",
-        "pg-nic-01": "[concat(parameters('prefix'),'-vm-pg-nic-01')]",
+        "pg-nic-01": "[concat(parameters('prefix'),'-pg-nic-01')]",
         "pg-nic-02": "[concat(parameters('prefix'),'-nic-02')]",
         "pg-nic-03": "[concat(parameters('prefix'),'-nic-03')]",
         "vnetData": "",
@@ -65,13 +65,13 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(concat(parameters('prefix'),'-vm-pgdb01'))]",
+            "name": "[guid(concat(parameters('prefix'),'-pgdb01'))]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('prefix'),'-vm-pgdb01'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('prefix'),'-pgdb01'))]"
             ],
             "properties": {
                 "roleDefinitionId": "[variables('Owner')]",
-                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(parameters('prefix'),'-vm-pgdb01')), '2023-09-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(parameters('prefix'),'-pgdb01')), '2023-09-01', 'Full').identity.principalId]"
             }
         },
         {

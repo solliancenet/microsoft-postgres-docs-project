@@ -129,7 +129,7 @@ $cred = new-object -typename System.Management.Automation.PSCredential -argument
 Connect-AzAccount -Credential $cred | Out-Null
 
 # Template deployment
-$rg = (Get-AzResourceGroup | Where-Object { $_.ResourceGroupName -like "*-postgres" });
+$rg = (Get-AzResourceGroup | Where-Object { $_.ResourceGroupName -like "*postgres" });
 $resourceGroupName = $rg.ResourceGroupName
 $region = $rg.Location;
 $deploymentId =  $rg.Tags["DeploymentId"]
@@ -148,7 +148,7 @@ $repoUrl = "solliancenet/microsoft-postgres-docs-project";
 Write-Host "Download Git repo." -ForegroundColor Green -Verbose
 git clone https://github.com/solliancenet/$workshopName.git $workshopName
 
-$templatesFile = "c:\labfiles\$workshopName\artifacts\environment-setup\automation\00-template.json"
+$templatesFile = "c:\labfiles\$workshopName\artifacts\environment-setup\automation\template.json"
 $parametersFile = "c:\labfiles\$workshopName\artifacts\environment-setup\spektra\deploy.parameters.post.json"
 $content = Get-Content -Path $parametersFile -raw;
 
@@ -163,13 +163,10 @@ $content | Set-Content -Path "$($parametersFile).json";
 
 Write-Host "Executing main ARM deployment" -ForegroundColor Green -Verbose
 
-#OLD WAY...
-#New-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templatesFile -TemplateParameterFile "$($parametersFile).json";
-
 #will fire deployment async so the main deployment shows "succeeded"
 ExecuteDeployment $templatesFile "$($parametersFile).json" $resourceGroupName;
 
-#wait for storage to be created...
-WaitForResource $resourceGroupName $resourceName "Microsoft.Storage/storageAccounts" 1000;
+#wait for VM to be created...
+WaitForResource $resourceGroupName "$prefix-pgdb01" "Microsoft.Compute/virtualMachines" 1000;
 
 Stop-Transcript
