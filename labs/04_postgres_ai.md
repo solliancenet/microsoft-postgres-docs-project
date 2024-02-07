@@ -479,24 +479,44 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
 
     ![The embeddings deployment for the text-embedding-ada-002 model is highlighted on the Deployments tab in Azure OpenAI Studio.](media/azure-openai-studio-deployments-embeddings.png)
 
-3. Using the deployment name, run the following query to update each record in the `listings` table, inserting the generated vector embeddings for the `description` field into the `description_vector` column using the `azure_openai.create_embeddings()` function. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page. **IMPORTANT**: You must rerun the above query until all the records are updated. Successfully updating all rows will be indicated by an output that reads `UPDATE ##`, where `##` is a number less than 100.
+3. Using the deployment name, run the following query to update each record in the `listings` table, inserting the generated vector embeddings for the `description` field into the `description_vector` column using the `azure_openai.create_embeddings()` function. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page. Note that this query takes approximately five minutes to complete.
 
     ```sql
-    WITH empty_vectors AS (
-        SELECT listing_id FROM listings
-        WHERE description_vector IS NULL
-        AND description <> ''
-        LIMIT 100
-    )
-    UPDATE listings l
-    SET description_vector = azure_openai.create_embeddings('{your-deployment-name}', description, throw_on_error => false)
-    WHERE listing_id IN (SELECT listing_id FROM empty_vectors);
+    DO $$
+
+    DECLARE counter integer := (SELECT COUNT(*) FROM listings WHERE description <> '' AND description_vector IS NULL);
+    DECLARE r record;
+    BEGIN
+        RAISE NOTICE 'Total descriptions to embed: %', counter;
+        WHILE counter > 0 LOOP
+            BEGIN
+                FOR r IN
+                    SELECT listing_id FROM listings WHERE description <> '' AND description_vector IS NULL
+                LOOP
+                    BEGIN
+                        UPDATE listings
+                        SET description_vector = azure_openai.create_embeddings('{your-deployment-name}', description)
+                        WHERE listing_id = r.listing_id;
+                    EXCEPTION
+                        WHEN OTHERS THEN
+                            RAISE NOTICE 'Waiting 1 second before trying again...';
+                            PERFORM pg_sleep(1);
+                    END;
+                    counter := (SELECT COUNT(*) FROM listings WHERE description <> '' AND description_vector IS NULL);
+                    IF counter % 25 = 0 THEN
+                        RAISE NOTICE 'Remaining descriptions to embed: %', counter;
+                    END IF;
+                END LOOP;
+            END;
+        END LOOP;
+    END;
+    $$;
     ```
 
-    The above query uses a common table expression (CTE) to retrieve records from the `listings` table where the `description_vector` field is null, and the `description` field is not an empty string. This CTE also includes `LIMIT 100` to reduce the number of records returned to 100. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. Limiting the number of records to 100 when performing this update is done to prevent the calls to create embeddings from exceeding the call rate limit of the Azure OpenAI service. The `throw_on_error` parameter is false, allowing the query to proceed if the rate limit is exceeded. If you exceed the limit, you will see a warning similar to the following:
+    The above query uses a `WHILE` loop to retrieve records from the `listings` table where the `description_vector` field is null, and the `description` field is not an empty string. The query then attempts to update the `description_vector` column with a vector representation of the `description` column using the `azure_openai.create_embeddings` function. The loop is used when performing this update to prevent calls to create embeddings function from exceeding the call rate limit of the Azure OpenAI service. If the call rate limit is exceeded, you will see warnings similar to the following in the output:
 
     ```sql
-    WARNING:  azure_ai::azure_ai: 429: Requests to the Get a vector representation of a given input that can be easily consumed by machine learning models and algorithms. Operation under Azure OpenAI API version 2023-05-15 have exceeded call rate limit of your current OpenAI S0 pricing tier. Please retry after 1 second. Please go here: https://aka.ms/oai/quotaincrease if you would like to further increase the default rate limit.
+    NOTICE: Waiting 1 second before trying again...
     ```
 
 4. You can verify that the `description_vector` column has been populated for all `listings` records by running the following query:
@@ -511,21 +531,80 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
 
 Vector similarity is a method used to measure two items' similarity by representing them as vectors, a series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors. Each embedding is a vector of floating point numbers, so the distance between two embeddings in the vector space correlates with the semantic similarity between two inputs in the original format.
 
-1. To enable more efficient searching over the `vector` field by creating an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to utilize the latest graph-based algorithms to approximate nearest-neighbor queries.
+1. Before executing a vector similarity search, run the below query using the `ILIKE` clause to observe the results of searching for records using a natural language query without using vector similarity:
+
+    ```sql
+    SELECT listing_id, name, description FROM listings WHERE description ILIKE '%Properties with a private room near Discovery Park%';
+    ```
+
+    The query returns zero results because it is attempting to match the text in the description field with the natural language query provided.
+
+2. Now, execute a [cosine similarity](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings#cosine-similarity) search query against the `listings` table to perform a vector similarity search against listing descriptions. The embeddings are generated for an input question and then cast to a vector array (`::vector`), which allows it to be compared against the vectors stored in the `listings` table. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page.
+
+    ```sql
+    SELECT listing_id, name, description FROM listings
+    ORDER BY description_vector <=> azure_openai.create_embeddings('{your-deployment-name}', 'Properties with a private room near Discovery Park')::vector
+    LIMIT 3;
+    ```
+
+    The query uses the `<=>` [vector operator](https://github.com/pgvector/pgvector#vector-operators), which represents the "cosine distance" operator used to calculate the distance between two vectors in a multi-dimensional space.
+
+3. Run the same query again using the `EXPLAIN ANALYZE` clause to view the query planning and execution times. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page.
+
+    ```sql
+    EXPLAIN ANALYZE
+    SELECT listing_id, name, description FROM listings
+    ORDER BY description_vector <=> azure_openai.create_embeddings('{your-deployment-name}', 'Properties with a private room near Discovery Park')::vector
+    LIMIT 3;
+    ```
+
+    In the output, notice the query plan, which will start with something similar to:
+
+    ```sql
+    Limit  (cost=1098.54..1098.55 rows=3 width=261) (actual time=10.505..10.507 rows=3 loops=1)
+       ->  Sort  (cost=1098.54..1104.10 rows=2224 width=261) (actual time=10.504..10.505 rows=3 loops=1)
+
+    ...
+
+    Sort Method: top-N heapsort  Memory: 27kB
+        ->  Seq Scan on listings  (cost=0.00..1069.80 rows=2224 width=261) (actual time=0.005..9.997 rows=2224 loops=1)
+    ```
+
+    The query is using a sequential scan sort to perform the lookup. The planning and execution times will be listed at the end of the results, and should look similar to the following:
+
+    ```sql
+    Planning Time: 62.020 ms
+    Execution Time: 10.530 ms
+    ```
+
+4. To enable more efficient searching over the `vector` field, create an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to utilize the latest graph-based algorithms to approximate nearest-neighbor queries.
 
     ```sql
     CREATE INDEX ON listings USING hnsw (description_vector vector_cosine_ops);
     ```
 
-2. With everything now in place, you are now ready to execute a [cosine similarity](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings#cosine-similarity) search query against the database. Run the query below to do a vector similarity search against listing descriptions. The embeddings are generated for an input question and then cast to a vector array (`::vector`), which allows it to be compared against the vectors stored in the `listings` table.
+5. To observe the impact of the `hnsw` index on the table, run the query again with the `EXPLAIN ANALYZE` clause to compare the query planning and execution times. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page.
 
     ```sql
+    EXPLAIN ANALYZE
     SELECT listing_id, name, description FROM listings
-    ORDER BY description_vector <=> azure_openai.create_embeddings('embeddings', 'Properties with a private room near Discovery Park')::vector
+    ORDER BY description_vector <=> azure_openai.create_embeddings('{your-deployment-name}', 'Properties with a private room near Discovery Park')::vector
     LIMIT 3;
     ```
 
-    The query uses the `<=>` [vector operator](https://github.com/pgvector/pgvector#vector-operators), which represents the "cosine distance" operator used to calculate the distance between two vectors in a multi-dimensional space.
+    In the output, notice the query plan now includes a more efficient index scan:
+
+    ```sql
+    Limit  (cost=116.48..119.33 rows=3 width=261) (actual time=1.112..1.130 rows=3 loops=1)
+       ->  Index Scan using listings_description_vector_idx on listings  (cost=116.48..2228.28 rows=2224 width=261) (actual time=1.111..1.128 rows=3 loops=1)
+    ```
+
+    The query execution times should reflect a significant reduction in the time it took to plan and run the query:
+
+    ```sql
+    Planning Time: 56.802 ms
+    Execution Time: 1.167 ms
+    ```
 
 ## Exercise 5: Integrate Azure AI Services
 
@@ -638,7 +717,8 @@ In this task, you will use the `azure_cognitive.analyze_sentiment` function to e
         (sentiment).sentiment,
         (sentiment).positive_score,
         (sentiment).neutral_score,
-        (sentiment).negative_score
+        (sentiment).negative_score,
+        comments
     FROM cte
     WHERE (sentiment).positive_score > 0.98
     LIMIT 10;
@@ -720,7 +800,7 @@ To install the `postgis` extension in your database, you will use the [CREATE EX
 
 You run a final query in this task that ties your work across labs 3 and 4.
 
-1. Run the below query that incorporates elements of the `azure_ai`, `pgvector`, and `PostGIS` extensions you have worked with in labs 3 and 4:
+1. Run the below query that incorporates elements of the `azure_ai`, `pgvector`, and `PostGIS` extensions you have worked with in labs 3 and 4. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page.
 
     ```sql
     WITH listings_cte AS (
@@ -735,7 +815,7 @@ You run a final query in this task that ties your work across labs 3 and 4.
         AND c.available = 't'
         AND c.price <= 75.00
         AND l.listing_id IN (SELECT listing_id FROM reviews)
-        ORDER BY description_vector <=> azure_openai.create_embeddings('embeddings', 'Properties with a private room near Discovery Park')::vector
+        ORDER BY description_vector <=> azure_openai.create_embeddings('{your-deployment-name}', 'Properties with a private room near Discovery Park')::vector
         LIMIT 3
     ),
     sentiment_cte AS (
