@@ -7,7 +7,7 @@
             "type": "String"
         },
         "adminUsername": {
-            "defaultValue": "s2admin",
+            "defaultValue": "GET-AZUSER-USERNAME",
             "type": "String"
         },
         "adminPassword": {
@@ -32,11 +32,11 @@
             "type": "String"
         },
         "vmAdminPassword": {
-            "defaultValue": "GET-AZUSER-PASSWORD",
+            "defaultValue": "Seattle123Seattle123",
             "type": "String"
         },
         "azureUsername": {
-            "defaultValue": "GET-AZUSER-PASSWORD",
+            "defaultValue": "GET-AZUSER-USERNAME",
             "type": "String"
         },
         "azurePassword": {
@@ -385,8 +385,8 @@
                 "network": {
                     "publicNetworkAccess": "Enabled"
                 },
-                "administratorLogin": "[parameters('adminUsername')]",
-                "administratorLoginPassword": "[parameters('adminPassword')]",
+                "administratorLogin": "[parameters('vmAdminUsername')]",
+                "administratorLoginPassword": "[parameters('vmAdminPassword')]",
                 "storageProfile": {
                     "storageMB": 131072,
                     "backupRetentionDays": 7
@@ -505,8 +505,8 @@
                 },
                 "osProfile": {
                     "computerName": "[variables('vm_db_name')]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
+                    "adminUsername": "[parameters('vmAdminUsername')]",
+                    "adminPassword": "[parameters('vmAdminPassword')]",
                     "windowsConfiguration": {
                         "provisionVMAgent": true,
                         "enableAutomaticUpdates": true,

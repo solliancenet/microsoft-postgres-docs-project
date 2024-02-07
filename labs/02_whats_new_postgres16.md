@@ -55,7 +55,10 @@ You will utilize the query store and logical replication in subsequent labs.  He
 ### Task 2: Create tables and data
 
 1. In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
-2. Run the following command to connect to your database, be sure to replace `PREFIX` and `REGION` with your lab information (optionally you can use pgAdmin to open a psql window):
+
+    ![Open the windows command prompt](media/windows_cmd_prompt.png)
+
+2. Run the following command to connect to your database, be sure to replace `PREFIX` and `REGION` with your lab information (optionally you can use pgAdmin to open a psql window). On Windows you can find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, you can install it using `sudo apt-get install postgresql-contrib`.  When prompted, enter the password (`Seattle123Seattle123`):
 
     ```cmd
     psql -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -U s2admin -d airbnb
@@ -89,7 +92,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
     \COPY temp_reviews (data) FROM PROGRAM 'curl https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/reviews.json'
     ```
 
-    ![Alt text](media/02_01_02_copy.png)
+    ![Results of the copy commands](media/02_01_02_copy.png)
 
 5. Run the following command to create the main tables:
 
@@ -184,7 +187,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
     FROM temp_calendar;
     ```
 
-    ![Alt text](media/02_01_insert_table_data.png)
+    ![Results of the temp table inserts.](media/02_01_insert_table_data.png)
 
     > NOTE: We are storing data in the tables as JSONB for lab purposes.  In the real world, you may not want to do something like this as with normal columns, PostgreSQL maintains statistics about the distributions of values in each column of the table – most common values (MCV), NULL entries, histogram of distribution. Based on this data, the PostgreSQL query planner makes smart decisions on the plan to use for the query. At this point, PostgreSQL does not store any stats for JSONB columns or keys. This can sometimes result in poor choices like using nested loop joins vs. hash joins.
 
@@ -192,7 +195,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
 8. Navigate to **Databases->airbnb->Schemas->public->Tables**.
 9. Right-click the **Tables** node, select **Query Tool**.
 
-    ![Alt text](media/query_tool.png)
+    ![Open the Query Tool](media/query_tool.png)
 
 10. Run each of the following commands to see the imported data after its transformation.  Note that we did not fully expand the JSON into all possible columns so as to show the new JSON syntax later:
 
@@ -202,11 +205,11 @@ You will utilize the query store and logical replication in subsequent labs.  He
     select * from calendar limit 10;
     ```
 
-    ![Alt text](media/02_01_top_listings.png)
+    ![Results from listings table](media/02_01_top_listings.png)
 
-    ![Alt text](media/02_01_top_calendar.png)
+    ![Results from reviews table](media/02_01_top_calendar.png)
 
-    ![Alt text](media/02_01_top_reviews.png)
+    ![Results from calendar table](media/02_01_top_reviews.png)
 
 ## Exercise 2: Developer Features
 
@@ -227,7 +230,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
        listings LIMIT 1;
     ```
 
-    ![Alt text](media/02_02_json_01.png)
+    ![Results from the query](media/02_02_json_01.png)
 
 2. The same query can also be written in Postgres 14 and higher, note the usage of the bracket notation `[]` and the result is slightly different:
 
@@ -240,7 +243,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
        listings LIMIT 1;
     ```
 
-    ![Alt text](media/02_02_json_02.png)
+    ![Results from the query](media/02_02_json_02.png)
 
 3. In Postgres 16, you can now use the SQL standard `IS JSON` syntax.  The `IS JSON` checks include checks for values, arrays, objects, scalars, and unique keys:
 
@@ -253,7 +256,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
        listings LIMIT 1;
     ```
 
-    ![Alt text](media/02_02_json_03.png)
+    ![Results from the query](media/02_02_json_03.png)
 
 4. Additionally, you can get more granular about the type of JSON.
 
@@ -267,7 +270,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
     	listings;
     ```
 
-    ![Alt text](media/02_02_json_04.png)
+    ![Results from the query](media/02_02_json_04.png)
 
 5. When combining the above, you can create intricate `CASE` statements based on the target type (in the event that it could be multiple types):
 
@@ -294,7 +297,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
        listings;
     ```
 
-    ![Alt text](media/02_primary_address.png)
+    ![Results from the query](media/02_primary_address.png)
 
 6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, you are using the containment operator (where one json document is contained inside another) to select data in addition to using the backwards compatible JSON syntax.  Note the usage of the ["?" operator](https://www.postgresql.org/docs/9.5/functions-json.html) that tests the existance of the top level key for the `host_is_superhost`:
 
@@ -303,10 +306,10 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
     FROM listings
     WHERE
     listings.amenities @> '["Washer","Pets Allowed"]'
-    and data -> 'host_is_superhost' ? 't'
+    and data -> 'host_is_superhost' ? 't';
     ```
 
-    ![Alt text](media/02_01_query_02.png)
+    ![Results from the query are displayed.](media/02_01_query_02.png)
 
 ### Task 2: Exploring JSON_ARRAY, JSON_ARRAYAGG and JSON_OBJECT
 
@@ -321,7 +324,7 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
        listings;
     ```
 
-    ![Alt text](media/02_02_json_05.png)
+    ![Results from the query are displayed.](media/02_02_json_05.png)
 
     ```sql
     SELECT
@@ -330,7 +333,7 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
         listings;
     ```
 
-    ![Alt text](media/02_02_json_06.png)
+    ![Results from the query are displayed.](media/02_02_json_06.png)
 
 2. You can also convert regular types into JSON using the `JSON_OBJECT` function.  The following will take several data types and create a JSON object from them:
 
@@ -338,7 +341,7 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
     SELECT json_object(ARRAY[1, 'a', true, row(2, 'b', false)]::TEXT[]);
     ```
 
-    ![Alt text](media/02_02_json_07.png)
+    ![Results from the query are displayed.](media/02_02_json_07.png)
 
 3. Additionally, you can use the `json_agg` combined with `row_to_json` to convert a series of columns in a select statement into json:
 
@@ -352,7 +355,7 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
         bedrooms
     ```
 
-    ![Alt text](media/02_bedrooms_json_query.png)
+    ![Results from the query are displayed.](media/02_bedrooms_json_query.png)
 
 There are many other types of functions and operators in PostgreSQL that you can utilize when working with JSON data.  You can reference the latest information for PG16 in the [9.16. JSON Functions and Operators](https://www.postgresql.org/docs/16/functions-json.html) documentation.
 
@@ -370,7 +373,7 @@ Indexes help increase query performance.
         and l.listing_id = 241032
     ```
 
-    ![Alt text](media/02_03_pre_index.png)
+    ![Results from the query are displayed.](media/02_03_pre_index.png)
 
 2. Create an index on the `listing_id`` column:
 
@@ -378,7 +381,7 @@ Indexes help increase query performance.
     CREATE INDEX listings_listing_id ON listings (listing_id);
     ```
 
-3. Re-run the query to see the Sequential Scan is now removed and a Index Scan is now used improving the cost and execution times:
+3. Re-run the query to see the `Sequential Scan` is now removed and a `Index Scan` is now used improving the cost and execution times:
 
     ```sql
         EXPLAIN ANALYZE select *
@@ -388,7 +391,7 @@ Indexes help increase query performance.
         and l.listing_id = 241032
     ```
 
-    ![Alt text](media/02_03_after_index.png)
+    ![Results from the query are displayed.](media/02_03_after_index.png)
 
 ### Task 4: Using Full Text + GIN indexes
 
@@ -412,7 +415,7 @@ For information on Full Text Search, reference [Full Text Search](https://www.po
     WHERE ts_summary @@ to_tsquery('amazing');
     ```
 
-    ![Alt text](media/02_03_tsquery.png)
+    ![Results from the query are displayed.](media/02_03_tsquery.png)
 
 3. In pgAdmin, run the following command:
 
@@ -428,7 +431,7 @@ For information on Full Text Search, reference [Full Text Search](https://www.po
     WHERE ts_summary @@ to_tsquery('amazing');
     ```
 
-    ![Alt text](media/02_03_tsquery_2.png)
+    ![Results from the query are displayed.](media/02_03_tsquery_2.png)
 
 ### Task 5: Aggregate function ANY_VALUE()
 
@@ -449,7 +452,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
         BY l.city;
     ```
 
-    ![Alt text](media/02_02_aggregate.png)
+    ![Results from the query are displayed.](media/02_02_aggregate.png)
 
 2. Modify the query to utilize the new `ANY_VALUE` function:
 
@@ -464,7 +467,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
         BY l.city;
     ```
 
-    ![Alt text](media/02_02_aggregate_02.png)
+    ![Results from the query are displayed.](media/02_02_aggregate_02.png)
 
 3. Keep in mind that the `ANY_VALUE` is the selection of an non-null item from the group, and does not act the same if you did the full `group by` clause:
 
@@ -478,7 +481,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
         by l.city, l.zipcode;
     ```
 
-    ![Alt text](media/02_group_by.png)
+    ![Results from the query are displayed.](media/02_group_by.png)
 
 ## Exercise 3: COPY Features
 
@@ -488,10 +491,10 @@ The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data int
 
 > NOTE: These paths below are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
 
-1. Download and review the `https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/default.csv` file
+1. Using a web browser, download and review the `https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/default.csv` file
 2. Notice the usage of the `\D` in the source data:
 
-    ![Alt text](media/02_02_copy_from_default.png)
+    ![Sampling of the file contents.](media/02_02_copy_from_default.png)
 
 3. In pgAdmin, right-click the `airbnb` database, select **PSQL Tool**.
 4. In the psql window, run the following command to import the data:
@@ -511,7 +514,7 @@ The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data int
         default_test;
     ```
 
-    ![Alt text](media/02_default_values.png)
+    ![Results from the query are displayed.](media/02_default_values.png)
 
 Notice every entry from the source file with the default of '\D' was converted to the `DEFAULT` value from the column definition.
 
@@ -569,11 +572,11 @@ With this change, many queries you were performing using these joins will now ru
 
 5. In the execution plan, you should notice the use of a `Parallel Hash Full Join`.  
 
-    ![Alt text](media/parallel_full_outer_join.png)
+    ![Execution plan with a parallel hash full join](media/parallel_full_outer_join.png)
 
 6. In previous versions of PostgreSQL, you would see a regular `Hash Full Join`.
 
-    ![Alt text](media/02_parallel_hash_full_join_14.png)
+    ![Execution plan with a hash full join](media/02_parallel_hash_full_join_14.png)
 
 Full JOINs are commonly used to find the differences between 2 tables. Prior to Postgres 16, parallelism was not implemented for full hash JOINs, which made them slower to execute. [(link to commit)](https://github.com/postgres/postgres/commit/11c2d6fdf)
 
@@ -612,7 +615,7 @@ The following is an example of a query that performs aggregates with the two fun
         y;
     ```
 
-    ![Alt text](media/02_03_query_01.png)
+    ![Results from the query are displayed.](media/02_03_query_01.png)
 
 3. Review the `EXPLAIN` plan details, notice the `HashAggregate` plan and the costs:
 
@@ -631,11 +634,11 @@ The following is an example of a query that performs aggregates with the two fun
 
 4. In 16+, you will see a `Finalize GroupAggregate`:
 
-    ![Alt text](media/02_03_query_03.png)
+    ![Results from the query are displayed.](media/02_03_query_03.png)
 
 5. In pre-16 instances, you would see a `HashAggregate` (feel free to test on the PG14 instance):
 
-    ![Alt text](media/02_03_query_02.png)
+    ![Results from the query are displayed.](media/02_03_query_02.png)
 
 For a more in-depth look at the code change for this feature, reference [here](https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=16fd03e956540d1b47b743f6a84f37c54ac93dd4).
 
@@ -651,7 +654,7 @@ Previously, attempting to get an execution plan for a parameterized query was fa
 
 2. You should get an error.
 
-    ![Alt text](media/02_04_query_01.png)
+    ![An error is displayed from the query.](media/02_04_query_01.png)
 
 3. To get an execution plan for a parametrized query, run the following:
 
@@ -659,7 +662,7 @@ Previously, attempting to get an execution plan for a parameterized query was fa
     EXPLAIN (GENERIC_PLAN) SELECT * FROM listings WHERE listing_id = $1;
     ```
 
-    ![Alt text](media/02_04_query_02.png)
+    ![Results from the query are displayed.](media/02_04_query_02.png)
 
     > Note the use of the parenthesis.  The old way (shown above) was to not utilize parenthesis and is only for backwards compatibility. Newer options such as `GENERIC_PLAN` will only work with the new syntax.
 
@@ -684,10 +687,10 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
     select * from pg_stat_io order by writes desc;
     ```
 
-    ![Alt text](media/02_pg_stat_01.png)
+    ![Query results showing no activity](media/02_pg_stat_01.png)
 
 2. Using `pgbench` you can generate some IO data (~750MB of data). In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
-3. Type the following. Be sure to replace the `PREFIX` and `REGION` tokens. On Windows you can find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, you can install it using `sudo apt-get install postgresql-contrib`:
+3. Run the following command. Be sure to replace the `PREFIX` and `REGION` tokens. On Windows you can find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, you can install it using `sudo apt-get install postgresql-contrib`. When prompted, enter the `Seattle123Seattle123` password:
 
     ```sql
     pgbench -i -s 50 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
@@ -706,7 +709,7 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 
 5. You should see the backend_type `client_backend` values change to be much higher:
 
-    ![Alt text](media/pg_stat_io.png)
+    ![Query results with IO activity displayed.](media/pg_stat_io.png)
 
 6. `pg_stat_io` will also break apart the operations into more granular statistics via the `context` column.  The `pgbench` test above generated context values in the `vacuum` and `bulkwrite` context categories.  When using basic DDL commands, the values will go into different context categories.
 
@@ -785,7 +788,7 @@ Some common uses for this data include:
     limit 50;
     ```
 
-    ![Alt text](media/02_05_replication.png)
+    ![Results showing the data is being replicated.](media/02_05_replication.png)
 
 ## Exercise 6: PgBouncer (Optional)
 
@@ -804,10 +807,10 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 - Search for the `pgbouncer.enabled` dynamic parameters.
 - Toggle the setting to `TRUE`.
 
-    ![Alt text](media/02_03_enable_pgbouncer.png)
+    ![Server parameters setting are shown.](media/02_03_enable_pgbouncer.png)
 
 - Search for the `metrics.pgbouncer_diagnostics` dynamic parameters.
-- Toggle the setting to `TRUE`.
+- Toggle the setting to `ON`.
 - Select **Save**.
 
 ### Task 2: Performance without PgBouncer
@@ -815,10 +818,19 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 1. Switch to the Azure Portal.
 2. Browse to the `PREFIX-pg-flex-REGION-16.postgres.database.azure.com` instance.
 3. Under **Monitoring** select **Metrics**.
+
+    ![Select the Metrics link](media/monitoring_metrics.png)
+
 4. For the **Metric**, under the **TRAFFIC** category, select **Active connections**.
+
+    ![Select the Active Connection under TRAFFIC](media/traffic_active_connections.png)
+
 5. Select **Add metric**.
 6. Under the **PGBOUNCER** category, select **Active client connections**.
 7. In the top right, select the time to be **Last 30 minutes** then select **Apply**.
+
+    ![Select the Active client connections under PGBOUNCER](media/metrics_set_30_minutes.png)
+
 8. In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
 9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password `Seattle123Seattle123`.  Notice the use of the `-c` parameter that will create 100 different connections, be sure to replace `PREFIX` with your lab information. On Windows you can find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, you can install it using `sudo apt-get install postgresql-contrib`::
 
@@ -828,7 +840,7 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 
 10. Switch back to the Metrics window, after a minute, you should see the `active connections` increase.
 
-    ![Alt text](media/02_pgbouncer_01.png)
+    ![Graph of active connections increasing.](media/02_pgbouncer_01.png)
 
 11. Stop the test or wait for it to finish.
 
@@ -843,7 +855,7 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 
 3. Switch back to the metrics window.  After a minute, you should see that the server `active connections` will max out and the PgBouncer `active client connections` will increase to handle the load on behalf of the server.
 
-    ![Alt text](media/02_pgbouncer_02.png)
+    ![Graph of active connections and active connections increasing.](media/02_pgbouncer_02.png)
 
 ## Exercise 6: Other Features (Optional)
 

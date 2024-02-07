@@ -27,42 +27,42 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
 1. Open the [Azure Portal](https://portal.azure.com/), if prompted, login using your lab credentials.
 2. Select **Create a resource (+)** in the upper-left corner of the portal or select **Create a resource** under **Azure services**.
 
-    ![Alt text](media/01_00_create_resource.png)
+    ![Select create a resource](media/01_00_create_resource.png)
 
 3. In the left side navigation, select **Databases**.
 4. Under **Azure Database for PostgreSQL Flexible Server**, select **Create**.
 
-    ![Alt text](media/01_00_databases.png)
+    ![Select Create under the Azure Database for PostgreSQL Flexible Server option](media/01_00_databases.png)
 
-5. Fill out the Basics tab with the following information, be sure to replace `PREFIX` with your lab information or a unique prefix such as your initials (ex `ABC`), also replace the `REGION`:
+5. Fill out the Basics tab with the following information, be sure to replace `PREFIX` with your lab information (ex `1224900`) or a unique prefix such as your initials (ex `ABC`), also replace the `REGION`:
 
-   - Resource Group: Name of your lab resource group
+   - Resource Group: Name of your lab resource group (ex `postgres`)
    - Server name:  `PREFIX-pg-flex-REGION-16`
    - Region: `REGION`
    - PostgreSQL Version: `16`
    - Workload Type: `Production (Small/Medium-size)`
   
-    ![Alt text](media/01_02_create_server_basics_00.png)
+    ![Screen shot of the options selected.](media/01_02_create_server_basics_00.png)
 
 6. Under **Compute + Storage**, select **Configure Server**.
 7. For the size, select `Standard_D2ds_v5`.
 8. Please **DO NOT** select the **High Availability** option as it is subject to availability and capacity limits in various regions.
 
-    ![Alt text](media/01_03_create_server_basics_02.png)
+    ![More server options displayed.](media/01_03_create_server_basics_02.png)
   
 9. Select **Save**.
 10. Authentication method: `PostgreSQL authentication only`.
 11. Admin username: `s2admin`.
 12. Password and confirm password: `Seattle123Seattle123`.
 
-    ![Alt text](media/01_03_create_server_basics_03.png)
+    ![Ensure that PostgreSQL authentication is selected.](media/01_03_create_server_basics_03.png)
 
 13. Select **Next: Networking**. On the Networking tab, you can choose how your server is reachable.
 14. Configure Networking options:
   
     - Select **Public access (allowed IP addresses)**
 
-      ![Alt text](media/01_04_networking_01.png)
+      ![Set the Public Access option](media/01_04_networking_01.png)
 
     - Add your client IP address to ensure you can connect to your new instance
 
@@ -70,20 +70,20 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
 
     - Additionally, select the **Allow public access from any Azure service with Azure to the server**
 
-    ![Alt text](media/01_04_networking_02.png)
+    ![Set the allow public access from any Azure service option](media/01_04_networking_02.png)
 
 15. Select **Review + create** to review your selections.
 
-    ![Alt text](media/01_07_review_create.png)
+    ![Select Review + Create](media/01_07_review_create.png)
 
 16. Select **Create** to provision the server. This operation may take a few minutes.
 17. In the top right of the toolbar, select the Notifications icon (a bell).
 
-      ![Alt text](media/01_08_deployment_00.png)
+      ![Screenshot showing the notifications icon](media/01_08_deployment_00.png)
 
 18. Select **Deployment in progress** link.  You can now monitor the deployment process:
 
-      ![Alt text](media/01_08_deployment.png)
+      ![The deployment in progress screen](media/01_08_deployment.png)
 
 - Once deployed, select the link to navigate to your server's **Overview** page.
   - Make a note of the Server name and the Server admin login name.
@@ -94,7 +94,7 @@ In this exercise you will create a new Azure Database for PostgreSQL Flexible Se
     - Resource name
     - Server name
 
-  ![Alt text](media/01_10_pg_overview.png)
+  ![PostgreSQL overview page](media/01_10_pg_overview.png)
 
 ## Exercise 2: Adding a database in the portal
 
@@ -105,7 +105,7 @@ In this exercise you will use the Azure Portal to add a new database to your new
 3. In the menu, select **+Add**.
 4. For the name, type **airbnb**.
 
-    ![Alt text](media/01_11_pg_database_create.png)
+    ![Create a new database called airbnb](media/01_11_pg_database_create.png)
 
 5. Select **Save**.
 
@@ -119,7 +119,7 @@ In this exercise you will modify the [maintenance schedule](https://learn.micros
 4. For the **Day of week**, select **Saturday**.
 5. For the **Start time (UTC)**, select **23**.
   
-      ![Alt text](media/01_12_pg_maintenance.png)
+      ![Set a custom maintence schedule](media/01_12_pg_maintenance.png)
 
 6. Select **Save**.
 
@@ -174,7 +174,7 @@ If you are using the virtual machine from the lab environment, all the software 
 1. From the lab virtual machine, open **pgAdmin**.
 2. Right-click the **Servers** node, select **Register->Server**.
   
-    ![Alt text](media/01_14_pg_admin_register.png)
+    ![Register a new server in pgAdmin](media/01_14_pg_admin_register.png)
 
 3. For name, type **PREFIX-pg-flex-REGION-16**, be sure to replace `PREFIX` with your lab information.
 4. Select the **Connection** tab.
@@ -202,10 +202,10 @@ Using pgAdmin, you will execute some basic queries
 
     ```sql
     select * 
-    from listings
+    from listings;
     ```
 
-    ![Alt text](media/01_listings_query.png)
+    ![The SQL query is displayed with results.](media/01_listings_query.png)
 
 ## Summary
 
@@ -222,7 +222,7 @@ If you would like to run these labs in your own Azure subscription, you will nee
 3. Search for **template**, select the **Template deployment (deploy using custom templates).
 4. Select **Create**.
 5. Select **Build your own template in the editor**.
-6. Copy and paste the `/artifacts/template.json` file into the window.
+6. Copy and paste the `/artifacts/environment-setup/automation/template.json` file into the window.
 7. Select **Save**.
 8. Set the **prefix** parameter to match your lab environment or your initials (ex `ABC`).
 9. Select **Review + create**.
