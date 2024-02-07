@@ -296,7 +296,7 @@ The `azure_ai` extension allows the creation of vector embeddings from text. To 
 
 1. Navigate to your newly provisioned Azure OpenAI resource in the [Azure portal](https://portal.azure.com/).
 
-2. On the resource's **Overview** page, select the **Go to Azure OpenAI Studio** button.
+2. On the resource's **Overview** page, select the **Go to Azure OpenAI Studio** button.  If prompted, select the lab credentials:
 
     ![Go to Azure OpenAI Studio is highlighted on the Azure OpenAI service's overview page.](media/go-to-azure-openai-studio.png)
 

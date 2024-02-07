@@ -465,7 +465,7 @@ In this task, you provision an Azure Storage account in the Azure portal to host
     | Subscription         | Select the subscription you use for lab resources. |
     | Resource group       | Select the resource group you created in Lab 1. |
     | **Instance details** |       |
-    | Storage account name | _Enter a globally unique name_, such as `stpostgreslabs`. |
+    | Storage account name | _Enter a globally unique name_, such as `PREFIXpostgreslabs`. |
     | Region               | Select the same region you chose for your Azure Database for PostgreSQL Flexible Server database. |
     | Performance          | Select **Standard**. |
     | Redundancy           | Select **Locally-redundant storage (LRS)**. |
@@ -500,11 +500,12 @@ In this task, you upload the sample Seattle Airbnb data files into the container
 
     ![Access keys is selected and highlighted in the left-hand menu of the Storage account page.](media/storage-account-access-keys.png)
 
-2. With the **Access keys** page open, select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the bottom of your browser window.
+2. With the **Access keys** page open, select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the bottom of your browser window
+3. If prompted, select **Bash**, then select **Create storage**.
 
     ![The Cloud Shell icon is highlighted in the Azure portal toolbar and a Cloud Shell window is open at the bottom of the browser window.](media/portal-cloud-shell.png)
 
-3. At the Azure Cloud Shell prompt, execute the following `curl` commands to download the Seattle Airbnb data files.
+4. At the Azure Cloud Shell prompt, execute the following `curl` commands to download the Seattle Airbnb data files.
 
     ```bash
     curl -O https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/listings.csv
@@ -520,7 +521,7 @@ In this task, you upload the sample Seattle Airbnb data files into the container
 
     The above commands download the files into the storage account associated with your Cloud Shell.
 
-4. Next, you will use the [Azure CLI](https://learn.microsoft.com/cli/azure/) to upload the files into the `seattle-airbnb-data` container you created in your storage account. Create variables to hold your storage account name and key values to make things easier.
+5. Next, you will use the [Azure CLI](https://learn.microsoft.com/cli/azure/) to upload the files into the `seattle-airbnb-data` container you created in your storage account. Create variables to hold your storage account name and key values to make things easier.
 
     Copy your storage account name by selecting the **Copy to clipboard** button next to the storage account name on the Access keys page above your Cloud Shell:
 
