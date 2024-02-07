@@ -531,13 +531,15 @@ The `listings` table is now ready to store embeddings. Using the `azure_openai.c
 
 Vector similarity is a method used to measure two items' similarity by representing them as vectors, a series of numbers. Vectors are often used to perform searches using LLMs. Vector similarity is commonly calculated using distance metrics, such as Euclidean distance or cosine similarity. Euclidean distance measures the straight-line distance between two vectors in the n-dimensional space, while cosine similarity measures the cosine of the angle between two vectors. Each embedding is a vector of floating point numbers, so the distance between two embeddings in the vector space correlates with the semantic similarity between two inputs in the original format.
 
-1. To enable more efficient searching over the `vector` field by creating an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to utilize the latest graph-based algorithms to approximate nearest-neighbor queries.
+1. Before executing a vector similarity search, run the below query using the `ILIKE` clause to observe the results of searching for records using a natural language query without using vector similarity:
 
     ```sql
-    CREATE INDEX ON listings USING hnsw (description_vector vector_cosine_ops);
+    SELECT listing_id, name, description FROM listings WHERE description ILIKE '%Properties with a private room near Discovery Park%';
     ```
 
-2. With everything now in place, you are now ready to execute a [cosine similarity](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings#cosine-similarity) search query against the database. Run the query below to do a vector similarity search against listing descriptions. The embeddings are generated for an input question and then cast to a vector array (`::vector`), which allows it to be compared against the vectors stored in the `listings` table. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page.
+    The query returns zero results because it is attempting to match the text in the description field with the natural language query provided.
+
+2. Now, execute a [cosine similarity](https://learn.microsoft.com/azure/ai-services/openai/concepts/understand-embeddings#cosine-similarity) search query against the `listings` table to perform a vector similarity search against listing descriptions. The embeddings are generated for an input question and then cast to a vector array (`::vector`), which allows it to be compared against the vectors stored in the `listings` table. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page.
 
     ```sql
     SELECT listing_id, name, description FROM listings
@@ -546,6 +548,63 @@ Vector similarity is a method used to measure two items' similarity by represent
     ```
 
     The query uses the `<=>` [vector operator](https://github.com/pgvector/pgvector#vector-operators), which represents the "cosine distance" operator used to calculate the distance between two vectors in a multi-dimensional space.
+
+3. Run the same query again using the `EXPLAIN ANALYZE` clause to view the query planning and execution times. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page.
+
+    ```sql
+    EXPLAIN ANALYZE
+    SELECT listing_id, name, description FROM listings
+    ORDER BY description_vector <=> azure_openai.create_embeddings('{your-deployment-name}', 'Properties with a private room near Discovery Park')::vector
+    LIMIT 3;
+    ```
+
+    In the output, notice the query plan, which will start with something similar to:
+
+    ```sql
+    Limit  (cost=1098.54..1098.55 rows=3 width=261) (actual time=10.505..10.507 rows=3 loops=1)
+       ->  Sort  (cost=1098.54..1104.10 rows=2224 width=261) (actual time=10.504..10.505 rows=3 loops=1)
+
+    ...
+
+    Sort Method: top-N heapsort  Memory: 27kB
+        ->  Seq Scan on listings  (cost=0.00..1069.80 rows=2224 width=261) (actual time=0.005..9.997 rows=2224 loops=1)
+    ```
+
+    The query is using a sequential scan sort to perform the lookup. The planning and execution times will be listed at the end of the results, and should look similar to the following:
+
+    ```sql
+    Planning Time: 62.020 ms
+    Execution Time: 10.530 ms
+    ```
+
+4. To enable more efficient searching over the `vector` field, create an index on `listings` using cosine distance and [HNSW](https://github.com/pgvector/pgvector#hnsw), which is short for Hierarchical Navigable Small World. HNSW allows `pgvector` to utilize the latest graph-based algorithms to approximate nearest-neighbor queries.
+
+    ```sql
+    CREATE INDEX ON listings USING hnsw (description_vector vector_cosine_ops);
+    ```
+
+5. To observe the impact of the `hnsw` index on the table, run the query again with the `EXPLAIN ANALYZE` clause to compare the query planning and execution times. Replace `{your-deployment-name}` with the **Deployment name** value you copied from the Azure OpenAI Studio **Deployments** page.
+
+    ```sql
+    EXPLAIN ANALYZE
+    SELECT listing_id, name, description FROM listings
+    ORDER BY description_vector <=> azure_openai.create_embeddings('{your-deployment-name}', 'Properties with a private room near Discovery Park')::vector
+    LIMIT 3;
+    ```
+
+    In the output, notice the query plan now includes a more efficient index scan:
+
+    ```sql
+    Limit  (cost=116.48..119.33 rows=3 width=261) (actual time=1.112..1.130 rows=3 loops=1)
+       ->  Index Scan using listings_description_vector_idx on listings  (cost=116.48..2228.28 rows=2224 width=261) (actual time=1.111..1.128 rows=3 loops=1)
+    ```
+
+    The query planning and execution times should reflect a significant reduction in the time it took to plan and run the query:
+
+    ```sql
+    Planning Time: 56.802 ms
+    Execution Time: 1.167 ms
+    ```
 
 ## Exercise 5: Integrate Azure AI Services
 
