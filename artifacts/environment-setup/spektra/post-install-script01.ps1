@@ -190,7 +190,4 @@ Write-Host "Executing main ARM deployment" -ForegroundColor Green -Verbose
 #will fire deployment async so the main deployment shows "succeeded"
 ExecuteDeployment $templatesFile "$($parametersFile).json" $resourceGroupName;
 
-#wait for VM to be created...
-WaitForResource $resourceGroupName "$prefix-pgdb01" "Microsoft.Compute/virtualMachines" 1000;
-
 Stop-Transcript
