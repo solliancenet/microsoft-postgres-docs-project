@@ -34,7 +34,7 @@
       "subnetName": "Subnet",
       "subnetPrefix": "10.0.0.0/24",
       "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('virtualNetworkName'), variables('subnetName'))]",
-      "virtualMachineSize": "Standard_D2s_v3",
+      "virtualMachineSize": "Standard_D4s_v3",
       "virtualNetworkName": "labvm-vnet",
       "vmName": "[concat('labvm-',parameters('deploymentId'))]",
       "adlsStorageAccountName": "[concat('asadatalake', parameters('deploymentId'))]",
@@ -149,11 +149,11 @@
           },
           "storageProfile": {
             "imageReference": {
-              "publisher": "microsoftvisualstudio",
-              "offer": "visualstudio2019latest",
-              "sku": "vs-2019-ent-latest-ws2019",
+              "publisher": "microsoftwindowsdesktop",
+              "offer": "windows-11",
+              "sku": "win11-22h2-pro",
               "version": "latest"
-            },
+          },
             "osDisk": {
               "createOption": "fromImage",
               "name": "[concat(variables('vmName'), '-osdisk')]",
@@ -189,7 +189,7 @@
             "properties": {
               "publisher": "Microsoft.Compute",
               "type": "CustomScriptExtension",
-              "typeHandlerVersion": "1.8",
+              "typeHandlerVersion": "1.10",
               "autoUpgradeMinorVersion": true,
               "settings": {
                 "fileUris": [

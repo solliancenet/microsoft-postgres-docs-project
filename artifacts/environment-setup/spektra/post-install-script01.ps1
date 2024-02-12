@@ -105,6 +105,30 @@ InstallGit
         
 InstallAzureCli
 
+InstallChrome
+
+InstallNotepadPP
+
+InstallPgAdmin
+
+$extensions = @("ms-vscode-deploy-azure.azure-deploy", 
+  "ms-azuretools.vscode-docker", 
+  "ms-python.python", 
+  "ms-azuretools.vscode-azurefunctions",
+  "ms-vscode-remote.remote-wsl");
+
+InstallVisualStudioCode $extensions;
+
+#InstallVisualStudio "community" "2022";
+
+#will get port 5432
+InstallPostgres16
+
+#will get port 5433
+InstallPostgres14
+
+InstallPython "3.11";
+
 Uninstall-AzureRm -ea SilentlyContinue
 
 CreateLabFilesDirectory
