@@ -44,7 +44,7 @@ This lab uses the Azure Database for PostgreSQL instance created in Lab 1, the d
 
 1. In a web browser, navigate to the [Azure portal](https://portal.azure.com/).
 
-2. select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the bottom of your browser window.
+2. Select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the top of your browser window.
 
     ![The Cloud Shell icon is highlighted in the Azure portal's toolbar.](media/portal-toolbar-cloud-shell.png)
 
