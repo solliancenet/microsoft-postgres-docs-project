@@ -25,7 +25,7 @@
     - [Task 8: Export data into blob storage using the blob\_put function](#task-8-export-data-into-blob-storage-using-the-blob_put-function)
   - [Summary](#summary)
 
-Azure Database for PostgreSQL Flexible Server is an extensible platform that provides the ability to extend a database's functionality using [many popular PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Extensions allow you to add extra functionality to your database by adding and expanding the capabilities of processes within the database. They work by bundling multiple related SQL objects in a single package that can be loaded or removed from your database with a single command. After being loaded into the database, extensions function like built-in features.
+Azure Database for PostgreSQL Flexible Server is an extensible platform that provides the ability to extend a database's functionality using [many popular PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Extensions enable the addition of extra functionality to the database by adding and expanding the capabilities of processes within the database. They work by bundling multiple related SQL objects in a single package that can be loaded or removed from the database with a single command. After being loaded into the database, extensions function like built-in features.
 
 You can view the list of supported extensions by running `SHOW azure.extensions;` within the database. Note that extensions not listed are not currently supported on Azure Database for PostgreSQL flexible server. You cannot create or load your own extension in Azure Database for the PostgreSQL flexible server.
 
@@ -39,7 +39,7 @@ In this lab, you work with the following common PostgreSQL extensions:
 
 ## Prerequisites
 
-This lab uses the Azure Database for PostgreSQL instance created in Lab 1 and the data and tables created in Lab 2. If you are starting this lab without completing the previous labs, expand the section below and complete the steps to set up your database.
+This lab uses the Azure Database for PostgreSQL instance created in Lab 1 and the data and tables created in Lab 2. If you are starting this lab without completing the previous labs, expand the section below and complete the steps to set up the database.
 
 <details>
 <summary>Expand this section to view the prerequisite setup steps.</summary>
@@ -89,9 +89,9 @@ This lab uses the Azure Database for PostgreSQL instance created in Lab 1 and th
 
 ### Task 2: Connect to the database using psql in the Azure Cloud Shell
 
-In this task, you use the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) to connect to your database.
+In this task, you use the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) to connect to the database.
 
-1. You need the connection details for your database to connect to it using `psql` in the Cloud Shell. Using the open [Azure portal](https://portal.azure.com/) window with the cloud shell pane at the bottom, navigate to your Azure Database for PostgreSQL Flexible Server resource, and in the left-hand navigation menu, select **Connect** under **Settings**.
+1. You need the connection details for the database to connect to it using `psql` in the Cloud Shell. Using the open [Azure portal](https://portal.azure.com/) window with the cloud shell pane at the bottom, navigate to your Azure Database for PostgreSQL Flexible Server resource, and in the left-hand navigation menu, select **Connect** under **Settings**.
 
     ![The Connect menu item is highlighted under Settings in the left-hand navigation menu in the Azure portal.](media/azure-postgres-connect.png)
 
@@ -99,9 +99,9 @@ In this task, you use the [psql command-line utility](https://www.postgresql.org
 
     ![The Connection strings page of the Azure Cosmos DB Cluster resource is highlighted. On the Connection strings page, the copy to clipboard button to the right of the psql connection string is highlighted.](media/postgresql-connection-details-psql.png)
 
-3. At the Cloud Shell prompt, replace the `{your_password}` token with the password you assigned to the `s2admin` user when creating your database, then run the command. If you followed the instructions in Lab 1, the password should be `Seattle123Seattle123`.
+3. At the Cloud Shell prompt, replace the `{your_password}` token with the password you assigned to the `s2admin` user when creating the database, then run the command. If you followed the instructions in Lab 1, the password should be `Seattle123Seattle123`.
 
-4. Connect to your database using the `psql` command-line utility by entering the following at the prompt:
+4. Connect to the database using the `psql` command-line utility by entering the following at the prompt:
 
     ```bash
     psql
@@ -249,23 +249,23 @@ Before you can install and use extensions in an Azure Database for PostgreSQL Fl
 
     ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, azure.extensions is entered and highlighted in the search bar and the PG_CRON extension is selected.](media/postgresql-server-parameters-extensions-pg-cron-postgis.png)
 
-    If the extension you are attempting to allowlist is not present in the list, it may not be supported in the version of PostgreSQL you are using. You can review the [supported extension versions in the Microsoft docs](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Alternatively, you can run the query, `SELECT * FROM pg_available_extensions;`, against your database.
+    If the extension you are attempting to allowlist is not present in the list, it may not be supported in the version of PostgreSQL you are using. You can review the [supported extension versions in the Microsoft docs](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Alternatively, you can run the query, `SELECT * FROM pg_available_extensions;`, against the database.
 
 3. Some extensions must be included in the server's shared preloaded libraries. Of the extensions you use in this lab, `pg_cron` must be preloaded at the server start. Clear the search box on the **Server parameters** page and enter `shared_preload`. Expand the **VALUE** dropdown list, then locate the `PG_CRON` extension and ensure it is checked. This extension is preloaded by default, so you are verifying its state and should not have to make any changes.
 
     ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, shared_preload is entered and highlighted in the search bar and the PG_CRON extension are selected and highlighted.](media/postgresql-server-parameters-shared-preloaded-libraries-pg-cron.png)
 
-4. Select **Save** on the toolbar to save the updates to the Azure extensions allowlist. This action will trigger a deployment on your database that should be completed within 20 to 30 seconds.
+4. Select **Save** on the toolbar to save the updates to the Azure extensions allowlist. This action will trigger a deployment on the database that should be completed within 20 to 30 seconds.
 
 ## Exercise 2: Store geospatial data with the PostGIS extension
 
 [PostGIS](https://www.postgis.net/) is a 3rd party open-source spatial database extender for PostgreSQL object-relational databases, which adds support for geographic objects that allow location queries to be run in SQL. This extension enables complex geospatial queries and analysis within PostgreSQL, essential for mapping, location tracking, and spatial analysis. It provides a variety of spatial data types, indexing options, and functions to query and manipulate geospatial data efficiently.
 
-You will use [pgAdmin](https://www.pgadmin.org/docs/pgadmin4/latest/index.html) to connect to and execute queries against your database for this exercise. The pgAdmin tool offers a [Geometry Data Viewer](https://www.pgadmin.org/docs/pgadmin4/8.0/editgrid.html#the-data-grid), which allows you to view GIS objects on a map.
+You will use [pgAdmin](https://www.pgadmin.org/docs/pgadmin4/latest/index.html) to connect to and execute queries against the database for this exercise. The pgAdmin tool offers a [Geometry Data Viewer](https://www.pgadmin.org/docs/pgadmin4/8.0/editgrid.html#the-data-grid), which allows you to view GIS objects on a map.
 
 ### Task 1: Connect to the database using pgAdmin
 
-In this task, you will open pgAdmin and connect to your database.
+In this task, you will open pgAdmin and connect to the database.
 
 1. If you do not already have it installed, download and install [pgAdmin](https://www.pgadmin.org/download/).
 
@@ -293,7 +293,7 @@ In this task, you will open pgAdmin and connect to your database.
 
     Select **Save** to register your server.
 
-3. Expand the **Servers** node within the Object Explorer, select your database server from the list, then right-click the server and select **Connect Server** from the context menu.
+3. Expand the **Servers** node within the Object Explorer, select the database server from the list, then right-click the server and select **Connect Server** from the context menu.
 
     ![The Azure Database for PostgreSQL Flexible Server instance is selected and highlighted in the Object Explorer in pgAdmin. In the server's context menu, Connect Server is highlighted.](media/pg-admin-server-connect.png)
   
@@ -303,9 +303,9 @@ In this task, you will open pgAdmin and connect to your database.
 
 ### Task 2: Install the PostGIS extension
 
-To install the `postgis` extension in your database, you will use the [CREATE EXTENSION](https://www.postgresql.org/docs/current/static/sql-createextension.html) command. Behind the scenes, executing `CREATE EXTENSION` runs the extension's script file. The script typically creates new SQL objects such as functions, data types, operators, and index support methods. Additionally, `CREATE EXTENSION` records the identities of all the created objects so they can be dropped again if `DROP EXTENSION` is issued.
+To install the `postgis` extension in the database, you will use the [CREATE EXTENSION](https://www.postgresql.org/docs/current/static/sql-createextension.html) command. Behind the scenes, executing `CREATE EXTENSION` runs the extension's script file. The script typically creates new SQL objects such as functions, data types, operators, and index support methods. Additionally, `CREATE EXTENSION` records the identities of all the created objects so they can be dropped again if `DROP EXTENSION` is issued.
 
-1. In the query window you opened above, run the `CREATE EXTENSION` command to install the `postgis` extension in your database.
+1. In the query window you opened above, run the `CREATE EXTENSION` command to install the `postgis` extension in the database.
 
     ```sql
     CREATE EXTENSION IF NOT EXISTS postgis;
@@ -333,7 +333,7 @@ With the `PostGIS` extension now loaded, you are ready to begin working with geo
 
 ### Task 4: View geospatial query results with the geometry data viewer
 
-With `PostGIS` installed in your database, you can take advantage of the [Geometry Data Viewer](https://www.pgadmin.org/docs/pgadmin4/8.0/editgrid.html#the-data-grid) in pgAdmin to view GIS objects in a map.
+With `PostGIS` installed in the database, you can take advantage of the [Geometry Data Viewer](https://www.pgadmin.org/docs/pgadmin4/8.0/editgrid.html#the-data-grid) in pgAdmin to view GIS objects in a map.
 
 1. Copy and paste the following query into the open query editor, then run it to view the data stored in the `listing_location` column:
 
@@ -375,7 +375,7 @@ With `PostGIS` installed in your database, you can take advantage of the [Geomet
 
 The following extension you will work with is [pg_cron](https://github.com/citusdata/pg_cron), a simple, cron-based job scheduler for PostgreSQL that runs inside the database as an extension. This powerful and simple extension can be used for many tasks, including aggregating data in near-real time, database cleanup and administrative tasks, and much more.
 
-Extending your database with the [pg_cron](https://github.com/citusdata/pg_cron) extension allows you to schedule PostgreSQL commands directly from the database using a cron-based job scheduler. Using this extension, you can schedule a job that calls a function to execute on a schedule, such as every month, hour, or minute. In this exercise, you will create a scheduled task that runs the `VACUUM` operation against the `airbnb` database.
+Extending the database with the [pg_cron](https://github.com/citusdata/pg_cron) extension allows you to schedule PostgreSQL commands directly from the database using a cron-based job scheduler. Using this extension, you can schedule a job that calls a function to execute on a schedule, such as every month, hour, or minute. In this exercise, you will create a scheduled task that runs the `VACUUM` operation against the `airbnb` database.
 
 ### Task 1: Install pg_cron extension
 
@@ -419,7 +419,7 @@ In this task, you will use `pg_cron` to create a scheduled job for performing ga
 
 ## Exercise 4: Load data into the database from Azure storage using the Azure Storage extension (Optional)
 
-The [pg_azure_storage extension](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-storage-extension) enables seamless integration of Azure blob storage with PostgreSQL databases. The extension allows you to import and export data in multiple file formats directly from Azure blob storage and your database. To use the `pg_azure_storage` extension for this lab, you must first provision an Azure Storage account, retrieve its access key, create a container, and copy the sample Seattle Airbnb data files into the container.
+The [pg_azure_storage extension](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-storage-extension) enables seamless integration of Azure blob storage with PostgreSQL databases. The extension allows you to import and export data in multiple file formats directly from Azure blob storage and the database. To use the `pg_azure_storage` extension for this lab, you must first provision an Azure Storage account, retrieve its access key, create a container, and copy the sample Seattle Airbnb data files into the container.
 
 ### Task 1: Add extension to allowlist
 
@@ -433,7 +433,7 @@ Before installing and using the `azure_storage` extension, you must _allowlist_ 
 
     ![On the Server parameters page of the Azure Database for PostgreSQL Flexible Server, azure.extensions is entered and highlighted in the search bar and the AZURE_STORAGE extension is selected and highlighted.](media/postgresql-server-parameters-extensions-azure-storage.png)
 
-    If the extension you are attempting to allowlist is not present in the list, it may not be supported in the version of PostgreSQL you are using. You can review the [supported extension versions in the Microsoft docs](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Alternatively, you can run the query, `SELECT * FROM pg_available_extensions;`, against your database.
+    If the extension you are attempting to allowlist is not present in the list, it may not be supported in the version of PostgreSQL you are using. You can review the [supported extension versions in the Microsoft docs](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#extension-versions). Alternatively, you can run the query, `SELECT * FROM pg_available_extensions;`, against the database.
 
 3. The `pg_azure_storage` extension must be preloaded at server start and, therefore, must be added to the server's shared preloaded libraries list. Clear the search box on the **Server parameters** page and enter `shared_preload`. Expand the **VALUE** dropdown list, then locate and check the box next to the `AZURE_STORAGE` extension:
 
@@ -565,9 +565,9 @@ In this task, you upload the sample Seattle Airbnb data files into the container
 
 ### Task 5: Connect to the database using psql in the Azure Cloud Shell
 
-With the files now securely stored in blob storage, it's time to set up the `pg_azure_storage` extension in your database. You will use the `psql` command line utility from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview).
+With the files now securely stored in blob storage, it's time to set up the `pg_azure_storage` extension in the database. You will use the `psql` command line utility from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview).
 
-1. You need the connection details for your database to connect to it using `psql` in the Cloud Shell. Navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/), and in the left-hand navigation menu, select **Connect** under **Settings**.
+1. You need the connection details for the database to connect to it using `psql` in the Cloud Shell. Navigate to your Azure Database for PostgreSQL Flexible Server resource in the [Azure portal](https://portal.azure.com/), and in the left-hand navigation menu, select **Connect** under **Settings**.
 
     ![The Connect menu item is highlighted under Settings in the left-hand navigation menu in the Azure portal.](media/azure-postgres-connect.png)
 
@@ -579,9 +579,9 @@ With the files now securely stored in blob storage, it's time to set up the `pg_
 
     ![The Connection strings page of the Azure Cosmos DB Cluster resource is highlighted. On the Connection strings page, the copy to clipboard button to the right of the psql connection string is highlighted.](media/postgresql-connection-details-psql.png)
 
-4. At the Cloud Shell prompt, replace the `{your_password}` token with the password you assigned to the `s2admin` user when creating your database, then run the command. If you followed the instructions in Lab 1, the password should be `Seattle123Seattle123`.
+4. At the Cloud Shell prompt, replace the `{your_password}` token with the password you assigned to the `s2admin` user when creating the database, then run the command. If you followed the instructions in Lab 1, the password should be `Seattle123Seattle123`.
 
-5. Connect to your database using the `psql` by entering the following at the prompt:
+5. Connect to the database using the `psql` by entering the following at the prompt:
 
     ```bash
     psql
@@ -591,15 +591,15 @@ With the files now securely stored in blob storage, it's time to set up the `pg_
 
 ### Task 6: Enable and configure the pg_azure_storage extension
 
-Now that you are connected to your database, you can install the `pg_azure_storage` extension. You install extensions using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
+Now that you are connected to the database, you can install the `pg_azure_storage` extension. You install extensions using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
 
-1. From the `psql` prompt in the Cloud Shell, run the following command to install the extension in your database:
+1. From the `psql` prompt in the Cloud Shell, run the following command to install the extension in the database:
 
     ```sql
     CREATE EXTENSION azure_storage;
     ```
 
-    When creating and working with the `pg_azure_storage` extension in your database, note that the extension's name is abbreviated to `azure_storage`.
+    When creating and working with the `pg_azure_storage` extension in the database, note that the extension's name is abbreviated to `azure_storage`.
 
 2. To ensure the **s2admin** account you specified as the database administrator has appropriate permissions to add a storage account in the `pg_azure_storage` extension, run the following command to `GRANT` it the necessary rights.
 
@@ -630,7 +630,7 @@ Now that you are connected to your database, you can install the `pg_azure_stora
 
 ### Task 7: Import data from blob storage
 
-With the `pg_azure_storage` extension now connected to your blob storage account, you can import the data it contains into your database. Using the queries below, you will create a new schema in the database, add tables to the new schema, and then import data from the files in blob storage into the new tables using the `pg_azure_storage` extension.
+With the `pg_azure_storage` extension now connected to your blob storage account, you can import the data it contains into the database. Using the queries below, you will create a new schema in the database, add tables to the new schema, and then import data from the files in blob storage into the new tables using the `pg_azure_storage` extension.
 
 1. To host the new tables and avoid conflicts with existing ones, you will create a new schema named `abb` in the database. To create a new schema, use the following command:
 

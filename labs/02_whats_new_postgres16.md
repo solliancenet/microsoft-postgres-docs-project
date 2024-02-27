@@ -29,7 +29,7 @@
   - [Exercise 6: Other Features (Optional)](#exercise-6-other-features-optional)
     - [Task 1: Use new VACUUM options to improve VACUUM performance](#task-1-use-new-vacuum-options-to-improve-vacuum-performance)
 
-In this lab you will explore the new developer and infrastructure features of PostgreSQL 16.
+In this lab, several new developer and infrastructure features of PostgreSQL 16 will be explored.
 
 ## Prerequisites
 
@@ -37,14 +37,14 @@ In this lab you will explore the new developer and infrastructure features of Po
 
 ## Exercise 1: Setup and Configuration
 
-In this exercise you will create some tables and use the COPY command to move data into those tables.  The data is in JSON format and not SQL format so the usage of `jsonb` data type with be required to import the data into a temporary table.  We will use this initial data to run some queries to transform the data such that we can utilize the new JSON syntax in PostgreSQL 16.
+In this exercise, some tables will be created and the COPY command will be used to move data into those tables.  The data is in JSON format and not SQL format so the usage of `jsonb` data type with be required to import the data into a temporary table.  We will use this initial data to run some queries to transform the data such that we can utilize the new JSON syntax in PostgreSQL 16.
 
 ### Task 1: Configure Server Parameters
 
-You will utilize the query store and logical replication in subsequent labs.  Here you will modify the server parameters to support these exercises. You are going to enable query store now as it takes a few minutes for the queries to start to be recorded.
+In this task, server parameters will be configured to ensure support for the Query Store and logical replication in subsequent labs. It is necessary to enable Query Store now as it takes a few minutes for the queries to start to be recorded.
 
 1. Switch to the Azure Portal.
-2. Browse to your primary **PREFIX-pg-flex-REGION-16** instance or writer endpoint.
+2. Browse to the primary **PREFIX-pg-flex-REGION-16** instance or writer endpoint.
 3. Under **Settings**, select **Server parameters**.
 4. Browse for the `wal_level` parameters.
 5. Set the value to `logical`.
@@ -54,11 +54,11 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
 ### Task 2: Create tables and data
 
-1. In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
+1. In the Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
 
     ![Open the windows command prompt](media/windows_cmd_prompt.png)
 
-2. Run the following command to connect to your database, be sure to replace `PREFIX` and `REGION` with your lab information (optionally you can use pgAdmin to open a psql window). On Windows you can find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, you can install it using `sudo apt-get install postgresql-contrib`.  When prompted, enter the password (`Seattle123Seattle123`):
+2. Run the following command to connect to the database, be sure to replace `PREFIX` and `REGION` with the lab information (optionally use pgAdmin to open a psql window). On Windows, find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, install it using `sudo apt-get install postgresql-contrib`.  When prompted, enter the password (`Seattle123Seattle123`):
 
     ```cmd
     psql -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -U s2admin -d airbnb
@@ -66,7 +66,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
 3. Run the following commands to create some temp tables and import the JSON and CSV data to the server.  Notice the usage of `json` files to do the import using the `COPY` command. Once into a temporary table, we than do some massaging:
 
-    > NOTE: These paths are Windows based and you may need to adjust based on your environment (WSL, Linux, etc).
+    > NOTE: These paths are Windows based and may need to be adjusted based on the environment (WSL, Linux, etc).
 
     ```sql
     DROP TABLE IF EXISTS temp_calendar;
@@ -189,7 +189,7 @@ You will utilize the query store and logical replication in subsequent labs.  He
 
     ![Results of the temp table inserts.](media/02_01_insert_table_data.png)
 
-    > NOTE: We are storing data in the tables as JSONB for lab purposes.  In the real world, you may not want to do something like this as with normal columns, PostgreSQL maintains statistics about the distributions of values in each column of the table – most common values (MCV), NULL entries, histogram of distribution. Based on this data, the PostgreSQL query planner makes smart decisions on the plan to use for the query. At this point, PostgreSQL does not store any stats for JSONB columns or keys. This can sometimes result in poor choices like using nested loop joins vs. hash joins.
+    > NOTE: We are storing data in the tables as JSONB for lab purposes.  In the real world, it may not be appropriate. With normal columns, PostgreSQL maintains statistics about the distributions of values in each column of the table – most common values (MCV), NULL entries, histogram of distribution. Based on this data, the PostgreSQL query planner makes smart decisions on the plan to use for the query. At this point, PostgreSQL does not store any stats for JSONB columns or keys. This can sometimes result in poor choices like using nested loop joins vs. hash joins.
 
 7. Switch to pgAdmin.
 8. Navigate to **Databases->airbnb->Schemas->public->Tables**.
@@ -245,7 +245,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
 
     ![Results from the query](media/02_02_json_02.png)
 
-3. In Postgres 16, you can now use the SQL standard `IS JSON` syntax.  The `IS JSON` checks include checks for values, arrays, objects, scalars, and unique keys:
+3. In Postgres 16, it is now possible to use the SQL standard `IS JSON` syntax.  The `IS JSON` checks include checks for values, arrays, objects, scalars, and unique keys:
 
     ```sql
     SELECT
@@ -258,7 +258,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
 
     ![Results from the query](media/02_02_json_03.png)
 
-4. Additionally, you can get more granular about the type of JSON.
+4. Additionally, new functions allow for queries to be more granular about the type of JSON.
 
     ```sql
     SELECT
@@ -272,7 +272,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
 
     ![Results from the query](media/02_02_json_04.png)
 
-5. When combining the above, you can create intricate `CASE` statements based on the target type (in the event that it could be multiple types):
+5. When combining the above, it is possible to create intricate `CASE` statements based on the target type (in the event that it could be multiple types):
 
     ```sql
     SELECT
@@ -299,7 +299,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
 
     ![Results from the query](media/02_primary_address.png)
 
-6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, you are using the containment operator (where one json document is contained inside another) to select data in addition to using the backwards compatible JSON syntax.  Note the usage of the ["?" operator](https://www.postgresql.org/docs/9.5/functions-json.html) that tests the existance of the top level key for the `host_is_superhost`:
+6. Finally, much of the basic JSON functionality that has existed pre-PG16 is still available and can also be used.  In this example, the containment operator is used (where one json document is contained inside another) to select data in addition to using the backwards compatible JSON syntax.  Note the usage of the ["?" operator](https://www.postgresql.org/docs/9.5/functions-json.html) that tests the existance of the top level key for the `host_is_superhost`:
 
     ```sql
     SELECT listing_id, name as listing_name, city, listings.amenities
@@ -313,7 +313,7 @@ There are several developer-based changes in PostgreSQL 16 as related to SQL syn
 
 ### Task 2: Exploring JSON_ARRAY, JSON_ARRAYAGG and JSON_OBJECT
 
-In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON_ARRAYAGG()`, and `JSON_OBJECT()` that are part of the SQL standard and now PostgreSQL 16.  
+In this series of steps, the new functions `JSON_ARRAY()`, `JSON_ARRAYAGG()`, and `JSON_OBJECT()` that are part of the SQL standard and now PostgreSQL 16 will be reviewed.
 
 1. In pgAdmin, run the following PostgreSQL 16 commands:
 
@@ -335,7 +335,7 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
 
     ![Results from the query are displayed.](media/02_02_json_06.png)
 
-2. You can also convert regular types into JSON using the `JSON_OBJECT` function.  The following will take several data types and create a JSON object from them:
+2. It is also possible to convert regular types into JSON using the `JSON_OBJECT` function.  The following will take several data types and create a JSON object from them:
 
     ```sql
     SELECT json_object(ARRAY[1, 'a', true, row(2, 'b', false)]::TEXT[]);
@@ -343,7 +343,7 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
 
     ![Results from the query are displayed.](media/02_02_json_07.png)
 
-3. Additionally, you can use the `json_agg` combined with `row_to_json` to convert a series of columns in a select statement into json:
+3. Additionally, use the `json_agg` combined with `row_to_json` to convert a series of columns in a select statement into json:
 
     ```sql
     select 
@@ -357,7 +357,7 @@ In this series of steps, you will review the new functions `JSON_ARRAY()`, `JSON
 
     ![Results from the query are displayed.](media/02_bedrooms_json_query.png)
 
-There are many other types of functions and operators in PostgreSQL that you can utilize when working with JSON data.  You can reference the latest information for PG16 in the [9.16. JSON Functions and Operators](https://www.postgresql.org/docs/16/functions-json.html) documentation.
+There are many other types of functions and operators in PostgreSQL that can be utilized when working with JSON data. Reference the latest information for PG16 in the [9.16. JSON Functions and Operators](https://www.postgresql.org/docs/16/functions-json.html) documentation.
 
 ### Task 3: Creating Indexes
 
@@ -423,7 +423,7 @@ For information on Full Text Search, reference [Full Text Search](https://www.po
     CREATE INDEX ts_idx ON listings USING GIN (ts_summary);
     ```
 
-4. Again, re-run the query, you should see the usage of a `Bitmap Heap Scan` instead of a `Seq Scan`:
+4. Again, re-run the query, notice the usage of a `Bitmap Heap Scan` instead of a `Seq Scan`:
 
     ```sql
     EXPLAIN ANALYZE SELECT *
@@ -469,7 +469,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
 
     ![Results from the query are displayed.](media/02_02_aggregate_02.png)
 
-3. Keep in mind that the `ANY_VALUE` is the selection of an non-null item from the group, and does not act the same if you did the full `group by` clause:
+3. Keep in mind that the `ANY_VALUE` is the selection of an non-null item from the group, and does not act the same with the full `group by` clause:
 
     ```sql
     select
@@ -489,7 +489,7 @@ Prior to PostgreSQL 16, when using GROUP BY, all non-aggregated columns from the
 
 The new `COPY FROM` `DEFAULT` parameter syntax allows for the import of data into a table using a common token in the source data.
 
-> NOTE: These paths below are Windows based and you may need to adjust based on your environment (WSL, Linux, etc)
+> NOTE: These paths below are Windows based and may need to be adjusted based on the environment (WSL, Linux, etc)
 
 1. Using a web browser, download and review the `https://solliancepublicdata.blob.core.windows.net/ms-postgresql-labs/default.csv` file
 2. Notice the usage of the `\D` in the source data:
@@ -522,9 +522,9 @@ Notice every entry from the source file with the default of '\D' was converted t
 
 ### Task 1: Allow parallelization of FULL and internal RIGHT OUTER hash joins
 
-In general, the more things you can do in parallel the faster you will get results.  As is the case when performing `FULL` and internal `RIGHT OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs were more to perform than the parallelization setup.
+In general, the more things that can be done in parallel the faster the results.  As is the case when performing `FULL` and internal `RIGHT OUTER` joins.  Previous to PostgreSQL these would not have been executed in parallel and the costs were more to perform than the parallelization setup.
 
-With this change, many queries you were performing using these joins will now run drastically faster.
+With this change, many queries performing using these joins will now run faster in PG16.
 
 1. Switch to pgAdmin.
 2. Run the following commands to setup some sample tables and data on the PG16 instance.
@@ -545,7 +545,7 @@ With this change, many queries you were performing using these joins will now ru
     from generate_series(1,3000000) x;
     ```
 
-3. Ensure that your instance is enabled and configured for parallel hash joins, this is the default for instances, but depending is always worth verifying.  You should see the following values.
+3. Ensure that the instance is enabled and configured for parallel hash joins, this is the default for instances, but depending is always worth verifying.  Notice the following default values.
    - parallel_type_cost = `0.1`
    - parallel_setup_cost = `1000`
    - max_parallel_workers_per_gather = `2`
@@ -560,7 +560,7 @@ With this change, many queries you were performing using these joins will now ru
 
     > NOTE: If the table values are very small, the effort of doing a parallel operation may be more than the effort to do a non-parallel execution.  The tables and rows above should be enough to generate a Parallel Hash Full Join plan.
 
-4. Run the following command to see the execution plan of the select statement, note that we are disabling the calculation of costs to ensure that you see the parallel hash full join in the execution plan.  This is because the costs to do parallel for this query may be higher than simply doing a regular hash full join:
+4. Run the following command to see the execution plan of the select statement, note that we are disabling the calculation of costs to ensure that the parallel hash full join is displayed in the execution plan.  This is because the costs to do parallel for this query may be higher than simply doing a regular hash full join:
 
     ```sql
     EXPLAIN (costs off)
@@ -570,11 +570,11 @@ With this change, many queries you were performing using these joins will now ru
     ON lt.x = rt.x;
     ```
 
-5. In the execution plan, you should notice the use of a `Parallel Hash Full Join`.  
+5. In the execution plan, notice the use of a `Parallel Hash Full Join`.  
 
     ![Execution plan with a parallel hash full join](media/parallel_full_outer_join.png)
 
-6. In previous versions of PostgreSQL, you would see a regular `Hash Full Join`.
+6. In previous versions of PostgreSQL, a regular `Hash Full Join` would display.
 
     ![Execution plan with a hash full join](media/02_parallel_hash_full_join_14.png)
 
@@ -582,7 +582,7 @@ Full JOINs are commonly used to find the differences between 2 tables. Prior to 
 
 ### Task 2: Allow aggregate functions string_agg() and array_agg() to be parallelized
 
-Aggregate functions typically perform some kind of mathematical operation on a column or set of columns.  If you were to calculate several aggregates at once, you could probably imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
+Aggregate functions typically perform some kind of mathematical operation on a column or set of columns.  When calculating several aggregates at once, it is easy to imagine that doing each one in a serialized manner would likely take much longer than doing it in a parallel manner.
 
 Not all aggregate functions have supported this type of optimization, as such with the `string_agg()` and `array_agg()` functions.  In PostgreSQL 16, this support was added and per the description on the code commit "adds combine, serial and deserial functions for the array_agg() and string_agg() aggregate functions, thus allowing these aggregates to partake in partial aggregations.  This allows both parallel aggregation to take place when these aggregates are present and also allows additional partition-wise aggregation plan shapes to include plans that require additional aggregation once the partially aggregated results from the partitions have been combined."
 
@@ -632,11 +632,11 @@ The following is an example of a query that performs aggregates with the two fun
         y;
     ```
 
-4. In 16+, you will see a `Finalize GroupAggregate`:
+4. In 16+, notice the use of a `Finalize GroupAggregate`:
 
     ![Results from the query are displayed.](media/02_03_query_03.png)
 
-5. In pre-16 instances, you would see a `HashAggregate` (feel free to test on the PG14 instance):
+5. In pre-16 instances, a `HashAggregate` would display (feel free to test on the PG14 instance):
 
     ![Results from the query are displayed.](media/02_03_query_02.png)
 
@@ -644,7 +644,7 @@ For a more in-depth look at the code change for this feature, reference [here](h
 
 ### Task 3: Add EXPLAIN option GENERIC_PLAN to display the generic plan for a parameterized query
 
-Previously, attempting to get an execution plan for a parameterized query was fairly complicated.  For example, using a prepared statement will have several executions which may required you to execute all the sub-executions separately and then put the results together. Using the new PG16 feature will eliminate those extra steps when attempting to find performance issues with parameterized queries.
+Previously, attempting to get an execution plan for a parameterized query was fairly complicated.  For example, using a prepared statement will have several executions which may required the execution of all the sub-executions separately and then put the results together. Using the new PG16 feature will eliminate those extra steps when attempting to find performance issues with parameterized queries.
 
 1. Run the following command to attempt to get an execution plan for a parameterized query using the pre-16 method:
 
@@ -652,7 +652,7 @@ Previously, attempting to get an execution plan for a parameterized query was fa
     EXPLAIN SELECT * FROM listings WHERE listing_id = $1;
     ```
 
-2. You should get an error.
+2. An error should display.
 
     ![An error is displayed from the query.](media/02_04_query_01.png)
 
@@ -666,10 +666,10 @@ Previously, attempting to get an execution plan for a parameterized query was fa
 
     > Note the use of the parenthesis.  The old way (shown above) was to not utilize parenthesis and is only for backwards compatibility. Newer options such as `GENERIC_PLAN` will only work with the new syntax.
 
-As you can see above, you can use parameter placeholders like `$1` instead of an unknown or variable value. However, there are certain restrictions:
+As displayed above, it is possible to use parameter placeholders like `$1` instead of an unknown or variable value. However, there are certain restrictions:
 
-- You can use parameters only with the statements SELECT, INSERT, UPDATE, DELETE and VALUES.
-- You can only use parameters instead of constants (literals). You can’t use parameters instead of identifiers (object names) or keywords, among other things.
+- Use parameters only with the statements SELECT, INSERT, UPDATE, DELETE and VALUES.
+- Only use parameters instead of constants (literals). It is not possible to use parameters instead of identifiers (object names) or keywords, among other things.
 
 ### Task 4: Using pg_stat_io for enhanced IO monitoring
 
@@ -679,7 +679,7 @@ Per the [postgresql documentation](https://www.postgresql.org/docs/devel/monitor
 
 Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation I/O which bypasses shared buffers (e.g. when moving a table from one tablespace to another) is currently not tracked."
 
-1. Run the following command to clear the stats and see the information available, you should see all zeros:
+1. Run the following command to clear the stats and see the information available, notice all zeros:
 
     ```sql
     select pg_stat_reset_shared('io');
@@ -689,14 +689,14 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
 
     ![Query results showing no activity](media/02_pg_stat_01.png)
 
-2. Using `pgbench` you can generate some IO data (~750MB of data). In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
-3. Run the following command. Be sure to replace the `PREFIX` and `REGION` tokens. On Windows you can find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, you can install it using `sudo apt-get install postgresql-contrib`. When prompted, enter the `Seattle123Seattle123` password:
+2. `pgbench` can be used to generate IO data (~750MB of data). In the Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
+3. Run the following command. Be sure to replace the `PREFIX` and `REGION` tokens. On Windows, find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, install it using `sudo apt-get install postgresql-contrib`. When prompted, enter the `Seattle123Seattle123` password:
 
     ```sql
     pgbench -i -s 50 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
-    > NOTE: In Azure Cloud Shell, you will need to check the version to ensure it is compatable with your target version (`pgbench --version`)
+    > NOTE: In Azure Cloud Shell, check the version to ensure it is compatable with the target version (`pgbench --version`)
 
 4. Again, run the previous command to see the newly generated IO information.
 
@@ -707,7 +707,7 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
     order by writes desc;
     ```
 
-5. You should see the backend_type `client_backend` values change to be much higher:
+5. Notice the backend_type `client_backend` values changed to be much higher:
 
     ![Query results with IO activity displayed.](media/pg_stat_io.png)
 
@@ -730,7 +730,7 @@ Currently, I/O on relations (e.g. tables, indexes) is tracked. However, relation
     order by writes desc;
     ```
 
-9. Review the backendtype of `client_backend`, object of `relation`, context of `normal` and the `extends` column value.  Because you were adding data to an existing table, you are performing `extends` operations.
+9. Review the backendtype of `client_backend`, object of `relation`, context of `normal` and the `extends` column value.  Because it added data to an existing table, `extends` operations were performed.
 
 Some common uses for this data include:
 
@@ -741,7 +741,7 @@ Some common uses for this data include:
 
 ### Task 1 : Setup Publication
 
-1. You will need to assign the `REPLICATION` permission in order to setup replication.  Run the following on the **PREFIX-pg-flex-REGION-16** server:
+1. Assign the `REPLICATION` permission to the user in order to setup replication.  Run the following on the **PREFIX-pg-flex-REGION-16** server:
 
     ```sql
     ALTER ROLE s2admin WITH REPLICATION;
@@ -759,7 +759,7 @@ Some common uses for this data include:
 
 ### Task 2: Setup Subcsriber
 
-1. On the **PREFIX-pg-flex-REGION-14** server for the `airbnb` database, run the following.  It will setup the subscription (you should already have the tables from the lab setup). Be sure to replace the `PREFIX` and `REGION` values:
+1. On the **PREFIX-pg-flex-REGION-14** server for the `airbnb` database, run the following.  It will setup the subscription (the tables should have been created from the lab setup). Be sure to replace the `PREFIX` and `REGION` values:
 
     ```sql
     CREATE SUBSCRIPTION my_pub_subscription CONNECTION 'host=PREFIX-pg-flex-REGION-16.postgres.database.azure.com port=5432 dbname=airbnb user=s2admin password=Seattle123Seattle123' PUBLICATION my_pub WITH (copy_data=true, enabled=true, create_slot=true, slot_name='my_pub_slot');
@@ -800,9 +800,9 @@ References:
 
 ### Task 1: Enable PgBouncer and PgBouncer Metrics
 
-You can use PgBouncer metrics to monitor the performance of the PgBouncer process, including details for active connections, idle connections, total pooled connections, and the number of connection pools. Each metric is emitted at a 1-minute interval and has up to 93 days of history. Customers can configure alerts on the metrics and also access the new metrics dimensions to split and filter metrics data by database name. PgBouncer metrics are disabled by default. For PgBouncer metrics to work, both the server parameters pgbouncer.enabled and metrics.pgbouncer_diagnostics must be enabled. These parameters are dynamic and don't require an instance restart.
+PgBouncer metrics can be used to monitor the performance of the PgBouncer process, including details for active connections, idle connections, total pooled connections, and the number of connection pools. Each metric is emitted at a 1-minute interval and has up to 93 days of history. Customers can configure alerts on the metrics and also access the new metrics dimensions to split and filter metrics data by database name. PgBouncer metrics are disabled by default. For PgBouncer metrics to work, both the server parameters pgbouncer.enabled and metrics.pgbouncer_diagnostics must be enabled. These parameters are dynamic and don't require an instance restart.
 
-- Browse to the Azure Portal and your **PREFIX-pg-flex-REGION-16** resource.
+- Browse to the Azure Portal and the **PREFIX-pg-flex-REGION-16** resource.
 - Under **Settings**, select **Server parameters**.
 - Search for the `pgbouncer.enabled` dynamic parameters.
 - Toggle the setting to `TRUE`.
@@ -831,14 +831,14 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 
     ![Select the Active client connections under PGBOUNCER](media/metrics_set_30_minutes.png)
 
-8. In your Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
-9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password `Seattle123Seattle123`.  Notice the use of the `-c` parameter that will create 100 different connections, be sure to replace `PREFIX` with your lab information. On Windows you can find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, you can install it using `sudo apt-get install postgresql-contrib`::
+8. In the Windows-based lab virtual machine, open a command prompt window, in the windows search area, type **cmd** and select it.
+9. Run the following commands to execute a `pgbench` test directly against the database server, when prompted enter the password `Seattle123Seattle123`.  Notice the use of the `-c` parameter that will create 100 different connections, be sure to replace `PREFIX` with the lab information. On Windows, find the pgbench tool in the `C:\Program Files\PostgreSQL\16\bin` directory, on ubuntu, install it using `sudo apt-get install postgresql-contrib`::
 
     ```sql
     pgbench -c 100 -T 180 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 5432 -U s2admin -d airbnb
     ```
 
-10. Switch back to the Metrics window, after a minute, you should see the `active connections` increase.
+10. Switch back to the Metrics window, after a minute, notice the `active connections` increase.
 
     ![Graph of active connections increasing.](media/02_pgbouncer_01.png)
 
@@ -847,13 +847,13 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 ### Task 3: Performance with PgBouncer
 
 1. Switch back to the windows command prompt.
-2. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password `Seattle123Seattle123`. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` and `REGION` with your lab information:
+2. Run the following commands to execute a `pgbench` test against the PgBouncer instance, when prompted enter the password `Seattle123Seattle123`. Notice the change of the port to the PgBouncer port of `6432`, be sure to replace `PREFIX` and `REGION` with the lab information:
 
     ```sql
     pgbench -c 100 -T 180 -h PREFIX-pg-flex-REGION-16.postgres.database.azure.com -p 6432 -U s2admin -d airbnb
     ```
 
-3. Switch back to the metrics window.  After a minute, you should see that the server `active connections` will max out and the PgBouncer `active client connections` will increase to handle the load on behalf of the server.
+3. Switch back to the metrics window.  After a minute, the server `active connections` will max out and the PgBouncer `active client connections` will increase to handle the load on behalf of the server.
 
     ![Graph of active connections and active connections increasing.](media/02_pgbouncer_02.png)
 
@@ -861,11 +861,11 @@ You can use PgBouncer metrics to monitor the performance of the PgBouncer proces
 
 ### Task 1: Use new VACUUM options to improve VACUUM performance
 
-The PostgreSQL `VACUUM` command is used to garbage-collect and analyze databases.  It works by removing `dead` tuples left over by large changes to a database (such as frequently updated tables). By removing the gaps between the data, you can speed up the performance of specific operations and increase your disk space.
+The PostgreSQL `VACUUM` command is used to garbage-collect and analyze databases.  It works by removing `dead` tuples left over by large changes to a database (such as frequently updated tables). By removing the gaps between the data, performance of specific operations will increase and available disk space should go up.
 
 Once of the new features to `VACUUM` in Postgres 16 is the ability to update the cost limit on the fly.  This will allow people that run large production databases that may be running out of disk space a bit too quickly; which if to occur, would likely take down the production system. to get VACUUM to execute faster. During a `VACUUM` is could be that it is not running as fast as it needs to because of the cost limit.
 
-By allowing the change during the operation, you can speed up the `VACUUM` operation without restarting it.
+By allowing the change during the operation, the `VACUUM` operation can be sped up without restarting it.
 
 These server parameters are called `vacuum_cost*` or `auto_vacuum_vacuum_cost*`. The default for the `vacuum_cost_limit` is `200` and `auto_vacuum_vacuum_cost` is `-1` which indicates to use the default vacuum cost limit.
 
