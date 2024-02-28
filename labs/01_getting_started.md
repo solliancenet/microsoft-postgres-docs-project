@@ -1,6 +1,6 @@
-# Hands on Lab: Provisioning, configuring, and getting started with development
+# Hands-on Lab: Provisioning, configuring, and getting started with development
 
-- [Hands on Lab: Provisioning, configuring, and getting started with development](#hands-on-lab-provisioning-configuring-and-getting-started-with-development)
+- [Hands-on Lab: Provisioning, configuring, and getting started with development](#hands-on-lab-provisioning-configuring-and-getting-started-with-development)
   - [Prerequisites](#prerequisites)
   - [Exercise 1: Creating an Azure Database for PostgreSQL - Flexible Server](#exercise-1-creating-an-azure-database-for-postgresql---flexible-server)
   - [Exercise 2: Adding a database in the portal](#exercise-2-adding-a-database-in-the-portal)
@@ -24,12 +24,12 @@ In this lab, an [Azure Database for PostgreSQL Flexible Server](https://learn.mi
 
 In this exercise, a new Azure Database for PostgreSQL Flexible Server will be created using the Azure Portal.
 
-1. Open the [Azure Portal](https://portal.azure.com/), if prompted, login using the lab credentials.
+1. Open the [Azure Portal](https://portal.azure.com/), and if prompted, log in using the lab credentials.
 2. Select **Create a resource (+)** in the upper-left corner of the portal or select **Create a resource** under **Azure services**.
 
-    ![Select create a resource](media/01_00_create_resource.png)
+    ![Select create a resource]
 
-3. In the left side navigation, select **Databases**.
+3. In the left-side navigation, select **Databases**.
 4. Under **Azure Database for PostgreSQL Flexible Server**, select **Create**.
 
     ![Select Create under the Azure Database for PostgreSQL Flexible Server option](media/01_00_databases.png)
@@ -48,7 +48,7 @@ In this exercise, a new Azure Database for PostgreSQL Flexible Server will be cr
 7. For the size, select `Standard_D2ds_v5`.
 8. Please **DO NOT** select the **High Availability** option as it is subject to availability and capacity limits in various regions.
 
-    ![More server options displayed.](media/01_03_create_server_basics_02.png)
+    ![More server options are displayed.](media/01_03_create_server_basics_02.png)
   
 9. Select **Save**.
 10. Authentication method: `PostgreSQL authentication only`.
@@ -111,7 +111,7 @@ In this exercise, the Azure Portal will be used to add a new database to the new
 
 ## Exercise 3: Configuring maintenance
 
-In this exercise, the [maintenance schedule](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-maintenance) of the Azure Database for PostgreSQL Flexible Server will be configured. By changing the schedule, the Azure update schedule can be matched to internal company based update schedules.
+In this exercise, the [maintenance schedule](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-maintenance) of the Azure Database for PostgreSQL Flexible Server will be configured. By changing the schedule, the Azure update schedule can be matched to internal company-based update schedules.
 
 1. Browse to the **PREFIX-pg-flex-REGION-16** instance.
 2. Under **Settings**, select **Maintenance**.
@@ -119,7 +119,7 @@ In this exercise, the [maintenance schedule](https://learn.microsoft.com/azure/p
 4. For the **Day of week**, select **Saturday**.
 5. For the **Start time (UTC)**, select **23**.
   
-      ![Set a custom maintence schedule](media/01_12_pg_maintenance.png)
+      ![Set a custom maintenance schedule](media/01_12_pg_maintenance.png)
 
 6. Select **Save**.
 
@@ -136,7 +136,7 @@ When bringing a device to the workshop, ensure the following has been completed:
 3. Switch back to the Azure Portal.
 4. Browse to the `PREFIX-pg-flex-REGION-16` instance.
 5. Under **Settings**, select **Networking**.
-6. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
+6. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox is selected.
 7. Under **Firewall rules**, add an entry for the IP address of the device.
 
     > NOTE: Find the client IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
@@ -146,7 +146,7 @@ When bringing a device to the workshop, ensure the following has been completed:
 
 ### Task 2: Networking Setup (Lab Environment)
 
-When using the virtual machine from the lab environment, all the software has been already been installed. Login using the following:
+When using the virtual machine from the lab environment, all the software has already been installed. log in using the following:
 
 1. Switch to the Azure Portal.
 2. Browse to the resource group.
@@ -156,7 +156,7 @@ When using the virtual machine from the lab environment, all the software has be
 6. Select **Download RDP file**.
 7. Open the RDP file with Remote Desktop.
 8. Select **Connect**.
-9. Login with `s2admin` and password `Seattle123Seattle123`.
+9. log in with `s2admin` and password `Seattle123Seattle123`.
 10. When prompted, select **Next**, then **Accept**.
 11. Switch back to the Azure Portal.
 12. Browse to the `PREFIX-pg-flex-REGION-16` instance.
@@ -172,11 +172,11 @@ When using the virtual machine from the lab environment, all the software has be
 ### Task 2: Add Server to pgAdmin
 
 1. From the lab virtual machine, open **pgAdmin**.
-2. Right-click the **Servers** node, select **Register->Server**.
+2. Right-click the **Servers** node, then select **Register->Server**.
   
     ![Register a new server in pgAdmin](media/01_14_pg_admin_register.png)
 
-3. For name, type **PREFIX-pg-flex-REGION-16**, be sure to replace `PREFIX` with the lab information.
+3. For name, type **PREFIX-pg-flex-REGION-16**, and be sure to replace `PREFIX` with the lab information.
 4. Select the **Connection** tab.
 5. For the **host name/address**, paste the server name copied from above.
 6. For the username, type **s2admin**.
@@ -197,7 +197,7 @@ In this exercise, pgAdmin will be used to execute some basic queries.
     > NOTE:  If for some reason the **airbnb** table is not displayed, use `psql` to run the script in the `"c:\labfiles\microsoft-postgres-docs-project\artifacts\data\airbnb.sql"`
 
 5. Expand the **Tables** node.
-6. Right-click the new `airbnb` table, select **Query Tool**.
+6. Right-click the new `airbnb` table, then select **Query Tool**.
 7. Copy the following into the query tool window and execute it:
 
     ```sql
@@ -209,9 +209,9 @@ In this exercise, pgAdmin will be used to execute some basic queries.
 
 ## Summary
 
-In this lab, a new Azure Database for PostgreSQL Flexible Server instance was created, configured some various aspects of it, added a database called `airbnb`, configured a custom maintenance schedule then explored some data using on a secondary PG14 instance using pgAdmin.
+In this lab, a new Azure Database for PostgreSQL Flexible Server instance was created, configured some various aspects of it, added a database called `airbnb`, configured a custom maintenance schedule then explored some data using a secondary PG14 instance using pgAdmin.
 
-In the next set of labs, several developer and performance features of PostgreSQL will be exlored.
+In the next set of labs, several developer and performance features of PostgreSQL will be explored.
 
 ## Miscellaneous (Optional)
 
@@ -219,7 +219,7 @@ To run these labs in an Azure subscription, execute the following steps using th
 
 1. Switch to the Azure Portal.
 2. Select the **+** in the top left.
-3. Search for **template**, select the **Template deployment (deploy using custom templates).
+3. Search for **template**, then select the **Template deployment (deploy using custom templates).
 4. Select **Create**.
 5. Select **Build r own template in the editor**.
 6. Copy and paste the `/artifacts/environment-setup/automation/template.json` file into the window.
@@ -228,5 +228,5 @@ To run these labs in an Azure subscription, execute the following steps using th
 9. Select **Review + create**.
 10. Select **Create**, the deployment will take a few minutes.  Once deployed, several items will be created:
     - A PostgreSQL 14 instance.
-    - Windows 11 Virtual Machine with necessary software installed.
+    - Windows 11 Virtual Machine with the necessary software installed.
     - Various Azure supporting services

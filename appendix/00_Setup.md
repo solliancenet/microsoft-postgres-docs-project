@@ -45,13 +45,13 @@ The following steps will configure an environment to perform the guide's migrati
 
 ## Connect to the Azure VM
 
-- Login to the deployed database VM
+- log in to the deployed database VM
   - Browse to the Azure Portal.
   - Select the **PREFIX-vm-pgdb01** virtual machine resource.
   - Under **Settings**, select **Connect**
   - Select **Select** to open the native RDP dialog
   - Select **Download RDP file** in the RDP dialog
-  - Login using `s2admin` and `Seattle123Seattle123`
+  - log in using `s2admin` and `Seattle123Seattle123`
 
 ## Install Chrome
 
@@ -149,11 +149,11 @@ Perform the following on the **PREFIX-vm-pgdb01** virtual machine resource.
 -->
 
 - Create the database user
-  - In the navigator, right-click the **Login/Group Roles**
-  - Select **Create->Login/Group Rule**
+  - In the navigator, right-click the **log in/Group Roles**
+  - Select **Create->log in/Group Rule**
   - For the name, type **conferenceuser**
   - Select the **Definition** tab, type `Seattle123` for the password
-  - Select the **Privileges** tab, toggle the **Can login?** to yes
+  - Select the **Privileges** tab, toggle the **Can log in?** to yes
   - Select **Save**
 
 - To allow the database user to perform DML operations against the database, right-click the **reg_app** schema in the **reg_app** database, and select **Grant Wizard...**.
@@ -352,14 +352,14 @@ mvn com.microsoft.azure:azure-webapp-maven-plugin:1.15.0:config
 mvn package azure-webapp:deploy
 ```
 
-- When prompted, login to the Azure Portal
+- When prompted, log in to the Azure Portal
 - Update the App Service configuration variables by running the following, be sure to replace the tokens:
 
 ```PowerShell
 $prefix = "{PREFIX}";
 $app_name = "$($prefix)api01";
 $rgName = "{RESOURCE-GROUP-NAME}";
-az login
+az log in
 az account set --subscription "{SUBSCRIPTION-ID}"
 az webapp config appsettings set -g $rgName -n $app_name --settings DB_CONNECTION_URL={DB_CONNECTION_URL}
 az webapp config appsettings set -g $rgName -n $app_name --settings DB_USER_NAME={DB_USER_NAME}

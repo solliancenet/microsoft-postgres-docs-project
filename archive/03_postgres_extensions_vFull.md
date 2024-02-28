@@ -1,6 +1,6 @@
-# Hands on Lab: Working with common PostgreSQL extensions
+# Hands-on Lab: Working with common PostgreSQL extensions
 
-- [Hands on Lab: Working with common PostgreSQL extensions](#hands-on-lab-working-with-common-postgresql-extensions)
+- [Hands-on Lab: Working with common PostgreSQL extensions](#hands-on-lab-working-with-common-postgresql-extensions)
   - [Exercise 1: Add extensions to allowlist](#exercise-1-add-extensions-to-allowlist)
   - [Exercise 2: Load data into the database from Azure storage using the Azure Storage extension](#exercise-2-load-data-into-the-database-from-azure-storage-using-the-azure-storage-extension)
     - [Task 1: Create an Azure Blob Storage account](#task-1-create-an-azure-blob-storage-account)
