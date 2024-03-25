@@ -63,24 +63,25 @@
         "postInstallParameters": "[concat(' -azureUsername ', parameters('azureUsername') , ' -azurePassword ', parameters('azurePassword'), ' -azureTenantID ', variables('azureTenantID'), ' -azureSubscriptionID ', variables('azureSubscriptionID'), ' -odlId ', variables('odlId'), ' -deploymentId ', variables('deploymentId'))]",
         "unique": "[uniqueString(resourceGroup().id)]",
         "location": "[parameters('location')]",
-        "dns-domain": "[concat(parameters('prefix'),'privatedns.com')]",
+        "dns-domain": "[concat(variables('prefix'),'privatedns.com')]",
         "linuxFxVersion": "JAVA|11-java11",
         "alwaysOn": "true",
-        "vault-name": "[concat(parameters('prefix'),'-kv-', variables('unique'))]",
-        "vm_db_name": "[concat(parameters('prefix'),'-pgdb01')]",
-        "app_name": "[concat(parameters('prefix'),'-app01')]",
-        "api_name": "[concat(parameters('prefix'),'-api01')]",
-        "insights-name": "[concat(parameters('prefix'),'-pg-insights')]",
-        "vm-db-ip": "[concat(parameters('prefix'),'-pg-ip-01')]",
-        "pg-vnet-db": "[concat(parameters('prefix'),'-vnet-postgresql')]",
-        "pg-vnet-app01": "[concat(parameters('prefix'),'-vnet-app01')]",
-        "pg-vnet-hub": "[concat(parameters('prefix'),'-vnet-hub')]",
-        "pg-nsg-01": "[concat(parameters('prefix'),'-pg-nsg')]",
-        "pg-flex-14": "[concat(parameters('prefix'),'-pg-flex-', parameters('location'), '-14')]",
-        "pg-flex-16": "[concat(parameters('prefix'),'-pg-flex-', parameters('location'), '-16')]",
-        "pg-nic-01": "[concat(parameters('prefix'),'-pg-nic-01')]",
-        "pg-nic-02": "[concat(parameters('prefix'),'-nic-02')]",
-        "pg-nic-03": "[concat(parameters('prefix'),'-nic-03')]",
+        "vault-name": "[concat(variables('prefix'),'-kv-', variables('unique'))]",
+        "vm_db_name": "[concat(variables('prefix'),'-pgdb01')]",
+        "app_name": "[concat(variables('prefix'),'-app01')]",
+        "api_name": "[concat(variables('prefix'),'-api01')]",
+        "insights-name": "[concat(variables('prefix'),'-pg-insights')]",
+        "vm-db-ip": "[concat(variables('prefix'),'-pg-ip-01')]",
+        "pg-vnet-db": "[concat(variables('prefix'),'-vnet-postgresql')]",
+        "pg-vnet-app01": "[concat(variables('prefix'),'-vnet-app01')]",
+        "pg-vnet-hub": "[concat(variables('prefix'),'-vnet-hub')]",
+        "pg-nsg-01": "[concat(variables('prefix'),'-pg-nsg')]",
+        "pg-flex-14": "[concat(variables('prefix'),'-pg-flex-', parameters('location'), '-14')]",
+        "pg-flex-16": "[concat(variables('prefix'),'-pg-flex-', parameters('location'), '-16')]",
+        "pg-nic-01": "[concat(variables('prefix'),'-pg-nic-01')]",
+        "pg-nic-02": "[concat(variables('prefix'),'-nic-02')]",
+        "pg-nic-03": "[concat(variables('prefix'),'-nic-03')]",
+        "prefix": "[toLower(parameters('prefix'))]",
         "vnetData": "",
         "vnetDataSet": "[if(empty(variables('vnetData')), json('{ \"subnetArmResourceId\": \"\" }'), variables('vnetData'))]",
         "finalVnetData": "[json(concat('{ \"SubnetArmResourceId\": \"', variables('vnetDataSet').subnetArmResourceId, '\"}'))]"
@@ -89,13 +90,13 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(concat(parameters('prefix'),'-pgdb01'))]",
+            "name": "[guid(concat(variables('prefix'),'-pgdb01'))]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('prefix'),'-pgdb01'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('prefix'),'-pgdb01'))]"
             ],
             "properties": {
                 "roleDefinitionId": "[variables('Owner')]",
-                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(parameters('prefix'),'-pgdb01')), '2023-09-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('prefix'),'-pgdb01')), '2023-09-01', 'Full').identity.principalId]"
             }
         },
         {
@@ -115,7 +116,7 @@
         {
             "type": "Microsoft.Network/privateDnsZones",
             "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('prefix'), 'privatedns.com')]",
+            "name": "[concat(variables('prefix'), 'privatedns.com')]",
             "location": "global",
             "properties": {
                 "maxNumberOfRecordSets": 25000,
@@ -129,9 +130,9 @@
         {
             "type": "Microsoft.Network/privateDnsZones/A",
             "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('prefix'), 'privatedns.com', '/cjg-postgresql')]",
+            "name": "[concat(variables('prefix'), 'privatedns.com', '/cjg-postgresql')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones', concat(parameters('prefix'), 'privatedns.com'))]"
+                "[resourceId('Microsoft.Network/privateDnsZones', concat(variables('prefix'), 'privatedns.com'))]"
             ],
             "properties": {
                 "metadata": {
@@ -148,9 +149,9 @@
         {
             "type": "Microsoft.Network/privateDnsZones/SOA",
             "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('prefix'), 'privatedns.com', '/@')]",
+            "name": "[concat(variables('prefix'), 'privatedns.com', '/@')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones', concat(parameters('prefix'), 'privatedns.com'))]"
+                "[resourceId('Microsoft.Network/privateDnsZones', concat(variables('prefix'), 'privatedns.com'))]"
             ],
             "properties": {
                 "ttl": 3600,
@@ -168,9 +169,9 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2020-05-01",
-            "name": "[concat(parameters('prefix'), 'vnet-hub', '/appGateway')]",
+            "name": "[concat(variables('prefix'), 'vnet-hub', '/appGateway')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-hub'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', concat(variables('prefix'), 'vnet-hub'))]"
             ],
             "properties": {
                 "addressPrefix": "10.5.1.0/24",
@@ -183,9 +184,9 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2020-05-01",
-            "name": "[concat(parameters('prefix'), 'vnet-app01', '/default')]",
+            "name": "[concat(variables('prefix'), 'vnet-app01', '/default')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-app01'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', concat(variables('prefix'), 'vnet-app01'))]"
             ],
             "properties": {
                 "addressPrefix": "10.6.0.0/24",
@@ -197,9 +198,9 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2020-05-01",
-            "name": "[concat(parameters('prefix'), 'vnet-hub', '/default')]",
+            "name": "[concat(variables('prefix'), 'vnet-hub', '/default')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-hub'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', concat(variables('prefix'), 'vnet-hub'))]"
             ],
             "properties": {
                 "addressPrefix": "10.5.0.0/24",
@@ -211,9 +212,9 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2020-05-01",
-            "name": "[concat(parameters('prefix'), 'vnet-postgresql', '/default')]",
+            "name": "[concat(variables('prefix'), 'vnet-postgresql', '/default')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-postgresql'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', concat(variables('prefix'), 'vnet-postgresql'))]"
             ],
             "properties": {
                 "addressPrefix": "10.7.0.0/24",
@@ -225,7 +226,7 @@
         {
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2020-05-01",
-            "name": "[concat(parameters('prefix'), 'vnet-app01')]",
+            "name": "[concat(variables('prefix'), 'vnet-app01')]",
             "location": "[variables('location')]",
             "properties": {
                 "addressSpace": {
@@ -250,7 +251,7 @@
                         "properties": {
                             "peeringState": "Connected",
                             "remoteVirtualNetwork": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-hub'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(variables('prefix'), 'vnet-hub'))]"
                             },
                             "allowVirtualNetworkAccess": true,
                             "allowForwardedTraffic": false,
@@ -271,7 +272,7 @@
         {
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2020-05-01",
-            "name": "[concat(parameters('prefix'), 'vnet-hub')]",
+            "name": "[concat(variables('prefix'), 'vnet-hub')]",
             "location": "[variables('location')]",
             "properties": {
                 "addressSpace": {
@@ -308,7 +309,7 @@
         {
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2020-05-01",
-            "name": "[concat(parameters('prefix'), 'vnet-postgresql')]",
+            "name": "[concat(variables('prefix'), 'vnet-postgresql')]",
             "location": "[variables('location')]",
             "properties": {
                 "addressSpace": {
@@ -333,7 +334,7 @@
                         "properties": {
                             "peeringState": "Connected",
                             "remoteVirtualNetwork": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('prefix'), 'vnet-hub'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(variables('prefix'), 'vnet-hub'))]"
                             },
                             "allowVirtualNetworkAccess": true,
                             "allowForwardedTraffic": false,
@@ -354,7 +355,7 @@
         {
             "type": "microsoft.operationalinsights/workspaces",
             "apiVersion": "2020-08-01",
-            "name": "[concat(parameters('prefix'), '-pg-logs')]",
+            "name": "[concat(variables('prefix'), '-pg-logs')]",
             "location": "[variables('location')]",
             "properties": {
                 "sku": {
