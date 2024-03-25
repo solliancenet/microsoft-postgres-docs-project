@@ -13,7 +13,7 @@
   - [Summary](#summary)
   - [Miscellaneous (Optional)](#miscellaneous-optional)
 
-In this lab, an [Azure Database for PostgreSQL Flexible Server](https://learn.microsoft.com/azure/postgresql/flexible-server/overview) will be created and then configured with various properties using the Azure Portal. Once created and configured, [pgAdmin](https://www.pgadmin.org/) will be used to connect to it and run some basic queries on pre-loaded data.
+In this lab, an [Azure Database for PostgreSQL Flexible Server](https://learn.microsoft.com/azure/postgresql/flexible-server/overview) will be created and then configured with various properties using the Azure portal. Once created and configured, [pgAdmin](https://www.pgadmin.org/) will be used to connect to it and run some basic queries on pre-loaded data.
 
 ## Prerequisites
 
@@ -22,12 +22,12 @@ In this lab, an [Azure Database for PostgreSQL Flexible Server](https://learn.mi
 
 ## Exercise 1: Creating an Azure Database for PostgreSQL - Flexible Server
 
-In this exercise, a new Azure Database for PostgreSQL Flexible Server will be created using the Azure Portal.
+In this exercise, a new Azure Database for PostgreSQL Flexible Server will be created using the Azure portal.
 
-1. Open the [Azure Portal](https://portal.azure.com/), and if prompted, log in using the lab credentials.
+1. Open the [Azure portal](https://portal.azure.com/), and if prompted, log in using the lab credentials.
 2. Select **Create a resource (+)** in the upper-left corner of the portal or select **Create a resource** under **Azure services**.
 
-    ![Select create a resource]
+    ![Select Create a resource](media/01_00_create_resource.png)
 
 3. In the left-side navigation, select **Databases**.
 4. Under **Azure Database for PostgreSQL Flexible Server**, select **Create**.
@@ -40,7 +40,7 @@ In this exercise, a new Azure Database for PostgreSQL Flexible Server will be cr
    - Server name:  `PREFIX-pg-flex-REGION-16`
    - Region: `REGION`
    - PostgreSQL Version: `16`
-   - Workload Type: `Production (Small/Medium-size)`
+   - Workload Type: `Production (Small / Medium-size)`
   
     ![Screen shot of the options selected.](media/01_02_create_server_basics_00.png)
 
@@ -60,13 +60,13 @@ In this exercise, a new Azure Database for PostgreSQL Flexible Server will be cr
 13. Select **Next: Networking**. On the Networking tab, choose how the server will be reachable.
 14. Configure Networking options:
   
-    - Select **Public access (allowed IP addresses)**
+    - Select **Public access (allowed IP addresses) and Private endpoint**.
 
       ![Set the Public Access option](media/01_04_networking_01.png)
 
-    - Add the client IP address to ensure connectivity to the new instance
+    - To ensure connectivity to the new instance, add the IP address of the client machine from which you plan to connect to it.
 
-        > NOTE: Find the client IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
+        > NOTE: If the client is the same machine from which you're accessing to Azure portal, click on the "+ Add current client IP ( ###.###.###.### )" link, and it will automatically add a firewall rule for that machine's IP address. If it is a different machine, find the client IP Address of that machine by accessing a service such as [What Is My IP Address](https://whatismyipaddress.com/) from it, and then manually add a firewall rule for that specific address ("Start IP address" and "End IP address" fields for the firewall rule should both be set to the IP address of the client).
 
     - Additionally, select the **Allow public access from any Azure service with Azure to the server**
 
@@ -86,19 +86,19 @@ In this exercise, a new Azure Database for PostgreSQL Flexible Server will be cr
       ![The deployment in progress screen](media/01_08_deployment.png)
 
 - Once deployed, select the link to navigate to the server's **Overview** page.
-  - Make a note of the Server name and the Server admin login name.
+  - Make a note of the values assigned to "Server name" and "Server admin login name".
   - Hover the cursor over each field, and the copy symbol appears to the right of the text.
   - Select the copy symbol as needed to copy the values for use later:
     - Subscription ID
-    - Resource Group
-    - Resource name
+    - Resource group
     - Server name
+    - Server admin login name
 
   ![PostgreSQL overview page](media/01_10_pg_overview.png)
 
 ## Exercise 2: Adding a database in the portal
 
-In this exercise, the Azure Portal will be used to add a new database to the newly created Azure Database for PostgreSQL Flexible Server.
+In this exercise, the Azure portal will be used to add a new database to the newly created Azure Database for PostgreSQL Flexible Server.
 
 1. Browse to the new **PREFIX-pg-flex-REGION-16** instance.
 2. Under **Settings**, select **Databases**.
@@ -133,22 +133,22 @@ When bringing a device to the workshop, ensure the following has been completed:
 
 1. Download and Install [pgAdmin](https://www.pgadmin.org/download/).
 2. Download and Install [PostgreSQL 16](https://www.postgresql.org/download/).
-3. Switch back to the Azure Portal.
+3. Switch back to the Azure portal.
 4. Browse to the `PREFIX-pg-flex-REGION-16` instance.
 5. Under **Settings**, select **Networking**.
 6. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox is selected.
 7. Under **Firewall rules**, add an entry for the IP address of the device.
 
-    > NOTE: Find the client IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
+    > NOTE: If the client is the same machine from which you're accessing to Azure portal, click on the "+ Add current client IP ( ###.###.###.### )" link, and it will automatically add a firewall rule for that machine's IP address. If it is a different machine, find the client IP Address of that machine by accessing a service such as [What Is My IP Address](https://whatismyipaddress.com/) from it, and then manually add a firewall rule for that specific address ("Start IP address" and "End IP address" fields for the firewall rule should both be set to the IP address of the client).
 
 8. Select **Save**.
 9. Repeat for the `PREFIX-pg-flex-REGION-14` instance. Note that this instance was created by the lab ARM template.
 
 ### Task 2: Networking Setup (Lab Environment)
 
-When using the virtual machine from the lab environment, all the software has already been installed. log in using the following:
+When using the virtual machine from the lab environment, all the software has already been installed. Log in using the following:
 
-1. Switch to the Azure Portal.
+1. Switch to the Azure portal.
 2. Browse to the resource group.
 3. Select the **PREFIX-vm-pgdb01** virtual machine.
 4. In the tabs, select **Connect->Connect**.
@@ -156,20 +156,20 @@ When using the virtual machine from the lab environment, all the software has al
 6. Select **Download RDP file**.
 7. Open the RDP file with Remote Desktop.
 8. Select **Connect**.
-9. log in with `s2admin` and password `Seattle123Seattle123`.
+9. Log in with `s2admin` and password `Seattle123Seattle123`.
 10. When prompted, select **Next**, then **Accept**.
-11. Switch back to the Azure Portal.
+11. Switch back to the Azure portal.
 12. Browse to the `PREFIX-pg-flex-REGION-16` instance.
 13. Under **Settings**, select **Networking**.
 14. Ensure that the **Allow public access from any Azure service within Azure to this server** checkbox in selected.
 15. Under **Firewall rules**, add an entry using the IP address copied above.
 
-    > NOTE: Find the client IP Address by using a service such as [What Is My IP Address](https://whatismyipaddress.com/)
+    > NOTE: If the client is the same machine from which you're accessing to Azure portal, click on the "+ Add current client IP ( ###.###.###.### )" link, and it will automatically add a firewall rule for that machine's IP address. If it is a different machine, find the client IP Address of that machine by accessing a service such as [What Is My IP Address](https://whatismyipaddress.com/) from it, and then manually add a firewall rule for that specific address ("Start IP address" and "End IP address" fields for the firewall rule should both be set to the IP address of the client).
 
 16. Select **Save**.
 17. Repeat the networking steps for the `PREFIX-pg-flex-REGION-14` instance. Note that this instance was created by the lab ARM template.
 
-### Task 2: Add Server to pgAdmin
+### Task 2: Add server to pgAdmin
 
 1. From the lab virtual machine, open **pgAdmin**.
 2. Right-click the **Servers** node, then select **Register->Server**.
@@ -193,11 +193,11 @@ In this exercise, pgAdmin will be used to execute some basic queries.
 2. Expand the **PREFIX-pg-flex-REGION-14** node.
 3. Expand the **Databases** node.
 4. Expand the **airbnb->Schemas->public** nodes.
+5. Expand the **Tables** node.
 
     > NOTE:  If for some reason the **airbnb** table is not displayed, use `psql` to run the script in the `"c:\labfiles\microsoft-postgres-docs-project\artifacts\data\airbnb.sql"`
 
-5. Expand the **Tables** node.
-6. Right-click the new `airbnb` table, then select **Query Tool**.
+6. Right-click the `airbnb` table, then select **Query Tool**.
 7. Copy the following into the query tool window and execute it:
 
     ```sql
@@ -209,7 +209,7 @@ In this exercise, pgAdmin will be used to execute some basic queries.
 
 ## Summary
 
-In this lab, a new Azure Database for PostgreSQL Flexible Server instance was created, configured some various aspects of it, added a database called `airbnb`, configured a custom maintenance schedule then explored some data using a secondary PG14 instance using pgAdmin.
+In this lab, a new Azure Database for PostgreSQL Flexible Server instance was created, configured some various aspects of it, added a database called `airbnb`, configured a custom maintenance schedule, then explored some data using a secondary PG14 instance using pgAdmin.
 
 In the next set of labs, several developer and performance features of PostgreSQL will be explored.
 
@@ -217,11 +217,11 @@ In the next set of labs, several developer and performance features of PostgreSQ
 
 To run these labs in an Azure subscription, execute the following steps using the provided ARM template:
 
-1. Switch to the Azure Portal.
+1. Switch to the Azure portal.
 2. Select the **+** in the top left.
 3. Search for **template**, then select the **Template deployment (deploy using custom templates).
 4. Select **Create**.
-5. Select **Build r own template in the editor**.
+5. Select **Build your own template in the editor**.
 6. Copy and paste the `/artifacts/environment-setup/automation/template.json` file into the window.
 7. Select **Save**.
 8. Set the **prefix** parameter to match the lab environment or your initials (ex `ABC`).
@@ -229,4 +229,4 @@ To run these labs in an Azure subscription, execute the following steps using th
 10. Select **Create**, the deployment will take a few minutes.  Once deployed, several items will be created:
     - A PostgreSQL 14 instance.
     - Windows 11 Virtual Machine with the necessary software installed.
-    - Various Azure supporting services
+    - Various Azure supporting services.
