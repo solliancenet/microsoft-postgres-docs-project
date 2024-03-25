@@ -45,7 +45,7 @@ In this exercise, a new Azure Database for PostgreSQL Flexible Server will be cr
     ![Screen shot of the options selected.](media/01_02_create_server_basics_00.png)
 
 6. Under **Compute + Storage**, select **Configure Server**.
-7. For the size, select `Standard_D2ds_v5`.
+7. For the size, select `Standard_D2ads_v5`.
 8. Please **DO NOT** select the **High Availability** option as it is subject to availability and capacity limits in various regions.
 
     ![More server options are displayed.](media/01_03_create_server_basics_02.png)
